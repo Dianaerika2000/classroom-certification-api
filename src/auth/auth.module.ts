@@ -1,19 +1,15 @@
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { ConfigService } from '@nestjs/config';
+import { MoodleModule } from 'src/moodle/moodle.module';
+import { UserModule } from 'src/user/user.module';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
-import { HttpModule } from '@nestjs/axios';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { PassportModule, PassportStrategy } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { MoodleModule } from 'src/moodle/moodle.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([User]),
-    
+  imports: [    
     PassportModule.register({ defaultStrategy: 'jwt'}),
     
     JwtModule.registerAsync({
@@ -27,6 +23,7 @@ import { MoodleModule } from 'src/moodle/moodle.module';
       }
     }),
     MoodleModule,
+    UserModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

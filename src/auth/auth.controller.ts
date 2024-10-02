@@ -11,7 +11,12 @@ export class AuthController {
 
   @Post('login')
   async login(@Body() loginDto: LoginDto){
-    const user = await this.authService.validateUser(loginDto);
-    return this.authService.login(user);    
+    const user = await this.authService.login(loginDto);
+    return {
+      data: {
+        message: "Inicio de sesión exitoso",
+        ...user
+      }
+    }    
   }
 }
