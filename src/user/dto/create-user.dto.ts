@@ -5,7 +5,7 @@ export class CreateUserDto {
   username: string;
 
   @IsString()
-  password: string;
+  name: string;
 
   @IsString()
   moodleToken: string;

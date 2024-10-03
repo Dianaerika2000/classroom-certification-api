@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
@@ -23,10 +23,10 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       }
     }),
     MoodleModule,
-    UserModule,
+    forwardRef(() => UserModule)
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
-  exports: [JwtStrategy, JwtModule]
+  exports: [JwtStrategy, JwtModule, PassportModule]
 })
 export class AuthModule {}

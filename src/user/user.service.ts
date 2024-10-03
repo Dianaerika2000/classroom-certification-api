@@ -4,7 +4,6 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { RoleService } from '../role/role.service';
 import { User } from './entities/user.entity';
-import * as bcrypt from 'bcrypt';
 import { MoodleService } from 'src/moodle/moodle.service';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -18,19 +17,16 @@ export class UserService {
   ){}
 
   async create(createUserDto: CreateUserDto) {
-    const { username, password, roleId,  moodleToken} = createUserDto;
+    const { username, roleId,  name} = createUserDto;
     const rol = await this.roleService.findOne(roleId);
-    const moodleUserInfo = await this.moodleService.getUserInfo(moodleToken, username);
 
     const userExists = await this.userRepository.findOneBy({ username });
     
     if(userExists) throw new BadRequestException(`User with username ${username} already exists`);
 
-    const hashedPassword = await bcrypt.hash(password, 10);
     const user = this.userRepository.create({
-      name: moodleUserInfo.fullname,
+      name,
       username,
-      password: hashedPassword,
       rol
     });
     
@@ -83,5 +79,9 @@ export class UserService {
     const user = await this.findOneById(id);
   
     return await this.userRepository.remove(user);
-  }  
+  }
+  
+  async getAllMoodleUsers(token: string): Promise<any> {
+    return await this.moodleService.getAllUsers(token);
+  }
 }
