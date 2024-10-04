@@ -3,6 +3,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
+import { MoodleModule } from './moodle/moodle.module';
+import { UserModule } from './user/user.module';
+import { RoleModule } from './role/role.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
@@ -24,6 +29,11 @@ import { AppService } from './app.service';
         autoLoadEntities: true,
       })
     }),
+    AuthModule,
+    MoodleModule,
+    UserModule,
+    RoleModule,
+    SeedModule,
 
   ],
   controllers: [AppController],
