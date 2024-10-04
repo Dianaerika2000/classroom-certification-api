@@ -61,5 +61,27 @@ export class MoodleService {
       console.error(error);
       throw new HttpException('Error al obtener información del usuario de Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }  
+  }
+  
+  async getAllUsers(token: string): Promise<any> {
+    const apiUrl = this.configService.get<string>('MOODLE_API_URL');
+    
+    if (!apiUrl) {
+      throw new HttpException('Configuración de Moodle incompleta', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=core_user_get_users&criteria[0][key]=&criteria[0][value]=`;
+
+    try {
+      const response = await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
+      if (response.data && response.data.users) {
+        return response.data.users;
+      } else {
+        throw new HttpException('No se encontraron usuarios en Moodle', HttpStatus.NOT_FOUND);
+      }
+    } catch (error) {
+      console.error(error);
+      throw new HttpException('Error al obtener la lista de usuarios de Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 }
