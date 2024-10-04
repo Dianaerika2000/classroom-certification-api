@@ -7,9 +7,6 @@ export class CreateUserDto {
   @IsString()
   name: string;
 
-  @IsString()
-  moodleToken: string;
-
   @IsNumber()
   @IsNotEmpty()
   roleId: number;
