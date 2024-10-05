@@ -8,6 +8,9 @@ import { MoodleModule } from './moodle/moodle.module';
 import { UserModule } from './user/user.module';
 import { RoleModule } from './role/role.module';
 import { SeedModule } from './seed/seed.module';
+import { AwsModule } from './aws/aws.module';
+import { TeamModule } from './team/team.module';
+import { TechnicalStaffModule } from './technical-staff/technical-staff.module';
 
 @Module({
   imports: [
@@ -27,6 +30,7 @@ import { SeedModule } from './seed/seed.module';
         entities: ['dist/**/entities/*.entity{.ts,.js}'],
         synchronize: true,
         autoLoadEntities: true,
+        cache: false
       })
     }),
     AuthModule,
@@ -34,7 +38,9 @@ import { SeedModule } from './seed/seed.module';
     UserModule,
     RoleModule,
     SeedModule,
-
+    AwsModule,
+    TeamModule,
+    TechnicalStaffModule
   ],
   controllers: [AppController],
   providers: [AppService],
