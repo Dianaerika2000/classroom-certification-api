@@ -1,17 +1,25 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile } from '@nestjs/common';
+
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
+
+import { Personal } from './entities/personal';
 import { TechnicalStaffService } from './technical-staff.service';
 import { CreateTechnicalStaffDto } from './dto/create-technical-staff.dto';
 import { UpdateTechnicalStaffDto } from './dto/update-technical-staff.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ValidRoles } from 'src/auth/enums/valid-roles';
 
+@ApiTags('Personal')
 @Controller('personal')
 export class TechnicalStaffController {
   constructor(private readonly technicalStaffService: TechnicalStaffService) {}
 
   @Post()
   @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @ApiResponse({status: 201, description: 'Technical staff was created', type: Personal})
+  @ApiResponse({status: 400, description: 'Bad Request'})
+  @ApiResponse({status: 401, description: 'Unauthorized'})
   @UseInterceptors(FileInterceptor('signature'))
   async create(
     @Body() createTechnicalStaffDto: CreateTechnicalStaffDto,
@@ -29,6 +37,9 @@ export class TechnicalStaffController {
 
   @Get()
   @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @ApiResponse({status: 200, description: 'List of all technical staff members retrieved successfully.'})
+  @ApiResponse({status: 400, description: 'Bad Request'})
+  @ApiResponse({status: 401, description: 'Unauthorized'})
   async findAll() {
     const technicalStaff = await this.technicalStaffService.findAll();
     
@@ -42,6 +53,9 @@ export class TechnicalStaffController {
 
   @Get(':id')
   @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @ApiResponse({status: 200, description: 'Technical staff member retrieved successfully.', type: Personal})
+  @ApiResponse({status: 400, description: 'Bad Request'})
+  @ApiResponse({status: 401, description: 'Unauthorized'})
   async findOne(@Param('id') id: string) {
     const technicalStaff = await this.technicalStaffService.findOne(+id);
     
@@ -55,6 +69,9 @@ export class TechnicalStaffController {
 
   @Patch(':id')
   @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @ApiResponse({status: 200, description: 'Technical staff member updated successfully.', type: Personal})
+  @ApiResponse({status: 400, description: 'Bad Request'})
+  @ApiResponse({status: 401, description: 'Unauthorized'})
   @UseInterceptors(FileInterceptor('signature'))
   async update(
     @Param('id') id: string, 
@@ -72,6 +89,9 @@ export class TechnicalStaffController {
   }
 
   @Delete(':id')
+  @ApiResponse({status: 200, description: 'Technical staff member deleted successfully.', type: Personal})
+  @ApiResponse({status: 400, description: 'Bad Request'})
+  @ApiResponse({status: 401, description: 'Unauthorized'})
   @Auth(ValidRoles.admin, ValidRoles.evaluator)
   async remove(@Param('id') id: string) {
     const technicalStaff = await this.technicalStaffService.remove(+id)
@@ -83,6 +103,4 @@ export class TechnicalStaffController {
       }
     }
   }
-
-
 }
