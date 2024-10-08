@@ -11,6 +11,7 @@ import { SeedModule } from './seed/seed.module';
 import { AwsModule } from './aws/aws.module';
 import { TeamModule } from './team/team.module';
 import { TechnicalStaffModule } from './technical-staff/technical-staff.module';
+import { CycleModule } from './cycle/cycle.module';
 
 @Module({
   imports: [
@@ -40,7 +41,8 @@ import { TechnicalStaffModule } from './technical-staff/technical-staff.module';
     SeedModule,
     AwsModule,
     TeamModule,
-    TechnicalStaffModule
+    TechnicalStaffModule,
+    CycleModule,
   ],
   controllers: [AppController],
   providers: [AppService],
