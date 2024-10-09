@@ -12,6 +12,7 @@ import { AwsModule } from './aws/aws.module';
 import { TeamModule } from './team/team.module';
 import { TechnicalStaffModule } from './technical-staff/technical-staff.module';
 import { CycleModule } from './cycle/cycle.module';
+import { ResourceModule } from './resource/resource.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { CycleModule } from './cycle/cycle.module';
     TeamModule,
     TechnicalStaffModule,
     CycleModule,
+    ResourceModule,
   ],
   controllers: [AppController],
   providers: [AppService],

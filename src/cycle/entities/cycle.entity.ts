@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Resource } from '../../resource/entities/resource.entity';
 
 @Entity({ name: 'cycles' })
 export class Cycle {
@@ -7,4 +8,10 @@ export class Cycle {
 
   @Column()
   name: string;
+
+  @OneToMany(
+    () => Resource,
+    (resource) => resource.cycle
+  )
+  resources: Resource[];
 }

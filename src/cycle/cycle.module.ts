@@ -12,5 +12,6 @@ import { AuthModule } from 'src/auth/auth.module';
   ],
   controllers: [CycleController],
   providers: [CycleService],
+  exports: [CycleService]
 })
 export class CycleModule {}
