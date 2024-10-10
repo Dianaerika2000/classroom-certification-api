@@ -13,6 +13,7 @@ import { TeamModule } from './team/team.module';
 import { TechnicalStaffModule } from './technical-staff/technical-staff.module';
 import { CycleModule } from './cycle/cycle.module';
 import { ResourceModule } from './resource/resource.module';
+import { ContentModule } from './content/content.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { ResourceModule } from './resource/resource.module';
     TechnicalStaffModule,
     CycleModule,
     ResourceModule,
+    ContentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
