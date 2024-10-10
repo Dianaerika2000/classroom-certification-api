@@ -11,7 +11,7 @@ export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
   @Get()
-  @Auth(ValidRoles.admin)
+  // @Auth(ValidRoles.admin)
   @ApiResponse({ status: 200, description: 'List of all roles', type: [Role] })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll() {
