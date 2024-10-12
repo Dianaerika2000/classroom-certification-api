@@ -13,6 +13,8 @@ import { TeamModule } from './team/team.module';
 import { TechnicalStaffModule } from './technical-staff/technical-staff.module';
 import { CycleModule } from './cycle/cycle.module';
 import { ResourceModule } from './resource/resource.module';
+import { ContentModule } from './content/content.module';
+import { AreaModule } from './area/area.module';
 
 @Module({
   imports: [
@@ -45,6 +47,8 @@ import { ResourceModule } from './resource/resource.module';
     TechnicalStaffModule,
     CycleModule,
     ResourceModule,
+    ContentModule,
+    AreaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
