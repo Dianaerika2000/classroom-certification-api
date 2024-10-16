@@ -1,5 +1,6 @@
+import { Indicator } from "src/indicator/entities/indicator.entity";
 import { Resource } from "src/resource/entities/resource.entity";
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: 'contents' })
 export class Content {
@@ -15,4 +16,10 @@ export class Content {
     { eager: true }
   )
   resource: Resource;
+
+  @OneToMany(
+    () => Indicator,
+    (indicator) => indicator.content
+  )
+  indicators: Indicator[];
 }
