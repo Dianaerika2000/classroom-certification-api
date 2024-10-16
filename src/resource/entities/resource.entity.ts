@@ -1,3 +1,4 @@
+import { Indicator } from "src/indicator/entities/indicator.entity";
 import { Content } from "../../content/entities/content.entity";
 import { Cycle } from "../../cycle/entities/cycle.entity";
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
@@ -22,4 +23,10 @@ export class Resource {
     (content) => content.resource
   )
   contents: Content[];
+
+  @OneToMany(
+    () => Indicator,
+    (indicator) => indicator.resource
+  )
+  indicators: Indicator[];
 }

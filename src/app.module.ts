@@ -15,6 +15,8 @@ import { CycleModule } from './cycle/cycle.module';
 import { ResourceModule } from './resource/resource.module';
 import { ContentModule } from './content/content.module';
 import { AreaModule } from './area/area.module';
+import { IndicatorModule } from './indicator/indicator.module';
+import { PercentageModule } from './percentage/percentage.module';
 
 @Module({
   imports: [
@@ -49,6 +51,8 @@ import { AreaModule } from './area/area.module';
     ResourceModule,
     ContentModule,
     AreaModule,
+    IndicatorModule,
+    PercentageModule,
   ],
   controllers: [AppController],
   providers: [AppService],
