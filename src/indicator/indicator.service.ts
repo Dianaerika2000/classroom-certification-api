@@ -83,4 +83,16 @@ export class IndicatorService {
     const indicator = await this.findOne(id);
     return await this.indicatorRepository.remove(indicator);
   }
+
+  async findAllByArea(areaId: number) {
+    const area = await this.areaService.findOne(areaId);
+
+    if (!area) {
+      throw new NotFoundException(`Area with id ${areaId} not found`);
+    }
+
+    return await this.indicatorRepository.find({
+      where: { area: { id: areaId } }
+    });
+  }
 }
