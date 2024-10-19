@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { IndicatorService } from './indicator.service';
 import { CreateIndicatorDto } from './dto/create-indicator.dto';
 import { UpdateIndicatorDto } from './dto/update-indicator.dto';
@@ -93,5 +93,20 @@ export class IndicatorController {
         indicator,
       }
     } 
+  }
+
+  @Get('area/:areaId')
+  @Auth(ValidRoles.admin)
+  @ApiResponse({ status: 200, description: 'List of all indicators for a specific area', type: [Indicator] })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async findAllByArea(@Param('areaId', ParseIntPipe) areaId: number) {
+    const indicators = await this.indicatorService.findAllByArea(areaId);
+    
+    return {
+      message: `Indicadores del area ${areaId} obtenidos exitosamente`,
+      data: {
+        indicators,
+      },
+    };
   }
 }
