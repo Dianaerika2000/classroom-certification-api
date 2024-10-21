@@ -1,4 +1,5 @@
-import { IsOptional, IsString } from "class-validator";
+import { IsEnum, IsOptional, IsString } from "class-validator";
+import { ClassroomStatus } from "../enums/classroom-status.enum";
 
 export class CreateClassroomDto {
   @IsString()
@@ -7,7 +8,7 @@ export class CreateClassroomDto {
   @IsString()
   code: string;
 
-  @IsString()
+  @IsEnum(ClassroomStatus)
   @IsOptional()
-  status: string;
+  status: ClassroomStatus;
 }
