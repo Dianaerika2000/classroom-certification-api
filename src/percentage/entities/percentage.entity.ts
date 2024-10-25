@@ -13,14 +13,14 @@ export class Percentage {
   @ManyToOne(
     () => Area,
     (area) => area.cycles_areas,
-    { eager: true }
+    { eager: true, onDelete: 'CASCADE' }
   )
   area: Area;
 
   @ManyToOne(
     () => Cycle,
     (cycle) => cycle.cycles_areas,
-    { eager: true }
+    { eager: true, onDelete: 'CASCADE' }
   )
   cycle: Cycle;
 }

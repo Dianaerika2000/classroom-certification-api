@@ -12,13 +12,15 @@ export class Cycle {
 
   @OneToMany(
     () => Resource,
-    (resource) => resource.cycle
+    (resource) => resource.cycle,
+    { cascade: true, onDelete: 'CASCADE' }
   )
   resources: Resource[];
 
   @OneToMany(
     () => Percentage,
-    (percentage) => percentage.cycle
+    (percentage) => percentage.cycle,
+    { cascade: true, onDelete: 'CASCADE' }
   )
   cycles_areas: Percentage[];
 }

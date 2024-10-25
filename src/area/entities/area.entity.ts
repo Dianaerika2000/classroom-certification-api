@@ -12,13 +12,15 @@ export class Area {
 
   @OneToMany(
     () => Indicator,
-    (indicator) => indicator.area
+    (indicator) => indicator.area,
+    { cascade: true, onDelete: 'CASCADE' }
   )
   indicators: Indicator[];
 
   @OneToMany(
     () => Percentage,
-    (percentage) => percentage.area
+    (percentage) => percentage.area,
+    { cascade: true, onDelete: 'CASCADE' }
   )
   cycles_areas: Percentage[];
 }
