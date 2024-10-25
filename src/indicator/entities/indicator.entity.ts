@@ -14,21 +14,21 @@ export class Indicator {
   @ManyToOne(
     () => Area,
     (area) => area.indicators,
-    { eager: true }
+    { eager: true, onDelete: 'CASCADE' }
   )
   area: Area;
 
   @ManyToOne(
     () => Resource,
     (resource) => resource.indicators,
-    { eager: true }
+    { eager: true, onDelete: 'CASCADE' }
   )
   resource: Resource;
 
   @ManyToOne(
     () => Content,
     (content) => content.indicators,
-    { eager: true }
+    { eager: true, onDelete: 'CASCADE' }
   )
   content: Content;
 }

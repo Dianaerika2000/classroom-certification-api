@@ -13,13 +13,14 @@ export class Content {
   @ManyToOne(
     () => Resource,
     (resource) => resource.contents,
-    { eager: true }
+    { eager: true, onDelete: 'CASCADE' }
   )
   resource: Resource;
 
   @OneToMany(
     () => Indicator,
-    (indicator) => indicator.content
+    (indicator) => indicator.content,
+    { cascade: true, onDelete: 'CASCADE' }
   )
   indicators: Indicator[];
 }
