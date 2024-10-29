@@ -4,11 +4,13 @@ import { ClassroomController } from './classroom.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Classroom } from './entities/classroom.entity';
 import { AuthModule } from 'src/auth/auth.module';
+import { MoodleModule } from 'src/moodle/moodle.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Classroom]),
     AuthModule,
+    MoodleModule
   ],
   controllers: [ClassroomController],
   providers: [ClassroomService],

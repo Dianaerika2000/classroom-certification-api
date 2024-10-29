@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, HttpCode } from '@nestjs/common';
 import { ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ClassroomService } from './classroom.service';
 import { Classroom } from './entities/classroom.entity';
@@ -6,6 +6,7 @@ import { CreateClassroomDto } from './dto/create-classroom.dto';
 import { UpdateClassroomDto } from './dto/update-classroom.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { ValidRoles } from '../auth/enums/valid-roles';
+import { FindClassroomMoodleDto } from '../moodle/dto/find-classroom-moodle.dto';
 
 @ApiTags('Classroom')
 @Controller('classroom')
@@ -103,5 +104,24 @@ export class ClassroomController {
         classroom
       }
     }  
+  }
+
+  @Post('moodle-search')
+  @HttpCode(200)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @ApiResponse({ status: 200, description: 'Classroom search in Moodle completed successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Classroom not found in Moodle' })
+  async findInMoodle(@Body() findClassroomMoodleDto: FindClassroomMoodleDto) {
+    const classrooms = await this.classroomService.findClassroomInMoodle(findClassroomMoodleDto);
+    
+    return {
+      message: "Búsqueda de aulas en Moodle realizada exitosamente",
+      data: {
+        classrooms
+      }
+    } 
   }
 }
