@@ -1,15 +1,18 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Body, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateClassroomDto } from './dto/create-classroom.dto';
 import { UpdateClassroomDto } from './dto/update-classroom.dto';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Classroom } from './entities/classroom.entity';
-import { Repository } from 'typeorm';
+import { MoodleService } from '../moodle/moodle.service';
+import { FindClassroomMoodleDto } from '../moodle/dto/find-classroom-moodle.dto';
 
 @Injectable()
 export class ClassroomService {
   constructor(
     @InjectRepository(Classroom)
     private readonly classroomRepository: Repository<Classroom>,
+    private readonly moodleService: MoodleService,
   ){}
 
   async create(createClassroomDto: CreateClassroomDto): Promise<Classroom> {
@@ -51,5 +54,16 @@ export class ClassroomService {
     const classroom = await this.findOne(id);
 
     return await this.classroomRepository.delete(classroom);
+  }
+
+  async findClassroomInMoodle(findClassroomMoodleDto: FindClassroomMoodleDto): Promise<any> {
+    const { field, value } = findClassroomMoodleDto;
+  
+    try {
+      const courses = await this.moodleService.getCourseByField(findClassroomMoodleDto);
+      return courses;
+    } catch (error) {
+      throw new NotFoundException(`No se encontró el aula en Moodle con ${field} = ${value}`);
+    }
   }
 }

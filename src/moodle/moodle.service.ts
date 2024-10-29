@@ -3,6 +3,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { url } from 'inspector';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
+import { FindClassroomMoodleDto } from './dto/find-classroom-moodle.dto';
 
 @Injectable()
 export class MoodleService {
@@ -84,4 +85,27 @@ export class MoodleService {
       throw new HttpException('Error al obtener la lista de usuarios de Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  async getCourseByField(findClassroomMoodleDto: FindClassroomMoodleDto): Promise<any> {
+    const { token, field, value} = findClassroomMoodleDto;
+    const apiUrl = this.configService.get<string>('MOODLE_API_URL');
+    
+    if (!apiUrl) {
+      throw new HttpException('Configuración de Moodle incompleta', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  
+    const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=core_course_get_courses_by_field&field=${field}&value=${value}`;
+  
+    try {
+      const response = await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
+      if (response.data && response.data.courses.length > 0) {
+        return response.data.courses;
+      } else {
+        throw new HttpException('Curso no encontrado en Moodle', HttpStatus.NOT_FOUND);
+      }
+    } catch (error) {
+      console.error(error);
+      throw new HttpException('Error al obtener el curso de Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  } 
 }
