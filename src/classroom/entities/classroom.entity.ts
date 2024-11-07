@@ -11,7 +11,7 @@ export class Classroom {
   @Column()
   code: string;
 
-  @Column({ default: 'en proceso' })
+  @Column({ default: 'pendiente' })
   status: string;
 
   @CreateDateColumn({ name: 'created_at'})
