@@ -1,0 +1,120 @@
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Evaluation } from './entities/evaluation.entity';
+import { EvaluationService } from './evaluation.service';
+import { CreateEvaluationDto } from './dto/create-evaluation.dto';
+import { UpdateEvaluationDto } from './dto/update-evaluation.dto';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { ValidRoles } from 'src/auth/enums/valid-roles';
+
+@ApiTags('Evaluation')
+@Controller('evaluation')
+export class EvaluationController {
+  constructor(private readonly evaluationService: EvaluationService) {}
+
+  @Post()
+  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @ApiResponse({ status: 201, description: 'Evaluation was created successfully', type: Evaluation })
+  @ApiResponse({ status: 400, description: 'Bad Request - Invalid input data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
+  async create(@Body() createEvaluationDto: CreateEvaluationDto) {
+    const evaluation = await this.evaluationService.create(createEvaluationDto);
+    
+    return {
+      message: "Evaluación creada exitosamente",
+      data: {
+        evaluation
+      }
+    }
+  }
+
+  @Get()
+  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @ApiResponse({ status: 200, description: 'Evaluations retrieved successfully', type: [Evaluation] })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
+  async findAll() {
+    const evaluations = await this.evaluationService.findAll();
+    return {
+      message: "Evaluaciones obtenidas exitosamente",
+      data: {
+        evaluations
+      }
+    };
+  }
+
+  @Get('classroom/:classroomId')
+  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @ApiParam({ name: 'classroomId', type: 'number', description: 'The ID of the classroom to retrieve evaluations for' })
+  @ApiResponse({ status: 200, description: 'Evaluations retrieved successfully', type: [Evaluation] })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
+  @ApiResponse({ status: 404, description: 'The classroom with the provided ID does not exist' })
+  async findByClassroom(@Param('classroomId') classroomId: number) {
+    const evaluations = await this.evaluationService.findByClassroom(classroomId);
+
+    if (evaluations.length === 0) {
+      return {
+        message: `No se encontraron evaluaciones para el aula con ID ${classroomId}`,
+        data: {
+          evaluations
+        }
+      };
+    }
+
+    return {
+      message: `Evaluaciones obtenidas exitosamente para el aula con ID ${classroomId}`,
+      data: {
+        evaluations
+      }
+    };
+  }
+
+  @Get(':id')
+  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @ApiParam({ name: 'id', type: 'number', description: 'The ID of the evaluation' })
+  @ApiResponse({ status: 200, description: 'Evaluation retrieved successfully', type: Evaluation })
+  @ApiResponse({ status: 400, description: 'Bad Request - Invalid evaluation ID' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
+  @ApiResponse({ status: 404, description: 'Evaluation not found' })
+  async findOne(@Param('id') id: string) {
+    const evaluation = await this.evaluationService.findOne(+id);
+    return {
+      message: `Evaluación con ID ${id} obtenida exitosamente`,
+      data: {
+        evaluation
+      }
+    };
+  }
+
+  @Patch(':id')
+  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @ApiParam({ name: 'id', type: 'number', description: 'The ID of the evaluation to update' })
+  @ApiResponse({ status: 200, description: 'Evaluation updated successfully', type: Evaluation })
+  @ApiResponse({ status: 400, description: 'Bad Request - Invalid input data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
+  @ApiResponse({ status: 404, description: 'Evaluation not found' })
+  async update(@Param('id') id: string, @Body() updateEvaluationDto: UpdateEvaluationDto) {
+    const updatedEvaluation = await this.evaluationService.update(+id, updateEvaluationDto);
+    return {
+      message: `Evaluación con ID ${id} actualizada exitosamente`,
+      data: {
+        updatedEvaluation
+      }
+    };
+  }
+
+  @Delete(':id')
+  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @ApiParam({ name: 'id', type: 'number', description: 'The ID of the evaluation to delete' })
+  @ApiResponse({ status: 200, description: 'Evaluation deleted successfully', type: Evaluation })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
+  @ApiResponse({ status: 404, description: 'Evaluation not found' })
+  async remove(@Param('id') id: string) {
+    const evaluation = await this.evaluationService.remove(+id);
+    return {
+      message: `Evaluación con ID ${id} eliminada exitosamente`,
+      data: {
+        evaluation
+      }
+    }
+  }
+}
