@@ -18,6 +18,7 @@ import { AreaModule } from './area/area.module';
 import { IndicatorModule } from './indicator/indicator.module';
 import { PercentageModule } from './percentage/percentage.module';
 import { ClassroomModule } from './classroom/classroom.module';
+import { EvaluationModule } from './evaluation/evaluation.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { ClassroomModule } from './classroom/classroom.module';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
         entities: ['dist/**/entities/*.entity{.ts,.js}'],
+        timezone: 'America/La_Paz',
         synchronize: true,
         autoLoadEntities: true,
         cache: false
@@ -55,6 +57,7 @@ import { ClassroomModule } from './classroom/classroom.module';
     IndicatorModule,
     PercentageModule,
     ClassroomModule,
+    EvaluationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
