@@ -19,6 +19,7 @@ import { IndicatorModule } from './indicator/indicator.module';
 import { PercentageModule } from './percentage/percentage.module';
 import { ClassroomModule } from './classroom/classroom.module';
 import { EvaluationModule } from './evaluation/evaluation.module';
+import { FormModule } from './form/form.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { EvaluationModule } from './evaluation/evaluation.module';
     PercentageModule,
     ClassroomModule,
     EvaluationModule,
+    FormModule,
   ],
   controllers: [AppController],
   providers: [AppService],
