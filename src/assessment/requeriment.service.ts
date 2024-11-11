@@ -17,13 +17,11 @@ export class RequerimentService {
 
     async create(createRequerimentDto: CreateRequerimentDto): Promise<Requeriment> {
         const { assessmentId, ...requerimentData } = createRequerimentDto;
-        console.log('createRequerimentDto',createRequerimentDto)
 
         const requeriment = this.requerimentRepository.create({
             ...requerimentData,
             assessment: { id: assessmentId } 
         });
-        console.log('requeriment',requeriment)
 
         return await this.requerimentRepository.save(requeriment);
     }

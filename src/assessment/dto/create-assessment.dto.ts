@@ -39,6 +39,15 @@ export class CreateAssessmentDto {
   areaId?: number;
 
   @ApiProperty({
+    example: 'Diseño Técnico',
+    description: 'The name of the area',
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  areaName?: string;
+
+  @ApiProperty({
     example: '1',
     description: 'The ID of the form to which this evaluation belongs.',
     type: Number,

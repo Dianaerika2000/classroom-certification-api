@@ -34,14 +34,12 @@ export class AssessmentService {
         });
 
         const savedAssessment = await this.assessmentRepository.save(assessment);
-        console.log('savedAssessment', savedAssessment)
 
         const createRequerimentDto: CreateRequerimentDto = {
             name: requerimentName,
             url: requerimentUrl,
             assessmentId: savedAssessment.id,
         };
-        console.log('createRequerimentDto', createRequerimentDto)
 
         await this.requerimentService.create(createRequerimentDto);
 
@@ -55,7 +53,6 @@ export class AssessmentService {
 
     async createByForm(createAssessmentDto: CreateAssessmentDto): Promise<Assessment[]> {
         const { formId } = createAssessmentDto;
-        console.log('formId', formId)
         const createdAssessments: Assessment[] = [];
 
         const form = await this.formService.findOne(formId);
@@ -63,10 +60,10 @@ export class AssessmentService {
             throw new NotFoundException(`Form with ID ${formId} not found.`);
         }
 
-        for (const [areaId, items] of Object.entries(areaAssessmentItems)) {
-            const area = await this.areaService.findOne(+areaId);
+        for (const [areaName, items] of Object.entries(areaAssessmentItems)) {
+            const area = await this.areaService.findByName(areaName);
             if (!area) {
-                throw new NotFoundException(`Area with ID ${areaId} not found.`);
+                throw new NotFoundException(`Area with name ${areaName} not found.`);
             }
 
             for (const description of items) {
