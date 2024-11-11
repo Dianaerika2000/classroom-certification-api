@@ -1,6 +1,5 @@
+import { Assessment } from "src/assessment/entities/assessment.entity";
 import { Classroom } from "src/classroom/entities/classroom.entity";
-import { Indicator } from "src/indicator/entities/indicator.entity";
-import { Resource } from "src/resource/entities/resource.entity";
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: 'forms' })
@@ -42,4 +41,11 @@ export class Form {
   )
   @JoinColumn({ name: 'classroom_id' })
   classroom: Classroom;
+
+  @OneToMany(
+    () => Assessment,
+    (assessment) => assessment.area,
+    { cascade: true, onDelete: 'CASCADE' }
+  )
+  assessment: Assessment[];
 }

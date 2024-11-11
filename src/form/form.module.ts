@@ -13,6 +13,7 @@ import { ClassroomModule } from 'src/classroom/classroom.module';
     ClassroomModule
   ],
   controllers: [FormController],
-  providers: [FormService]
+  providers: [FormService],
+  exports: [FormService]
 })
 export class FormModule {}
