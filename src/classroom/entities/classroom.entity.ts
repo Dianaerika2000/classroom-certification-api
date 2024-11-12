@@ -1,4 +1,5 @@
 import { Evaluation } from 'src/evaluation/entities/evaluation.entity';
+import { Form } from 'src/form/entities/form.entity';
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'classrooms'})
@@ -20,4 +21,7 @@ export class Classroom {
 
   @OneToMany(() => Evaluation, evaluation => evaluation.classroom)
   evaluations: Evaluation[];
+
+  @OneToMany(() => Form, form => form.classroom)
+  forms: Form[];
 }

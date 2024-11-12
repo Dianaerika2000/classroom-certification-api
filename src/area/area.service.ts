@@ -48,4 +48,14 @@ export class AreaService {
 
     return await this.areaRepository.remove(area);
   }
+
+  async findByName(name: string): Promise<Area> {
+    const area = await this.areaRepository.findOne({ where: {name} });
+
+    if (!area) {
+      throw new NotFoundException(`Area with name "${name}" not found`);
+    }
+
+    return area;
+  }
 }
