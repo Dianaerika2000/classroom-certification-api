@@ -1,5 +1,7 @@
-import { IsNumber, IsOptional, IsString } from "class-validator";
+import { IsArray, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
+import { CreateRequerimentDto } from "./create-requeriment.dto";
+import { Type } from "class-transformer";
 
 export class CreateAssessmentDto {
   @ApiProperty({
@@ -56,20 +58,12 @@ export class CreateAssessmentDto {
   formId: number;
 
   @ApiProperty({
-    example: 'PA-FPAV',
-    description: 'The name of the requeriment.',
-    type: String,
+    description: 'The list of requirements for this assessment',
+    type: [CreateRequerimentDto],
   })
   @IsOptional()
-  @IsString()
-  requerimentName?: string;
-
-  @ApiProperty({
-    example: 'https://example-url.com',
-    description: 'The url of the requeriment',
-    type: String,
-  })
-  @IsOptional()
-  @IsString()
-  requerimentUrl?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateRequerimentDto)
+  requeriments?: CreateRequerimentDto[];
 }

@@ -22,7 +22,7 @@ export class AssessmentService {
     ) { }
 
     async create(createAssessmentDto: CreateAssessmentDto): Promise<Assessment> {
-        const { formId, areaId, requerimentName, requerimentUrl, ...assessmentData } = createAssessmentDto;
+        const { formId, areaId, requeriments, ...assessmentData } = createAssessmentDto;
 
         const form = await this.formService.findOne(formId);
         const area = await this.areaService.findOne(areaId);
@@ -35,13 +35,17 @@ export class AssessmentService {
 
         const savedAssessment = await this.assessmentRepository.save(assessment);
 
-        const createRequerimentDto: CreateRequerimentDto = {
-            name: requerimentName,
-            url: requerimentUrl,
-            assessmentId: savedAssessment.id,
-        };
+        if (requeriments && requeriments.length > 0) {
+            for (const req of requeriments) {
+                const createRequerimentDto: CreateRequerimentDto = {
+                    name: req.name,
+                    url: req.url,
+                    assessmentId: savedAssessment.id,
+                };
 
-        await this.requerimentService.create(createRequerimentDto);
+                await this.requerimentService.create(createRequerimentDto);
+            }
+        }
 
         const assessmentWithRequeriments = await this.assessmentRepository.findOne({
             where: { id: savedAssessment.id },
@@ -98,7 +102,7 @@ export class AssessmentService {
 
         const assessments = await this.assessmentRepository.find({
             where: { form: { id: formId } },
-            relations: ['form'],
+            relations: ['form', 'requeriments'],
         });
 
         return assessments;
@@ -127,31 +131,40 @@ export class AssessmentService {
             throw new NotFoundException(`Assessment with ID "${id}" not found`);
         }
 
-        if (updateAssessment.requerimentName || updateAssessment.requerimentUrl) {
-            const requeriments = await this.requerimentService.findByAssessment(id);
+        if (updateAssessment.requeriments && updateAssessment.requeriments.length > 0) {
+            const existingRequeriments = await this.requerimentService.findByAssessment(id);
+            const requerimentsMap = new Map(updateAssessment.requeriments.map(req => [req.name, req]));
 
-            if (requeriments && requeriments.length > 0) {
-                const requeriment = requeriments[0];
-                const updateRequerimentDto: UpdateRequerimentDto = {
-                    name: updateAssessment.requerimentName,
-                    url: updateAssessment.requerimentUrl,
-                    assessmentId: id,
-                };
+            for (const existingRequeriment of existingRequeriments) {
+                const updatedRequerimentData = requerimentsMap.get(existingRequeriment.name);
 
-                await this.requerimentService.update(requeriment.id, updateRequerimentDto);
-            } else {
-                const createRequerimentDto = new CreateRequerimentDto();
-                createRequerimentDto.name = updateAssessment.requerimentName;
-                createRequerimentDto.url = updateAssessment.requerimentUrl;
-                createRequerimentDto.assessmentId = id;
-
-                await this.requerimentService.create(createRequerimentDto); // Creación del nuevo requerimiento
+                if (updatedRequerimentData) {
+                    const updateRequerimentDto: UpdateRequerimentDto = {
+                        name: updatedRequerimentData.name,
+                        url: updatedRequerimentData.url,
+                        assessmentId: id
+                    };
+                    await this.requerimentService.update(existingRequeriment.id, updateRequerimentDto);
+                    requerimentsMap.delete(existingRequeriment.name)
+                } else {
+                    await this.requerimentService.remove(existingRequeriment.id);
+                }
             }
+
+            for (const newRequerimentData of requerimentsMap.values()) {
+                const createRequerimentDto: CreateRequerimentDto = {
+                    name: newRequerimentData.name,
+                    url: newRequerimentData.url,
+                    assessmentId: newRequerimentData.assessmentId
+                };
+                await this.requerimentService.create(createRequerimentDto);
+            }
+        } else {
+            await this.requerimentService.removeByAssessment(id);
         }
 
         await this.assessmentRepository.save(assessment);
 
-        // Recuperar el Assessment con sus Requeriments para devolverlo completo
         const assessmentWithRequeriments = await this.assessmentRepository.findOne({
             where: { id },
             relations: ['requeriments'],

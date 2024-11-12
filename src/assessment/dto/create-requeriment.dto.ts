@@ -24,6 +24,7 @@ export class CreateRequerimentDto {
         description: 'The ID of the assessment.',
         type: Number,
     })
+    @IsOptional()
     @IsNumber()
-    assessmentId: number;
+    assessmentId?: number;
 }

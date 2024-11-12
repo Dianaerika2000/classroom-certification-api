@@ -1,10 +1,11 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AssessmentService } from './assessment.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ValidRoles } from 'src/auth/enums/valid-roles';
 import { Assessment } from './entities/assessment.entity';
 import { CreateAssessmentDto } from './dto/create-assessment.dto';
+import { UpdateAssessmentDto } from './dto/update-assessment.dto';
 
 @ApiTags('Assessment')
 @Controller('assessment')
@@ -98,6 +99,23 @@ export class AssessmentController {
             message: `Valoración con ID ${id} obtenido exitosamente`,
             data: {
                 assessment
+            }
+        };
+    }
+
+    @Patch(':id')
+    @Auth(ValidRoles.admin, ValidRoles.evaluator)
+    @ApiParam({ name: 'id', type: 'number', description: 'The ID of the assessment to update' })
+    @ApiResponse({ status: 200, description: 'Assessment updated successfully', type: Assessment })
+    @ApiResponse({ status: 400, description: 'Bad Request - Invalid input data' })
+    @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
+    @ApiResponse({ status: 404, description: 'Assessment not found' })
+    async update(@Param('id') id: string, @Body() updateAssessment: UpdateAssessmentDto) {
+        const updatedAssessment = await this.assessmentService.update(+id, updateAssessment);
+        return {
+            message: `Valoración con ID ${id} actualizada exitosamente`,
+            data: {
+                updatedAssessment
             }
         };
     }

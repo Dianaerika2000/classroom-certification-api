@@ -66,4 +66,13 @@ export class RequerimentService {
 
         return await this.requerimentRepository.remove(requeriment);
     }
+
+    async removeByAssessment(assessmentId: number) {
+        const requeriments = await this.requerimentRepository.find({
+            where: { assessment: { id: assessmentId } },
+            relations: ['assessment'],
+        });
+
+        return await this.requerimentRepository.remove(requeriments);
+    }
 }
