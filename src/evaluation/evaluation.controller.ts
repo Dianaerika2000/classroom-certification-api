@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe } from '@nestjs/common';
-import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Evaluation } from './entities/evaluation.entity';
 import { EvaluationService } from './evaluation.service';
 import { CreateEvaluationDto } from './dto/create-evaluation.dto';
@@ -130,5 +130,24 @@ export class EvaluationController {
       message: "Recursos coincidentes obtenidos exitosamente",
       data: matchedResources,
     };
+  }
+
+  @ApiOperation({ summary: 'Analyze classroom compliance with defined indicators' })
+  @Post('analyze-compliance')
+  async analyzeClassroomCompliance(
+    @Query('moodleCourseId') moodleCourseId: number,
+    @Query('token') token: string,
+    @Query('cycleId') cycleId: number,
+    @Query('areaId') areaId: number,
+  ): Promise<any> {
+    return await this.evaluationService.analyzeClassroomCompliance(moodleCourseId, token, cycleId, areaId);
+  }
+
+  @Post('evaluate-indicators/:areaId')
+  async evaluateIndicatorsForMatchedContents(
+    @Param('areaId') areaId: number,
+    @Body('matchedContents') matchedContents: any[]
+  ): Promise<any> {
+    return await this.evaluationService.evaluateIndicatorsForMatchedContents(matchedContents, areaId);
   }
 }

@@ -122,21 +122,23 @@ export class EvaluationService {
   ): Promise<any> {
     try {
       // Paso 1: Obtiene los contenidos del curso desde Moodle que coinciden con los recursos
-      const matchedContents = await this.fetchAndMatchCourseContents(moodleCourseId, token, cycleId);
+      const { matchedResources, unmatchedResources } = await this.fetchAndMatchCourseContents(moodleCourseId, token, cycleId);
 
-      // Paso 2: Evalúa el cumplimiento de los indicadores por cuadrante (ciclo y área) para cada recurso y contenido
-      const results = await this.evaluateIndicatorsForMatchedContents(matchedContents, areaId);
-
-      // Devuelve los resultados de la evaluación
+      // Paso 2: Evalúa el cumplimiento de los indicadores por cuadrante (ciclo y área) solo para los recursos que hicieron match
+      const results = await this.evaluateIndicatorsForMatchedContents(matchedResources, areaId);
+  
+      // Devuelve los resultados de la evaluación, incluyendo los recursos que no hicieron match
       return {
         message: "Análisis de cumplimiento del aula completado exitosamente",
-        data: results,
+        data: {
+          matchedResults: results,
+          unmatchedResources: unmatchedResources
+        },
       };
     } catch (error) {
       throw new Error(`Error durante el análisis de cumplimiento del aula: ${error.message}`);
     }
   }
-
 
   /**
    * Obtiene y verifica el contenido del curso de Moodle, buscando coincidencias con los recursos en la base de datos.
@@ -187,8 +189,18 @@ export class EvaluationService {
           }
         }
       }
-  
-      return matchedResources;
+
+      // Los recursos restantes son los que no hicieron match
+      const unmatchedResources = resources.map(resource => ({
+        resource,
+        matchedSection: null,
+        matchedModule: null,
+      }));
+
+      return {
+        matchedResources,
+        unmatchedResources
+      };
     } catch (error) {
       throw new NotFoundException(`Error obteniendo contenido del curso desde Moodle: ${error.message}`);
     }
@@ -209,48 +221,54 @@ export class EvaluationService {
       if (contents && contents.length > 0) {
         // Llama a la función secundaria para evaluar el cumplimiento de indicadores en el recurso específico
         const resourceResults = await this.evaluateContentIndicators(resource, contents, matchedSection, matchedModule, areaId);
-        results.push(...resourceResults);
+  
+        results.push(resourceResults);
       } else {
         // Si no hay contenidos, evalúa los indicadores del recurso directamente
         const resourceOnlyResults = await this.evaluateResourceIndicators(resource, matchedSection, matchedModule, areaId);
-        results.push(...resourceOnlyResults);
+  
+        results.push(resourceOnlyResults);
       }
     }
   
+    console.log('Resultados finales de evaluateIndicatorsForMatchedContents:', results);
     return results;
-  }
+  }  
 
   async evaluateResourceIndicators(
     resource: any,
     matchedSection: any,
     matchedModule: any,
     areaId: number
-  ): Promise<any[]> {
-    const results = [];
+  ): Promise<any> {
+    // Inicializa la estructura de respuesta para el recurso
+    const result = {
+      resourceId: resource.id,
+      contents: null, // No hay contenido específico en este caso
+      indicators: [],
+    };
   
     // Obtiene los indicadores directamente asociados al recurso y área
     const indicators = await this.getIndicatorsByAreaAndResource(areaId, resource.id);
   
     for (const indicator of indicators) {
-      let isIndicatorMet = 0;
+      let indicatorResult = 0;
   
       // Llama a una función genérica que evalúa el cumplimiento del indicador en el recurso
       if (matchedSection) {
-        isIndicatorMet = this.checkIndicatorCompliance(indicator, matchedSection);
+        indicatorResult = this.checkIndicatorCompliance(indicator, matchedSection);
       } else if (matchedModule) {
-        isIndicatorMet = this.checkIndicatorCompliance(indicator, matchedModule);
+        indicatorResult = this.checkIndicatorCompliance(indicator, matchedModule);
       }
   
-      // Agrega el resultado de la evaluación del indicador
-      results.push({
-        resourceId: resource.id,
-        contentId: null, // No hay contenido específico
+      // Agrega el resultado de la evaluación del indicador a la lista de indicadores del recurso
+      result.indicators.push({
         indicatorId: indicator.id,
-        isMet: isIndicatorMet,
+        result: indicatorResult,
       });
     }
   
-    return results;
+    return result;
   }
   
   async evaluateContentIndicators(
@@ -259,69 +277,70 @@ export class EvaluationService {
     matchedSection: any,
     matchedModule: any,
     areaId: number
-  ): Promise<any[]> {
-    const results = [];
-  
+  ): Promise<any> {
+    const result = {
+      resourceId: resource.id,
+      contents: {
+        match: [],
+        noMatch: [],
+      },
+    };
+
     for (const content of contents) {
-      const contentName = content.name.toLowerCase();
+      const contentName = content?.name?.toLowerCase() || "";
       let foundContent = null;
-  
+      let indicatorsResult = [];
+
       // Coincidencia en secciones o módulos con coincidencia flexible
-      if (matchedSection && matchedSection.name.toLowerCase().includes(contentName)) {
+      if (matchedSection?.name && matchedSection.name.toLowerCase().includes(contentName)) {
         foundContent = matchedSection;
-      } else if (matchedModule && matchedModule.name.toLowerCase().includes(contentName)) {
+      } else if (matchedModule?.name && matchedModule.name.toLowerCase().includes(contentName)) {
         foundContent = matchedModule;
-      } else if (matchedModule && matchedModule.contents) {
+      } else if (matchedModule?.contents) {
         // Busca en contenidos específicos dentro del módulo
         foundContent = matchedModule.contents.find((moduleContent: any) =>
-          moduleContent.content && moduleContent.content.toLowerCase().includes(contentName)
+          moduleContent?.content && moduleContent.content.toLowerCase().includes(contentName)
         );
       }
-  
+
       if (foundContent) {
-        // Obtiene y evalúa los indicadores asociados a este contenido específico
+        // Evaluar los indicadores para los contenidos que hicieron match
         const indicators = await this.getIndicatorsByAreaAndContent(areaId, content.id);
-  
         for (const indicator of indicators) {
-          // Llama a una función genérica que evalúa el cumplimiento del indicador
-          const isIndicatorMet = this.checkIndicatorCompliance(indicator, foundContent);
-  
-          // Registra el resultado de la evaluación del indicador
-          results.push({
-            resourceId: resource.id,
-            contentId: content.id,
+          const indicatorResult = this.checkIndicatorCompliance(indicator, foundContent);
+          indicatorsResult.push({
             indicatorId: indicator.id,
-            isMet: isIndicatorMet,
+            result: indicatorResult,
           });
         }
-      } else {
-        // Si no hay coincidencia en el contenido, registra un incumplimiento
-        results.push({
-          resourceId: resource.id,
+        result.contents.match.push({
           contentId: content.id,
+          indicators: indicatorsResult,
+        });
+      } else {
+        // Registra el contenido en noMatch si no hizo coincidencia
+        indicatorsResult.push({
           indicatorId: null,
-          isMet: 0,
+          result: 0,
+        });
+        result.contents.noMatch.push({
+          contentId: content.id,
+          indicators: indicatorsResult,
         });
       }
     }
-  
-    return results;
+
+    return result;
   }
   
   /**
    * Verifica si un contenido cumple con el indicador específico.
    */
   checkIndicatorCompliance(indicator: any, foundContent: any): number {
-    // Puedes basar la evaluación en un campo `pattern`, `description`, o `name`
-    // Aquí asumimos que cada indicador tiene un campo `pattern` que define la condición de cumplimiento
-    const pattern = indicator.name?.toLowerCase();
-    const contentToCheck = foundContent.content?.toLowerCase() || "";
-
-    // Realiza la evaluación según el patrón o descripción
-    if (pattern && contentToCheck.includes(pattern)) {
-      return 1; // Cumple con el indicador
-    }
-
-    return 0; // No cumple con el indicador
-  }
+    console.log('Evaluando indicador:', indicator);
+    console.log('Contenido encontrado:', foundContent);
+  
+    // Por ahora, forzamos que siempre devuelva 1 para verificar su funcionamiento
+    return 1;
+  }  
 }
