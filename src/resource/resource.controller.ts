@@ -110,4 +110,21 @@ export class ResourceController {
       }
     };
   }
+
+  @Get(':id/contents')
+  @Auth(ValidRoles.admin)
+  @ApiParam({ name: 'id', type: 'number', description: 'Resource ID' })
+  @ApiResponse({ status: 200, description: 'List of contents for a specific resource' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Resource not found' })
+  async findContents(@Param('id', ParseIntPipe) id: number) {
+    const contents = await this.resourceService.findContents(id);
+
+    return {
+      message: `Contenidos del recurso ${id} obtenidos exitosamente`,
+      data: {
+        contents,
+      },
+    };
+  }
 }

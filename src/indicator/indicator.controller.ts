@@ -109,4 +109,46 @@ export class IndicatorController {
       },
     };
   }
+
+  @Get('area/:areaId/resource/:resourceId')
+  @Auth(ValidRoles.admin)
+  @ApiParam({ name: 'areaId', type: 'number', description: 'Area ID' })
+  @ApiParam({ name: 'resourceId', type: 'number', description: 'Resource ID' })
+  @ApiResponse({ status: 200, description: 'List of indicators for a specific area and resource', type: [Indicator] })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Indicator not found' })
+  async findByAreaAndResource(
+    @Param('areaId', ParseIntPipe) areaId: number,
+    @Param('resourceId', ParseIntPipe) resourceId: number,
+  ) {
+    const indicators = await this.indicatorService.findByAreaAndResource(areaId, resourceId);
+
+    return {
+      message: `Indicadores del area ${areaId} y recurso ${resourceId} obtenidos exitosamente`,
+      data: {
+        indicators,
+      },
+    };
+  }
+
+  @Get('area/:areaId/content/:contentId')
+  @Auth(ValidRoles.admin)
+  @ApiParam({ name: 'areaId', type: 'number', description: 'Area ID' })
+  @ApiParam({ name: 'contentId', type: 'number', description: 'Content ID' })
+  @ApiResponse({ status: 200, description: 'List of indicators for a specific area and content', type: [Indicator] })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Indicator not found' })
+  async findByAreaAndContent(
+    @Param('areaId', ParseIntPipe) areaId: number,
+    @Param('contentId', ParseIntPipe) contentId: number,
+  ) {
+    const indicators = await this.indicatorService.findByAreaAndContent(areaId, contentId);
+
+    return {
+      message: `Indicadores del area ${areaId} y contenido ${contentId} obtenidos exitosamente`,
+      data: {
+        indicators,
+      },
+    };
+  }
 }
