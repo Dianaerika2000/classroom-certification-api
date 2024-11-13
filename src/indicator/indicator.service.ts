@@ -95,4 +95,42 @@ export class IndicatorService {
       where: { area: { id: areaId } }
     });
   }
+
+  async findByAreaAndResource(areaId: number, resourceId: number): Promise<Indicator[]> {
+    const area = await this.areaService.findOne(areaId);
+    if (!area) {
+      throw new NotFoundException(`Area with id ${areaId} not found`);
+    }
+
+    const resource = await this.resourceService.findOne(resourceId);
+    if (!resource) {
+      throw new NotFoundException(`Content with id ${resourceId} not found`);
+    }
+  
+    return await this.indicatorRepository.find({
+      where: {
+        area: { id: areaId },
+        resource: { id: resourceId },
+      },
+    });
+  }
+  
+  async findByAreaAndContent(areaId: number, contentId: number): Promise<Indicator[]> {
+    const area = await this.areaService.findOne(areaId);
+    if (!area) {
+      throw new NotFoundException(`Area with id ${areaId} not found`);
+    }
+
+    const content = await this.contentService.findOne(contentId);
+    if (!content) {
+      throw new NotFoundException(`Content with id ${contentId} not found`);
+    }
+  
+    return await this.indicatorRepository.find({
+      where: {
+        area: { id: areaId },
+        content: { id: contentId },
+      },
+    });
+  }  
 }

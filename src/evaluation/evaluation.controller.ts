@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe } from '@nestjs/common';
 import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Evaluation } from './entities/evaluation.entity';
 import { EvaluationService } from './evaluation.service';
@@ -116,5 +116,19 @@ export class EvaluationController {
         evaluation
       }
     }
+  }
+
+  @Get('fetch-and-match/:moodleCourseId')
+  async fetchAndMatchCourseContents(
+    @Param('moodleCourseId', ParseIntPipe) moodleCourseId: number,
+    @Query('cycleId', ParseIntPipe) cycleId: number,
+    @Query('token') token: string,
+  ) {
+    const matchedResources = await this.evaluationService.fetchAndMatchCourseContents(moodleCourseId, token, cycleId);
+
+    return {
+      message: "Recursos coincidentes obtenidos exitosamente",
+      data: matchedResources,
+    };
   }
 }

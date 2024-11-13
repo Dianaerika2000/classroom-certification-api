@@ -75,4 +75,17 @@ export class ResourceService {
 
     return await this.resourceRepository.remove(resource);
   }
+  
+  async findContents(resourceId: number) {
+    const resource = await this.resourceRepository.findOne({
+      where: { id: resourceId },
+      relations: ['contents'],
+    });
+
+    if (!resource) {
+      throw new NotFoundException(`Resource with id ${resourceId} not found`);
+    }
+
+    return resource.contents;
+  }
 }
