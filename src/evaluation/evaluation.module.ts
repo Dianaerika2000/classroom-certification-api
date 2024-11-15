@@ -10,6 +10,8 @@ import { ResourceModule } from 'src/resource/resource.module';
 import { IndicatorModule } from 'src/indicator/indicator.module';
 import { AreaModule } from 'src/area/area.module';
 import { MoodleModule } from 'src/moodle/moodle.module';
+import { OrganizationalaspectsService } from './organizationalaspects/organizationalaspects.service';
+import { Cycle2Service } from './cycle2/cycle2.service';
 
 @Module({
   imports: [
@@ -23,6 +25,6 @@ import { MoodleModule } from 'src/moodle/moodle.module';
     IndicatorModule
   ],
   controllers: [EvaluationController],
-  providers: [EvaluationService],
+  providers: [EvaluationService, OrganizationalaspectsService, Cycle2Service],
 })
 export class EvaluationModule {}

@@ -10,14 +10,14 @@ export class MoodleService {
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService
-  ){}
+  ) { }
 
   private getMoodleApiUrl(): string {
     const apiUrl = this.configService.get<string>('MOODLE_API_URL');
     if (!apiUrl) {
       throw new HttpException('Configuración de Moodle incompleta', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    
+
     return apiUrl;
   }
 
@@ -53,9 +53,9 @@ export class MoodleService {
 
   async getUserInfo(token: string, username: string): Promise<any> {
     const apiUrl = this.getMoodleApiUrl();
-  
+
     const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=core_user_get_users_by_field&field=username&values[0]=${username}`;
-  
+
     try {
       const response = await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
       if (response.data && response.data.length > 0) {
@@ -68,7 +68,7 @@ export class MoodleService {
       throw new HttpException('Error al obtener información del usuario de Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  
+
   async getAllUsers(token: string): Promise<any> {
     const apiUrl = this.getMoodleApiUrl();
 
@@ -88,10 +88,10 @@ export class MoodleService {
   }
 
   async getCourseByField(findClassroomMoodleDto: FindClassroomMoodleDto): Promise<any> {
-    const { token, field, value} = findClassroomMoodleDto;
+    const { token, field, value } = findClassroomMoodleDto;
     const apiUrl = this.getMoodleApiUrl();
     const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=core_course_get_courses_by_field&field=${field}&value=${value}`;
-  
+
     try {
       const response = await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
       if (response.data && response.data.courses.length > 0) {
@@ -104,7 +104,7 @@ export class MoodleService {
       throw new HttpException('Error al obtener el curso de Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  
+
   async getCourseContents(courseId: number, token: string): Promise<any> {
     const apiUrl = this.getMoodleApiUrl();
     const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=core_course_get_contents&courseid=${courseId}`;
@@ -116,5 +116,17 @@ export class MoodleService {
       console.error(error);
       throw new HttpException('Error al obtener contenidos del curso de Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }  
+  }
+
+  async getBookChapterContent(token: string, fileurl: string): Promise<any> {
+    const baseurl = `${fileurl}?token=${token}`;
+
+    try {
+      const response = await firstValueFrom(this.httpService.get(baseurl));
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener el contenido del capítulo:', error);
+      throw new Error('No se pudo obtener el contenido del capítulo.');
+    }
+  }
 }
