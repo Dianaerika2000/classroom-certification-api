@@ -1,0 +1,39 @@
+{
+    "resources": [
+        {
+            "name": "Carpeta pedagógica",
+            "general": {
+                "name": "Carpeta pedagógica",
+                "description": "No modificar"
+            },
+            "appearance": {
+                "chapterNumbering": "Númerica",
+                "customTitle": false
+            },
+            "commonSettings": {
+                "availability": "Mostrar en la página del curso",
+                "numberId": "Ninguno",
+                "forceLanguage": false
+            }
+        },
+        {
+            "name": "Video de presentación de la materia",
+            "general": {
+                "name": "Video de introducción a la asignatura",
+                "description": "No modificar"
+            },
+            "content": {
+                "contentPage": "URL con el video"
+            },
+            "appearance": {
+                "description": false,
+                "modificationData": true
+            },
+            "commonSettings": {
+                "availability": "Mostrar en la página del curso",
+                "numberId": "Ninguno",
+                "forceLanguage": false
+            }
+        }
+    ]
+}

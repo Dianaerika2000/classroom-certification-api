@@ -9,7 +9,7 @@ interface IndicatorResult {
 }
 
 @Injectable()
-export class OrganizationalaspectsService {
+export class TrainingDesignService {
     constructor(
         private readonly moodleService: MoodleService,
     ) { }
@@ -71,7 +71,7 @@ export class OrganizationalaspectsService {
      */
     private async evaluateLabelResource(indicators: any[], matchedContent: any): Promise<IndicatorResult[]> {
         return this.evaluateUnimplementedContent(indicators, matchedContent, "Etiqueta");
-    } 
+    }
 
     /**
      * Función para evaluar los indicadores del contenido: Datos de la asignatura
@@ -229,7 +229,7 @@ export class OrganizationalaspectsService {
      */
     private async evaluateCurriculum(indicators: any[], matchedContent: any): Promise<IndicatorResult[]> {
         return this.evaluateUnimplementedContent(indicators, matchedContent, "Curriculum vitae");
-    } 
+    }
 
     /**
      * Función para evaluar los indicadores del recurso: Video presentación

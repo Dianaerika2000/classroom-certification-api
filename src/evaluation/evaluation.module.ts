@@ -10,8 +10,8 @@ import { ResourceModule } from 'src/resource/resource.module';
 import { IndicatorModule } from 'src/indicator/indicator.module';
 import { AreaModule } from 'src/area/area.module';
 import { MoodleModule } from 'src/moodle/moodle.module';
-import { OrganizationalaspectsService } from './organizationalaspects/organizationalaspects.service';
-import { Cycle2Service } from './cycle2/cycle2.service';
+import { TechnicalDesignService } from './organizational-aspects/technical-design/technical-design.service';
+import { TrainingDesignService } from './organizational-aspects/training-design/training-design.service';
 
 @Module({
   imports: [
@@ -25,6 +25,6 @@ import { Cycle2Service } from './cycle2/cycle2.service';
     IndicatorModule
   ],
   controllers: [EvaluationController],
-  providers: [EvaluationService, OrganizationalaspectsService, Cycle2Service],
+  providers: [EvaluationService, TechnicalDesignService, TrainingDesignService],
 })
 export class EvaluationModule {}
