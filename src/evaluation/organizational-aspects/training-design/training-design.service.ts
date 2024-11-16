@@ -1,12 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Indicator } from 'src/indicator/entities/indicator.entity';
 import { MoodleService } from 'src/moodle/moodle.service';
-
-interface IndicatorResult {
-    indicatorId: number;
-    result: number;
-    observation?: string;
-}
+import { IndicatorResult } from '../config/indicator-result';
+import { JSDOM } from 'jsdom';
 
 @Injectable()
 export class TrainingDesignService {
@@ -36,7 +32,7 @@ export class TrainingDesignService {
         }
 
         // Evalúa los indicadores usando el evaluador específico
-        return token != null ? contentEvaluator(indicators, matchedContent, token) : contentEvaluator(indicators, matchedContent, token);
+        return contentEvaluator(indicators, matchedContent, token);
     }
 
     /**
@@ -47,7 +43,7 @@ export class TrainingDesignService {
             'Etiqueta': this.evaluateLabelResource.bind(this),
             'Datos de la asignatura': this.evaluateSubjectDataContent.bind(this),
             'Contenido de la asignatura y referencias bibliográficas': this.evaluateContent.bind(this),
-            'Carta descriptiva': this.evaluateSubjectDataContent.bind(this),
+            'Carta descriptiva': this.evaluateDescriptiveLetter.bind(this),
             'Guía de aprendizaje': this.evaluateLearningGuide.bind(this),
             'Sistema de evaluación': this.evaluateEvaluationSystem.bind(this),
             'Curriculum vitae del autor del contenido del aula': this.evaluateCurriculum.bind(this),
@@ -84,7 +80,7 @@ export class TrainingDesignService {
         const results: IndicatorResult[] = []; // Array para almacenar resultados
 
         if (matchedContent != null) {
-            const content = this.findContentByName(matchedContent.contents, 'Datos de la asignatura');
+            const content = this.findContentByName(matchedContent.contents, 'Datos generales de la asignatura');
 
             if (content) {
                 const indicatorHandlers = {
@@ -134,7 +130,7 @@ export class TrainingDesignService {
         const results: IndicatorResult[] = []; // Array para almacenar resultados
 
         if (matchedContent != null) {
-            const content = this.findContentByName(matchedContent.contents, 'Contenido de la asignatura');
+            const content = this.findContentByName(matchedContent.contents, 'Contenido de la Asignatura');
 
             if (content) {
                 const indicatorHandlers = {
@@ -165,6 +161,53 @@ export class TrainingDesignService {
     }
 
     /**
+     * Función para evaluar los indicadores del contenido: Carta Descriptiva
+     * @param indicators 
+     * @param matchedSection 
+     * @param matchedModule 
+     * @returns 
+     */
+    private async evaluateDescriptiveLetter(indicators: any[], matchedContent: any, token: string): Promise<IndicatorResult[]> {
+        const results: IndicatorResult[] = []; // Array para almacenar resultados
+
+        if (matchedContent != null) {
+            const content = this.findContentByName(matchedContent.contents, 'Contenido de la Asignatura');
+
+            if (content) {
+                const indicatorHandlers = {
+                    'retos': async (indicator: any) => {
+                        return await this.fetchContentFromMoodle(content.fileurl, token, indicator);
+                    },
+                    'parciales': async (indicator: any) => {
+                        return await this.fetchContentFromMoodle(content.fileurl, token, indicator);
+                    },
+                    'videoconferencia': async (indicator: any) => {
+                        return await this.fetchContentFromMoodle(content.fileurl, token, indicator);
+                    },
+                };
+
+                for (const indicator of indicators) {
+                    const handlerKey = Object.keys(indicatorHandlers).find(key => indicator.name.includes(key));
+
+                    if (handlerKey) {
+                        const result = await indicatorHandlers[handlerKey](indicator);
+                        results.push(result);
+                    } else {
+                        // Agregar un resultado para revisión manual si no hay handler
+                        results.push({
+                            indicatorId: indicator.id,
+                            result: 0,
+                            observation: 'Este indicador requiere verificación manual.',
+                        });
+                    }
+                }
+            }
+        }
+
+        return results; // Devuelve un array de resultados
+    }
+
+    /**
      * Función para evaluar los indicadores del recurso: Guía de aprendizaje
      * @param indicators 
      * @param matchedContent 
@@ -182,7 +225,7 @@ export class TrainingDesignService {
 
                 if (htmlcontent) {
                     // Llamar a evaluateLearningGuideHml para procesar los resultados
-                    results = this.evaluateLearningGuideHml(indicators, htmlcontent);
+                    results = this.evaluateLearningGuideHtml(indicators, htmlcontent);
                     return results; // Retorna los resultados inmediatamente
                 }
             }
@@ -264,7 +307,7 @@ export class TrainingDesignService {
 
             if (htmlcontent != null) {
                 // Validar el contenido HTML con respecto al indicador
-                const isValid = await this.validateContentHtml(htmlcontent, indicator.name);
+                const isValid = this.validateIndicator(htmlcontent, indicator.name);
 
                 // Devolver el indicador evaluado basado en si es válido o no
                 return {
@@ -285,40 +328,191 @@ export class TrainingDesignService {
         };
     }
 
-    private async validateContentHtml(htmlContent: string, indicatorName: string): Promise<boolean> {
-        // Definir palabras clave que se deben buscar en el HTML
-        const requiredKeywords = {
-            'prerequisitos': ['pre-requisitos', 'requisitos'],
-            'sigla, código y semestre': ['sigla', 'código', 'semestre'],
-            'horas semanales': ['horas semanales', 'horarios'],
-            'créditos': ['créditos'],
-            'fecha de revisión': ['revisado en', 'fecha de revisión'],
-            'referencia bibliográfica': ['referencia bibliográfica', 'bibliografía'],
-        };
+    private validateIndicator(htmlContent: string, indicatorName: string): boolean {
+        const dom = new JSDOM(htmlContent);
+        const document = dom.window.document;
 
-        // Normalizar nombres e indicadores para comparación
-        const normalizedIndicatorName = indicatorName.toLowerCase().trim();
-        const keywords = requiredKeywords[normalizedIndicatorName];
+        // Normalizar el indicador a minúsculas para hacerlo más flexible
+        const normalizedIndicatorName = indicatorName.toLowerCase()
+            .trim()
+            .replace(/[^a-záéíóúüñ\s]/gi, '');
 
-        if (!keywords) {
-            console.log(`No se encontró una palabra clave para el indicador: ${indicatorName}`);
-            return false;
-        }
-
-        // Normalizar contenido HTML para evitar fallos por mayúsculas/minúsculas
-        const normalizedHtmlContent = htmlContent.toLowerCase();
-
-        // Verificar presencia de palabras clave
-        if (Array.isArray(keywords)) {
-            // Todas las palabras clave deben estar presentes
-            return keywords.every(keyword => normalizedHtmlContent.includes(keyword));
-        } else {
-            // Verificar presencia de una sola palabra clave
-            return normalizedHtmlContent.includes(keywords);
+        switch (normalizedIndicatorName) {
+            case 'contiene prerequisitos de la materia':
+                return this.validatePrerequisites(document);
+            case 'contiene sigla código y semestre de la materia':
+                return this.validateSiglaCodigoSemestre(document);
+            case 'contiene horas semanales y créditos':
+                return this.validateHorasCreditos(document);
+            case 'contiene fecha de revisión del programa vigente':
+                return this.validateFechaRevision(document);
+            case 'cuenta con referencia bibliográfica':
+                return this.validateReferenciaBibliografica(document);
+            case 'contiene retos actividades prácticas a calificar según avance de la materia':
+                return this.validateRetos(document);
+            case 'contiene evaluación sumativa parciales y final de la materia':
+                return this.validateEvaluacionSumativa(document);
+            case 'indica enlaces de videoconferencia para reemplazar':
+                return this.validateVideoconferencia(document);
+            default:
+                console.log('Indicador no reconocido:', indicatorName);
+                return false;
         }
     }
 
-    private evaluateLearningGuideHml(indicators: Indicator[], htmlContent: any): IndicatorResult[] {
+    private validatePrerequisites(document: Document): boolean {
+        const prerequisitesRow = this.findRowByHeader(document, ['pre-requisitos', 'prerequisitos']);
+        if (!prerequisitesRow) {
+            console.log('No se encontró la fila de prerequisitos');
+            return false;
+        }
+
+        const content = prerequisitesRow.querySelector('td')?.textContent?.trim();
+        if (!content) {
+            console.log('No se encontró contenido en prerequisitos');
+            return false;
+        }
+
+        return true;
+    }
+
+    private validateSiglaCodigoSemestre(document: Document): boolean {
+        const siglaRow = this.findRowByHeader(document, ['sigla y código']);
+        const semestreRow = this.findRowByHeader(document, ['semestre']);
+
+        if (!siglaRow || !semestreRow) {
+            console.log('No se encontró sigla/código o semestre');
+            return false;
+        }
+
+        const siglaContent = siglaRow.querySelector('td')?.textContent?.trim();
+        const semestreContent = semestreRow.querySelector('td')?.textContent?.trim();
+
+        if (!siglaContent || !semestreContent) {
+            console.log('Falta contenido en sigla/código o semestre');
+            return false;
+        }
+
+        return true;
+    }
+
+    private validateHorasCreditos(document: Document): boolean {
+        const horasRow = this.findRowByHeader(document, ['horas semanales']);
+        const creditosRow = this.findRowByHeader(document, ['créditos', 'creditos']);
+
+        if (!horasRow || !creditosRow) {
+            console.log('No se encontró horas semanales o créditos');
+            return false;
+        }
+
+        const horasContent = horasRow.querySelector('td')?.textContent?.trim();
+        const creditosContent = creditosRow.querySelector('td')?.textContent?.trim();
+
+        if (!horasContent || !creditosContent) {
+            console.log('Falta contenido en horas semanales o créditos');
+            return false;
+        }
+
+        return true;
+    }
+
+    private validateFechaRevision(document: Document): boolean {
+        const revisionRow = this.findRowByHeader(document, ['revisado en', 'fecha de revisión']);
+        if (!revisionRow) {
+            console.log('No se encontró la fecha de revisión');
+            return false;
+        }
+
+        const content = revisionRow.querySelector('td')?.textContent?.trim();
+        if (!content) {
+            console.log('No se encontró contenido en fecha de revisión');
+            return false;
+        }
+
+        return true;
+    }
+
+    private validateReferenciaBibliografica(document: Document): boolean {
+        const revisionRow = this.findRowByHeader(document, ['referencia bibliográfica', 'bibliografía', 'fuentes', 'Referencia Bibliográfica']);
+        if (!revisionRow) {
+            console.log('No se encontró la referencia bibliográfica');
+            return false;
+        }
+
+        const content = revisionRow.querySelector('th')?.textContent?.trim();
+        if (!content) {
+            console.log('No se encontró contenido en referencia bibliográfica');
+            return false;
+        }
+
+        return true;
+    }
+
+    private validateRetos(document: Document): boolean {
+        const revisionRow = this.findRowByHeader(document, ['Reto', 'reto']);
+        if (!revisionRow) {
+            console.log('No se encontraron los retos');
+            return false;
+        }
+
+        const content = revisionRow.querySelector('td')?.textContent?.trim();
+        if (!content) {
+            console.log('No se encontró contenido en Retos');
+            return false;
+        }
+
+        return true;
+    }
+
+    private validateEvaluacionSumativa(document: Document): boolean {
+        const revisionRow = this.findRowByHeader(document, ['parcial', 'examen final']);
+        if (!revisionRow) {
+            console.log('No se encontraron las evaluaciones');
+            return false;
+        }
+
+        const content = revisionRow.querySelector('th')?.textContent?.trim();
+        if (!content) {
+            console.log('No se encontró contenido en parciales');
+            return false;
+        }
+
+        return true;
+    }
+
+    private validateVideoconferencia(document: Document): boolean {
+        const revisionRow = this.findRowByHeader(document, ['videoconferencia']);
+        if (!revisionRow) {
+            console.log('No se encontraron las videoconferencias');
+            return false;
+        }
+
+        const content = revisionRow.querySelector('td')?.textContent?.trim();
+        if (!content) {
+            console.log('No se encontró contenido en videoconferencia');
+            return false;
+        }
+
+        return true;
+    }
+
+    private findRowByHeader(document: Document, headerTexts: string[]): Element | null {
+        const rows = document.querySelectorAll('tr');
+
+        for (const row of Array.from(rows)) {
+            const header = row.querySelector('th');
+            if (!header) continue;
+
+            const headerText = header.textContent?.toLowerCase().trim() || '';
+            if (headerTexts.some(text => headerText.includes(text.toLowerCase()))) {
+                return row;
+            }
+        }
+
+        return null;
+    }
+
+    private evaluateLearningGuideHtml(indicators: Indicator[], htmlContent: string): IndicatorResult[] {
         if (!htmlContent) {
             return indicators.map(indicator => ({
                 indicatorId: indicator.id,
@@ -327,29 +521,40 @@ export class TrainingDesignService {
             }));
         }
 
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlContent, "text/html");
+        // Crear un documento DOM usando jsdom
+        const dom = new JSDOM(htmlContent);
+        const doc = dom.window.document;
 
         const results: IndicatorResult[] = [];
 
+        // Función auxiliar para buscar texto en elementos
+        const findElementByText = (selector: string, text: string): HTMLElement | null => {
+            const elements = Array.from(doc.querySelectorAll(selector)) as HTMLElement[];
+            return elements.find(el => el.textContent?.toLowerCase().includes(text.toLowerCase())) || null;
+        };
+
         // Evaluación de prerequisitos
-        const prerequisitesSection = doc.querySelector("th:contains('INICIO')");
-        const hasPrerequisites = prerequisitesSection && Array.from(prerequisitesSection.parentNode.querySelectorAll("th, td"))
-            .some(activity => /lectura|cuestionario diagnóstico/i.test(activity.textContent));
+        const prerequisitesSection = findElementByText("th", "INICIO");
+        const prerequisitesRow = prerequisitesSection?.closest('tr') as HTMLTableRowElement;
+        const hasPrerequisites = prerequisitesRow &&
+            Array.from(prerequisitesRow.querySelectorAll("th, td"))
+                .some(activity => /lectura|cuestionario diagnóstico/i.test(activity.textContent || ''));
 
         results.push({
-            indicatorId: indicators.find(i => i.name.includes('prerequisitos'))?.id || 0,
+            indicatorId: indicators.find(i => i.name.toLowerCase().includes('prerequisitos'))?.id || 0,
             result: hasPrerequisites ? 1 : 0,
             observation: hasPrerequisites ? 'Cumple con los prerequisitos' : 'No se describen los prerequisitos'
         });
 
         // Evaluación del desarrollo de unidades temáticas
-        const unitSection = doc.querySelector("td:contains('AVANCE DE UNIDADES TEMÁTICAS')");
-        const hasUnitDevelopment = unitSection && Array.from(unitSection.parentNode.querySelectorAll("th, td"))
-            .some(activity => /lecciones|mapa mental interactivo|autoevaluación/i.test(activity.textContent));
+        const unitSection = findElementByText("td", "AVANCE DE UNIDADES TEMÁTICAS");
+        const unitRow = unitSection?.closest('tr') as HTMLTableRowElement;
+        const hasUnitDevelopment = unitRow &&
+            Array.from(unitRow.querySelectorAll("th, td"))
+                .some(activity => /lecciones|mapa mental interactivo|autoevaluación/i.test(activity.textContent || ''));
 
         results.push({
-            indicatorId: indicators.find(i => i.name.includes('desarrollo de unidades'))?.id || 0,
+            indicatorId: indicators.find(i => i.name.toLowerCase().includes('desarrollo de unidades'))?.id || 0,
             result: hasUnitDevelopment ? 1 : 0,
             observation: hasUnitDevelopment ? 'Describe el desarrollo de unidades temáticas' : 'No se describe el desarrollo de unidades temáticas'
         });
@@ -359,19 +564,19 @@ export class TrainingDesignService {
         const hasChallenges = challengeActivities.length > 0;
 
         results.push({
-            indicatorId: indicators.find(i => i.name.includes('actividades de reto'))?.id || 0,
+            indicatorId: indicators.find(i => i.name.toLowerCase().includes('actividades de reto'))?.id || 0,
             result: hasChallenges ? 1 : 0,
             observation: hasChallenges ? 'Se describen actividades de reto' : 'No se describen actividades de reto'
         });
 
         // Evaluación de comunicación: foros y videoconferencias
-        const communicationSection = doc.querySelector("td:contains('Foros de debate')");
-        const forumMatch = communicationSection && /foros? de debate/i.test(communicationSection.textContent);
-        const videoMatch = communicationSection && communicationSection.textContent.match(/videoconferencias?:?\s*(\d+)/i);
+        const communicationSection = findElementByText("td", "Foros de debate");
+        const forumMatch = communicationSection && /foros? de debate/i.test(communicationSection.textContent || '');
+        const videoMatch = communicationSection?.textContent?.match(/videoconferencias?:?\s*(\d+)/i);
         const numberOfVideoconferences = videoMatch ? parseInt(videoMatch[1], 10) : 0;
 
         results.push({
-            indicatorId: indicators.find(i => i.name.includes('foros y videoconferencias'))?.id || 0,
+            indicatorId: indicators.find(i => i.name.toLowerCase().includes('foros y videoconferencias'))?.id || 0,
             result: forumMatch && numberOfVideoconferences > 0 ? 1 : 0,
             observation: forumMatch && numberOfVideoconferences > 0
                 ? `Se describen foros y ${numberOfVideoconferences} videoconferencias`
@@ -379,19 +584,41 @@ export class TrainingDesignService {
         });
 
         // Evaluación de actividades de evaluación
-        const evaluationSection = doc.querySelector("th:contains('CIERRE')");
-        const evaluationActivities = evaluationSection
-            ? Array.from(evaluationSection.parentNode.querySelectorAll("th, td"))
-            : [];
-        const evaluationResults = evaluationActivities.filter(activity =>
-            /(Primer parcial|Segundo parcial|Examen Final|Proyecto Final|Tareas):?\s*(\d+)%/i.test(activity.textContent)
-        );
+        const evaluationSection = findElementByText("th", "CIERRE");
+        const tableElement = evaluationSection.closest('tbody');
+        const allEvaluationText = tableElement.textContent || '';
+
+        // Crear un array para almacenar los porcentajes encontrados
+        const evaluationComponents: { name: string; percentage: number }[] = [];
+
+        // Buscar cada componente de evaluación
+        const patterns = [
+            /Primer parcial:\s*(\d+)%/i,
+            /Segundo parcial:\s*(\d+)%/i,
+            /Examen Final:\s*(\d+)%/i,
+            /Proyecto Final:\s*(\d+)%/i,
+            /Tareas:\s*(\d+)%/i
+        ];
+
+        patterns.forEach(pattern => {
+            const match = allEvaluationText.match(pattern);
+            if (match) {
+                const percentage = parseInt(match[1], 10);
+                evaluationComponents.push({
+                    name: match[0].split(':')[0].trim(),
+                    percentage
+                });
+            }
+        });
+
+        // Verificar si se encontraron componentes de evaluación
+        const hasEvaluationComponents = evaluationComponents.length > 0;
 
         results.push({
-            indicatorId: indicators.find(i => i.name.includes('actividades de evaluación'))?.id || 0,
-            result: evaluationResults.length > 0 ? 1 : 0,
-            observation: evaluationResults.length > 0
-                ? `Se describen actividades de evaluación con porcentajes`
+            indicatorId: indicators.find(i => i.name.toLowerCase().includes('actividades de evaluación'))?.id || 0,
+            result: hasEvaluationComponents ? 1 : 0,
+            observation: hasEvaluationComponents
+                ? `Se describen actividades de evaluación: ${evaluationComponents.map(comp => `${comp.name} (${comp.percentage}%)`).join(', ')}`
                 : 'No se describen las actividades de evaluación con porcentajes'
         });
 
@@ -399,13 +626,22 @@ export class TrainingDesignService {
     }
 
     private evaluateEvaluationContent(indicators: any[], htmlContent: string): IndicatorResult[] {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlContent, "text/html");
+        // Crear un documento DOM usando jsdom
+        const dom = new JSDOM(htmlContent);
+        const doc = dom.window.document;
         const results: IndicatorResult[] = [];
 
+        // Función auxiliar para buscar texto en elementos
+        const findElementByText = (selector: string, text: string): HTMLElement | null => {
+            const elements = Array.from(doc.querySelectorAll(selector)) as HTMLElement[];
+            return elements.find(el => el.textContent?.toLowerCase().includes(text.toLowerCase())) || null;
+        };
+
         // Indicador: Normas de evaluación
-        const normasSection = doc.querySelector("th:contains('Normas de evaluación')");
-        const hasNormas = normasSection && normasSection.nextElementSibling?.textContent.includes('restricción de acceso');
+        const normasSection = findElementByText("th", "Normas de evaluación");
+        const nextElement = normasSection?.nextElementSibling as HTMLElement | null;
+        const hasNormas = normasSection && nextElement?.textContent?.includes('restricción de acceso');
+
         results.push({
             indicatorId: indicators.find(i => i.name.includes('Normas de evaluación'))?.id || 0,
             result: hasNormas ? 1 : 0,
@@ -413,8 +649,10 @@ export class TrainingDesignService {
         });
 
         // Indicador: Formas e instrumentos de evaluación
-        const formasSection = doc.querySelector("th:contains('Formas e instrumentos de evaluación')");
-        const hasFormas = formasSection && formasSection.nextElementSibling?.textContent.includes('evaluación diagnóstica');
+        const formasSection = findElementByText("th", "Formas e instrumentos de evaluación");
+        const formasNextElement = formasSection?.nextElementSibling as HTMLElement | null;
+        const hasFormas = formasSection && formasNextElement?.textContent?.includes('evaluación diagnóstica');
+
         results.push({
             indicatorId: indicators.find(i => i.name.includes('formas de evaluación'))?.id || 0,
             result: hasFormas ? 1 : 0,
@@ -422,12 +660,18 @@ export class TrainingDesignService {
         });
 
         // Indicador: Actividades y ponderaciones
-        const activitiesTable = doc.querySelectorAll("table")[1]; // Segunda tabla con actividades y ponderaciones
-        const rows = activitiesTable ? activitiesTable.querySelectorAll("tr") : [];
-        const hasValidActivities = Array.from(rows).some(row => {
-            const cells = row.querySelectorAll("td");
-            return cells.length === 3 && cells[2].textContent.trim().endsWith('%');
+        const tables = Array.from(doc.querySelectorAll("table")) as HTMLTableElement[];
+        const activitiesTable = tables[1]; // Segunda tabla con actividades y ponderaciones
+
+        const rows = activitiesTable
+            ? Array.from(activitiesTable.querySelectorAll("tr")) as HTMLTableRowElement[]
+            : [];
+
+        const hasValidActivities = rows.some(row => {
+            const cells = Array.from(row.querySelectorAll("td")) as HTMLTableCellElement[];
+            return cells.length === 3 && cells[2]?.textContent?.trim().endsWith('%');
         });
+
         results.push({
             indicatorId: indicators.find(i => i.name.includes('Actividades'))?.id || 0,
             result: hasValidActivities ? 1 : 0,
@@ -437,11 +681,15 @@ export class TrainingDesignService {
         });
 
         // Indicador: Total de ponderaciones es 100%
-        const totalRow = Array.from(rows).find(row => row.textContent.includes('Total'));
-        const totalPonderacion = totalRow
-            ? totalRow.querySelector("td:last-child")?.textContent.replace('%', '').trim()
+        const totalRow = rows.find(row => row.textContent?.includes('Total'));
+        const lastCell = totalRow
+            ? (Array.from(totalRow.querySelectorAll("td")).pop() as HTMLTableCellElement)
+            : null;
+        const totalPonderacion = lastCell
+            ? lastCell.textContent?.replace('%', '').trim()
             : null;
         const isValidTotal = totalPonderacion === '100';
+
         results.push({
             indicatorId: indicators.find(i => i.name.includes('porcentajes'))?.id || 0,
             result: isValidTotal ? 1 : 0,
@@ -454,6 +702,15 @@ export class TrainingDesignService {
     }
 
     private findContentByName(contents: any[], name: string) {
-        return contents.find(content => content.content === name);
+        const result = contents.find(content => {
+            if (!content.content) {
+                console.warn('Content field is undefined:', content);
+                return false;
+            }
+
+            return content.content.toLowerCase().includes(name.toLowerCase());
+        });
+
+        return result;
     }
 }

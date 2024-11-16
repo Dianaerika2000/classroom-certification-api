@@ -6,11 +6,17 @@ import { CreateEvaluationDto } from './dto/create-evaluation.dto';
 import { UpdateEvaluationDto } from './dto/update-evaluation.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ValidRoles } from 'src/auth/enums/valid-roles';
+import { TrainingDesignService } from './organizational-aspects/training-design/training-design.service';
+import { TechnicalDesignService } from './organizational-aspects/technical-design/technical-design.service';
 
 @ApiTags('Evaluation')
 @Controller('evaluation')
 export class EvaluationController {
-  constructor(private readonly evaluationService: EvaluationService) {}
+  constructor(
+    private readonly evaluationService: EvaluationService,
+    private readonly trainingDesignService: TrainingDesignService,
+    private readonly technicalDesignService: TechnicalDesignService,
+  ) { }
 
   @Post()
   @Auth(ValidRoles.admin, ValidRoles.evaluator)
@@ -19,7 +25,7 @@ export class EvaluationController {
   @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
   async create(@Body() createEvaluationDto: CreateEvaluationDto) {
     const evaluation = await this.evaluationService.create(createEvaluationDto);
-    
+
     return {
       message: "Evaluación creada exitosamente",
       data: {
@@ -149,5 +155,63 @@ export class EvaluationController {
     @Body('matchedContents') matchedContents: any[]
   ): Promise<any> {
     return await this.evaluationService.evaluateIndicatorsForMatchedContents(matchedContents, areaId);
+  }
+
+  @Post('evaluate-content')
+  async evaluateContentIndicatorsOA(
+    @Body('content') content: any,
+    @Body('indicators') indicators: any[],
+    @Body('matchedContent') matchedContent: any,
+    @Query('token') token?: string
+  ) {
+    try {
+      const results = await this.trainingDesignService.evaluateContentIndicators(
+        content,
+        indicators,
+        matchedContent,
+        token
+      );
+
+      return {
+        success: true,
+        results,
+      };
+    } catch (error) {
+      console.error('Error evaluando contenido:', error);
+      return {
+        success: false,
+        message: 'Error evaluando contenido',
+        error: error.message,
+      };
+    }
+  }
+
+  @Post('evaluate-content-technical')
+  async evaluateContentIndicatorsOATech(
+    @Body('content') content: any,
+    @Body('indicators') indicators: any[],
+    @Body('matchedContent') matchedContent: any,
+    @Query('token') token?: string
+  ) {
+    try {
+      const results = await this.technicalDesignService.evaluateContentIndicators(
+        content,
+        indicators,
+        matchedContent,
+        token
+      );
+
+      return {
+        success: true,
+        results,
+      };
+    } catch (error) {
+      console.error('Error evaluando contenido:', error);
+      return {
+        success: false,
+        message: 'Error evaluando contenido',
+        error: error.message,
+      };
+    }
   }
 }

@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import technicalConfig from '../config/technical-design-config.json';
-
-interface IndicatorResult {
-    indicatorId: number;
-    result: number;
-    observation?: string;
-}
+import { IndicatorResult } from '../config/indicator-result';
 
 @Injectable()
 export class TechnicalDesignService {
@@ -31,7 +26,7 @@ export class TechnicalDesignService {
         }
 
         // Evalúa los indicadores usando el evaluador específico
-        return token != null ? contentEvaluator(indicators, matchedContent, token) : contentEvaluator(indicators, matchedContent, token);
+        return contentEvaluator(indicators, matchedContent, token);
     }
 
     /**
@@ -40,8 +35,13 @@ export class TechnicalDesignService {
     private getContentEvaluator(contentName: string): ((indicators: any[], matchedContent: any, token?: string) => IndicatorResult[]) | null {
         const resourceEvaluators = {
             'Etiqueta': this.evaluateLabelResource.bind(this),
-            'Carpeta pedagógica': this.evaluatePedagogicalFolderResource.bind(this),
-            'Video de presentación de la materia': this.evaluateVideoPresentation.bind(this)
+            'Datos de la asignatura': this.evaluatePedagogicalFolderResource.bind(this),
+            'Contenido de la asignatura y referencias bibliográficas': this.evaluatePedagogicalFolderResource.bind(this),
+            'Carta descriptiva': this.evaluatePedagogicalFolderResource.bind(this),
+            'Guía de aprendizaje': this.evaluatePedagogicalFolderResource.bind(this),
+            'Sistema de evaluación': this.evaluatePedagogicalFolderResource.bind(this),
+            'Curriculum vitae del autor del contenido del aula': this.evaluatePedagogicalFolderResource.bind(this),
+            'Video de presentación': this.evaluateVideoPresentation.bind(this)
         };
 
         // Busca coincidencia exacta o parcial
@@ -122,9 +122,23 @@ export class TechnicalDesignService {
     }
 
     private evaluateGeneralIndicatorFolder(indicator: any, matchedContent: any): IndicatorResult {
-        const config = technicalConfig['Carpeta Pedagógica'].general;
+        // Buscar "Carpeta pedagógica" dentro del array de recursos
+        const pedagogicalFolderConfig = technicalConfig.resources.find(resource =>
+            resource.name.toLowerCase() === 'carpeta pedagógica'
+        );
+
+        // Verificar si la carpeta pedagógica existe en la configuración
+        if (!pedagogicalFolderConfig) {
+            return {
+                indicatorId: indicator.id,
+                result: 0,
+                observation: 'Configuración de "Carpeta Pedagógica" no encontrada en el archivo de configuración.',
+            };
+        }
+
+        const config = pedagogicalFolderConfig.general; // Acceder a la propiedad 'general'
         const isNameValid = matchedContent.name === config.name;
-        const isDescriptionValid = !matchedContent.summary ? true : false;
+        const isDescriptionValid = matchedContent.summary ? false : true; // Cambié la condición para comparar la descripción
 
         const result = isNameValid && isDescriptionValid ? 1 : 0;
 
@@ -173,7 +187,7 @@ export class TechnicalDesignService {
 
         if (matchedContent != null) {
             const indicatorHandlers = {
-                'sin restricciones': async (indicator: any) => {
+                'sin restricciones de acceso': async (indicator: any) => {
                     return this.evaluateAccessRestrictions(indicator, matchedContent);
                 },
                 'Solo ver': async (indicator: any) => {
@@ -182,7 +196,9 @@ export class TechnicalDesignService {
             };
 
             for (const indicator of indicators) {
-                const handlerKey = Object.keys(indicatorHandlers).find(key => indicator.name.includes(key));
+                const handlerKey = Object.keys(indicatorHandlers).find(key =>
+                    indicator.name.trim().toLowerCase().includes(key.toLowerCase())
+                );
 
                 if (handlerKey) {
                     const result = await indicatorHandlers[handlerKey](indicator);
