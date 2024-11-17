@@ -188,6 +188,7 @@ export class EvaluationService {
             });
           }
         }
+        // TODO: iterar los contents de un modulo
       }
 
       // Los recursos restantes son los que no hicieron match
@@ -205,7 +206,7 @@ export class EvaluationService {
       throw new NotFoundException(`Error obteniendo contenido del curso desde Moodle: ${error.message}`);
     }
   }
-  
+  // TODO: Modificar y enviar el arra
   async evaluateIndicatorsForMatchedContents(
     matchedContents: any[],
     areaId: number
@@ -234,7 +235,8 @@ export class EvaluationService {
     console.log('Resultados finales de evaluateIndicatorsForMatchedContents:', results);
     return results;
   }  
-
+  // TODO: Modicar para que envie a la funcion auxiliar el recurso, array de indicadores de ese recurso
+  // el match section y el matchmodule
   async evaluateResourceIndicators(
     resource: any,
     matchedSection: any,

@@ -116,5 +116,18 @@ export class MoodleService {
       console.error(error);
       throw new HttpException('Error al obtener contenidos del curso de Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }  
+  }
+  
+  async getLessonPages(lessonId: number, token: string): Promise<any[]> {
+    const apiUrl = this.getMoodleApiUrl();
+    const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=mod_lesson_get_pages&lessonid=${lessonId}`;
+  
+    try {
+      const response = await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
+      return response.data.pages || [];
+    } catch (error) {
+      console.error('Error al obtener las páginas de la lección desde Moodle:', error);
+      throw new HttpException('Error al obtener las páginas de la lección desde Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }    
 }
