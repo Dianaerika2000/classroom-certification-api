@@ -12,6 +12,8 @@ import { AreaModule } from 'src/area/area.module';
 import { MoodleModule } from 'src/moodle/moodle.module';
 import { TechnicalDesignService } from './organizational-aspects/technical-design/technical-design.service';
 import { TrainingDesignService } from './organizational-aspects/training-design/training-design.service';
+import { TechnicalDesignCycleIiService } from './cycle-ii/technical-design-cycle-ii/technical-design-cycle-ii.service';
+import { TrainingDesignCycleIiService } from './cycle-ii/training-design-cycle-ii/training-design-cycle-ii.service';
 
 @Module({
   imports: [
@@ -25,6 +27,6 @@ import { TrainingDesignService } from './organizational-aspects/training-design/
     IndicatorModule
   ],
   controllers: [EvaluationController],
-  providers: [EvaluationService, TechnicalDesignService, TrainingDesignService],
+  providers: [EvaluationService, TechnicalDesignService, TrainingDesignService, TechnicalDesignCycleIiService, TrainingDesignCycleIiService],
 })
 export class EvaluationModule {}

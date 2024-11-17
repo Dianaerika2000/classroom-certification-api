@@ -129,4 +129,56 @@ export class MoodleService {
       throw new Error('No se pudo obtener el contenido del capítulo.');
     }
   }
+
+  async getAssignmentsByCourse(courseId: number, token: string): Promise<any> {
+    const apiUrl = this.getMoodleApiUrl();
+    const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=mod_assign_get_assignments&courseids[0]=${courseId}`;
+
+    try {
+      const response = await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      throw new HttpException('Error al obtener actividades del curso de Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getForumsByCourse(courseId: number, token: string): Promise<any> {
+    const apiUrl = this.getMoodleApiUrl();
+    const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=mod_forum_get_forums_by_courses&courseids[0]=${courseId}`;
+
+    try {
+      const response = await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      throw new HttpException('Error al obtener actividades del curso de Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getLessonPages(lessonId: number, token: string): Promise<any[]> {
+    const apiUrl = this.getMoodleApiUrl();
+    const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=mod_lesson_get_pages&lessonid=${lessonId}`;
+  
+    try {
+      const response = await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
+      return response.data.pages || [];
+    } catch (error) {
+      console.error('Error al obtener las páginas de la lección desde Moodle:', error);
+      throw new HttpException('Error al obtener las páginas de la lección desde Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getLessonPageContent(lessonId: number, pageId: number, token: string): Promise<any> {
+    const apiUrl = this.getMoodleApiUrl();
+    const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=mod_lesson_get_page_data&lessonid=${lessonId}&pageid=${pageId}`;
+  
+    try {
+      const response = await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
+      return response.data.page;
+    } catch (error) {
+      console.error('Error al obtener las páginas de la lección desde Moodle:', error);
+      throw new HttpException('Error al obtener las páginas de la lección desde Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 }

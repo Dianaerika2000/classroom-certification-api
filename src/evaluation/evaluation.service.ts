@@ -20,17 +20,17 @@ export class EvaluationService {
     private readonly cycleService: CycleService,
     private readonly resourceService: ResourceService,
     private readonly indicatorService: IndicatorService,
-  ){}
+  ) { }
 
-  async create(createEvaluationDto: CreateEvaluationDto): Promise<Evaluation>  {
+  async create(createEvaluationDto: CreateEvaluationDto): Promise<Evaluation> {
     const { classroomId, ...evaluationData } = createEvaluationDto;
-    
+
     const classroom = await this.classroomService.findOne(classroomId);
 
     const evaluation = this.evaluationRepository.create({
-      ...evaluationData,     
+      ...evaluationData,
       result: evaluationData.result ?? 0,
-      classroom,               
+      classroom,
     });
 
     return await this.evaluationRepository.save(evaluation);
@@ -42,29 +42,29 @@ export class EvaluationService {
 
   async findByClassroom(classroomId: number): Promise<Evaluation[]> {
     const classroom = await this.classroomService.findOne(classroomId);
-    
+
     if (!classroom) {
       throw new NotFoundException(`Aula con ID ${classroomId} no encontrada`);
     }
-    
+
     const evaluations = await this.evaluationRepository.find({
-      where: { classroom: { id: classroomId } }, 
+      where: { classroom: { id: classroomId } },
       relations: ['classroom'],
     });
-    
+
     return evaluations;
   }
 
-  async findOne(id: number): Promise<Evaluation>{
+  async findOne(id: number): Promise<Evaluation> {
     const evaluation = await this.evaluationRepository.findOneBy({ id });
     if (!evaluation) {
       throw new NotFoundException(`Evaluation with ID "${id}" not found`);
     }
-    
+
     return evaluation;
   }
 
-  async update(id: number, updateEvaluationDto: UpdateEvaluationDto): Promise<Evaluation>{
+  async update(id: number, updateEvaluationDto: UpdateEvaluationDto): Promise<Evaluation> {
     const evaluation = await this.evaluationRepository.preload({
       id: id,
       ...updateEvaluationDto,
@@ -80,7 +80,7 @@ export class EvaluationService {
   async remove(id: number) {
     const evaluation = await this.findOne(id);
 
-    return await this.evaluationRepository.remove(evaluation); 
+    return await this.evaluationRepository.remove(evaluation);
   }
 
   /**
@@ -126,7 +126,7 @@ export class EvaluationService {
 
       // Paso 2: Evalúa el cumplimiento de los indicadores por cuadrante (ciclo y área) solo para los recursos que hicieron match
       const results = await this.evaluateIndicatorsForMatchedContents(matchedResources, areaId);
-  
+
       // Devuelve los resultados de la evaluación, incluyendo los recursos que no hicieron match
       return {
         message: "Análisis de cumplimiento del aula completado exitosamente",
@@ -147,55 +147,96 @@ export class EvaluationService {
     try {
       // Obtiene el contenido del curso desde Moodle usando el ID del curso en Moodle
       const courseContents = await this.moodleService.getCourseContents(moodleCourseId, token);
-  
+
       if (!courseContents || courseContents.length === 0) {
         throw new NotFoundException(`Contenido no encontrado para el curso con ID en Moodle ${moodleCourseId}`);
       }
-  
+
+      // Obtiene la información del ciclo
+      const cycle = await this.cycleService.findOne(cycleId);
+      const isCycle2 = cycle?.name === 'CICLO 2';
+
       // Obtiene los recursos asociados al ciclo de la base de datos usando cycleId
       let resources = await this.getResourcesByCycle(cycleId);
-  
+
       const matchedResources = [];
-  
-      // Recorre cada sección del curso
-      for (const section of courseContents) {
-        // Coincidencia de nombre entre la sección y los recursos
-        resources = resources.filter(resource => {
-          if (section.name && section.name.toLowerCase() === resource.name.toLowerCase()) {
+      let unmatchedResources = [];
+
+      if (isCycle2) {
+        const validSections = courseContents.filter((section: any) => {
+          return section.name && section.name.trim() !== '' && section.name.toLowerCase() !== 'inicio' && section.name.toLowerCase() !== 'cierre';
+        });
+
+        for (const resource of resources) {
+          if (resource.name.includes('Retos')) {
+            const courseAssignments = await this.moodleService.getAssignmentsByCourse(moodleCourseId, token);
+            const validAssignments = courseAssignments.courses[0].assignments.filter((assign: any) => {
+              return assign.name && assign.name.toLowerCase().includes('reto') && assign.name.toLowerCase() !== 'reto';
+            });
             matchedResources.push({
               resource,
-              matchedSection: section, // Toda la información de la sección
-              matchedModule: null, // Coincidencia en la sección, no en un módulo específico
+              matchedSection: null, // Toda la información de la sección
+              matchedModule: validAssignments // Coincidencia en la sección, no en un módulo específico
             });
-            return false; // Elimina el recurso coincidente de la lista
-          }
-          return true;
-        });
-  
-        // Si no se encuentra coincidencia en la sección, revisa sus módulos
-        if (section.modules && section.modules.length > 0) {
-          for (const module of section.modules) {
-            resources = resources.filter(resource => {
-              if (module.name && module.name.toLowerCase() === resource.name.toLowerCase()) {
-                matchedResources.push({
-                  resource,
-                  matchedSection: section.name,
-                  matchedModule: module, // Toda la información del módulo
-                });
-                return false; // Elimina el recurso coincidente de la lista
-              }
-              return true;
+          } else if (resource.name.includes('Foro de debate')) {
+            const courseForums = await this.moodleService.getForumsByCourse(moodleCourseId, token);
+            const validForums = courseForums.filter((forum: any) => {
+              return forum.type && forum.type.toLowerCase() !== 'news';
+            });
+            matchedResources.push({
+              resource,
+              matchedSection: null, // Toda la información de la sección
+              matchedModule: validForums // Coincidencia en la sección, no en un módulo específico
+            });
+          } else {
+            matchedResources.push({
+              resource,
+              matchedSection: validSections, // Toda la información de la sección
+              matchedModule: null, // Coincidencia en la sección, no en un módulo específico
             });
           }
         }
-      }
+      } else {
+        // Recorre cada sección del curso
+        for (const section of courseContents) {
+          // Coincidencia de nombre entre la sección y los recursos
+          resources = resources.filter(resource => {
+            if (section.name && section.name.toLowerCase() === resource.name.toLowerCase()) {
+              matchedResources.push({
+                resource,
+                matchedSection: section, // Toda la información de la sección
+                matchedModule: null, // Coincidencia en la sección, no en un módulo específico
+              });
+              return false; // Elimina el recurso coincidente de la lista
+            }
+            return true;
+          });
 
-      // Los recursos restantes son los que no hicieron match
-      const unmatchedResources = resources.map(resource => ({
-        resource,
-        matchedSection: null,
-        matchedModule: null,
-      }));
+          // Si no se encuentra coincidencia en la sección, revisa sus módulos
+          if (section.modules && section.modules.length > 0) {
+            for (const module of section.modules) {
+              resources = resources.filter(resource => {
+                if (module.name && module.name.toLowerCase() === resource.name.toLowerCase()) {
+                  matchedResources.push({
+                    resource,
+                    matchedSection: section.name,
+                    matchedModule: module, // Toda la información del módulo
+                  });
+                  return false; // Elimina el recurso coincidente de la lista
+                }
+                return true;
+              });
+            }
+          }
+        }
+
+        // Los recursos restantes son los que no hicieron match
+        unmatchedResources = resources.map(resource => ({
+          resource,
+          matchedSection: null,
+          matchedModule: null,
+        }));
+      }
 
       return {
         matchedResources,
@@ -205,35 +246,35 @@ export class EvaluationService {
       throw new NotFoundException(`Error obteniendo contenido del curso desde Moodle: ${error.message}`);
     }
   }
-  
+
   async evaluateIndicatorsForMatchedContents(
     matchedContents: any[],
     areaId: number
   ): Promise<any> {
     const results = [];
-  
+
     for (const item of matchedContents) {
       const { resource, matchedSection, matchedModule } = item;
-  
+
       // Verifica si el recurso tiene contenidos específicos
       const contents = await this.getContentsByResource(resource.id);
-  
+
       if (contents && contents.length > 0) {
         // Llama a la función secundaria para evaluar el cumplimiento de indicadores en el recurso específico
         const resourceResults = await this.evaluateContentIndicators(resource, contents, matchedSection, matchedModule, areaId);
-  
+
         results.push(resourceResults);
       } else {
         // Si no hay contenidos, evalúa los indicadores del recurso directamente
         const resourceOnlyResults = await this.evaluateResourceIndicators(resource, matchedSection, matchedModule, areaId);
-  
+
         results.push(resourceOnlyResults);
       }
     }
-  
+
     console.log('Resultados finales de evaluateIndicatorsForMatchedContents:', results);
     return results;
-  }  
+  }
 
   async evaluateResourceIndicators(
     resource: any,
@@ -247,30 +288,30 @@ export class EvaluationService {
       contents: null, // No hay contenido específico en este caso
       indicators: [],
     };
-  
+
     // Obtiene los indicadores directamente asociados al recurso y área
     const indicators = await this.getIndicatorsByAreaAndResource(areaId, resource.id);
-  
+
     for (const indicator of indicators) {
       let indicatorResult = 0;
-  
+
       // Llama a una función genérica que evalúa el cumplimiento del indicador en el recurso
       if (matchedSection) {
         indicatorResult = this.checkIndicatorCompliance(indicator, matchedSection);
       } else if (matchedModule) {
         indicatorResult = this.checkIndicatorCompliance(indicator, matchedModule);
       }
-  
+
       // Agrega el resultado de la evaluación del indicador a la lista de indicadores del recurso
       result.indicators.push({
         indicatorId: indicator.id,
         result: indicatorResult,
       });
     }
-  
+
     return result;
   }
-  
+
   async evaluateContentIndicators(
     resource: any,
     contents: any[],
@@ -332,15 +373,15 @@ export class EvaluationService {
 
     return result;
   }
-  
+
   /**
    * Verifica si un contenido cumple con el indicador específico.
    */
   checkIndicatorCompliance(indicator: any, foundContent: any): number {
     console.log('Evaluando indicador:', indicator);
     console.log('Contenido encontrado:', foundContent);
-  
+
     // Por ahora, forzamos que siempre devuelva 1 para verificar su funcionamiento
     return 1;
-  }  
+  }
 }
