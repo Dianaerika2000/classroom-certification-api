@@ -1,0 +1,31 @@
+{
+    "resources": [
+        {
+            "name": "Mapa mental",
+            "general": {
+                "name": "Nombre de la unidad",
+                "description": "Mapa mental con objetivos"
+            }
+        },
+        {
+            "name": "Retos",
+            "general": {
+                "name": "Nombre de los retos",
+                "description": "Instrucciones de las tareas",
+                "instructions": ""
+            },
+            "content": {
+                "contentPage": "URL con el video"
+            },
+            "appearance": {
+                "description": false,
+                "modificationData": true
+            },
+            "commonSettings": {
+                "availability": "Mostrar en la página del curso",
+                "numberId": "Ninguno",
+                "forceLanguage": false
+            }
+        }
+    ]
+}

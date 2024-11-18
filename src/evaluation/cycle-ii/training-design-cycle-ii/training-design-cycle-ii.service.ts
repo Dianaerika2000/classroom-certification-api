@@ -103,9 +103,6 @@ export class TrainingDesignCycleIiService {
 
         if (matchedContent) {
             const indicatorHandlers = {
-                'imágenes': async (indicator: any) => {
-                    return this.evaluateImagesInLessons(indicator, matchedContent, token);
-                },
                 'preguntas': async (indicator: any) => {
                     return this.evaluateQuestionsInLessons(indicator, matchedContent, token);
                 }
@@ -192,7 +189,7 @@ export class TrainingDesignCycleIiService {
 
         if (matchedContent) {
             const indicatorHandlers = {
-                'tema de inicio': async (indicator: any) => {
+                'Inicio': async (indicator: any) => {
                     return this.evaluateIntroSubjectForForums(indicator, matchedContent);
                 },
                 'instrucciones': async (indicator: any) => {
@@ -279,23 +276,22 @@ export class TrainingDesignCycleIiService {
         const document = dom.window.document;
 
         // Buscar el título "Objetivo de la Unidad:"
-        const titleElement = Array.from(document.querySelectorAll('b, strong'))
-            .find((el): el is HTMLElement =>
-                el instanceof HTMLElement && el.textContent?.toLowerCase().includes('objetivo de la unidad')
-            );
+        const element = Array.from(document.querySelectorAll('b, strong')) as HTMLElement[];
+        const titleElement = element.find(el => el.textContent?.toLowerCase().includes('objetivo de la unidad'));
 
         // Validar si hay contenido significativo después del título
         let hasContent = false;
-        if (titleElement) {
+        if (titleElement && titleElement.parentElement) {
             // Buscar elementos hermanos posteriores al título
-            let nextSibling = titleElement.parentElement?.nextElementSibling;
+            let nextSibling = titleElement.parentElement.nextElementSibling;
             while (nextSibling) {
-                // Verificar si el nodo es un elemento HTML y tiene texto relevante
-                if (nextSibling instanceof HTMLElement && nextSibling.textContent?.trim().length > 0) {
+                // Verificar si el elemento tiene texto relevante
+                const content = nextSibling.textContent || '';
+                if (content.trim().length > 0) {
                     hasContent = true;
                     break;
                 }
-                nextSibling = nextSibling.nextElementSibling; // Continuar con el siguiente hermano
+                nextSibling = nextSibling.nextElementSibling;
             }
         }
 
@@ -331,7 +327,7 @@ export class TrainingDesignCycleIiService {
         const hasActivity = reto.activity && typeof reto.activity === 'string';
 
         // Busca palabras clave que indican instrucciones
-        const keywords = ['realizar', 'elaborar', 'desarrollar', 'crear', 'hacer', 'completar', 'leer', 'subir'];
+        const keywords = ['realizar', 'elaborar', 'desarrollar', 'crear', 'hacer', 'completar', 'leer', 'subir', 'instrucciones', 'realice'];
         const hasInstructionKeywords = (text: string) =>
             keywords.some(keyword => text.toLowerCase().includes(keyword));
 
@@ -358,7 +354,7 @@ export class TrainingDesignCycleIiService {
             } else {
                 // Genera observaciones para los retos que no cumplen
                 failedObservations.push(
-                    `Reto "${reto.intro || 'sin título'}" no cumple con: ${!hasInstructions ? 'Instrucciones específicas' : ''}`.trim().replace(/,\s*$/, '') // Elimina la última coma
+                    `"${reto.name || 'sin título'}" no cumple con: ${!hasInstructions ? 'Instrucciones específicas' : ''}`.trim().replace(/,\s*$/, '') // Elimina la última coma
                 );
             }
         }
@@ -389,7 +385,7 @@ export class TrainingDesignCycleIiService {
             } else {
                 // Genera observaciones para los retos que no cumplen
                 failedObservations.push(
-                    `Reto "${reto.intro || 'sin título'}" no cumple con: ${!hasSupportFiles ? 'Archivos de apoyo' : ''}`.trim().replace(/,\s*$/, '') // Elimina la última coma
+                    `"${reto.name || 'sin título'}" no cumple con: ${!hasSupportFiles ? 'Archivos de apoyo' : ''}`.trim().replace(/,\s*$/, '') // Elimina la última coma
                 );
             }
         }
@@ -435,7 +431,7 @@ export class TrainingDesignCycleIiService {
             } else {
                 // Genera observaciones para los retos que no cumplen
                 failedObservations.push(
-                    `Foro "${forum.intro || 'sin título'}" no cumple con: ${!hasInstructions ? 'Instrucciones previas' : ''}`.trim().replace(/,\s*$/, '') // Elimina la última coma
+                    `"${forum.name || 'sin título'}" no cumple con: ${!hasInstructions ? 'Instrucciones previas' : ''}`.trim().replace(/,\s*$/, '') // Elimina la última coma
                 );
             }
         }
@@ -466,7 +462,7 @@ export class TrainingDesignCycleIiService {
             } else {
                 // Genera observaciones para los retos que no cumplen
                 failedObservations.push(
-                    `Foro "${forum.intro || 'sin título'}" no cumple con: ${!hasSubject ? 'Tema de Inicio' : ''}`.trim().replace(/,\s*$/, '') // Elimina la última coma
+                    `"${forum.name || 'sin título'}" no cumple con: ${!hasSubject ? 'Tema de Inicio' : ''}`.trim().replace(/,\s*$/, '') // Elimina la última coma
                 );
             }
         }
@@ -490,28 +486,33 @@ export class TrainingDesignCycleIiService {
      * @returns 
      */
     private hasUrlForeachSubject(indicator: any, matchedResources: any[]): IndicatorResult {
+        // Verificar que matchedResources no sea null o undefined
+        if (!matchedResources || !Array.isArray(matchedResources)) {
+            return {
+                indicatorId: indicator.id,
+                result: 0,
+                observation: 'No hay recursos para evaluar'
+            };
+        }
+
         // Obtener las secciones únicas que no sean "videoconferencias"
-        const uniqueSections = matchedResources
-            .flatMap(item => item.matchedSection) // Aplanar el array de matchedSection
-            .filter(section =>
-                section &&
-                typeof section === 'object' &&
-                section.name.toLowerCase() !== 'videoconferencias'
-            )
-            // Eliminar duplicados basados en el id de la sección
-            .filter((section, index, self) =>
-                index === self.findIndex(t => t.id === section.id)
-            );
+        const uniqueSections = matchedResources.filter(section =>
+            section &&
+            typeof section === 'object' &&
+            section.name &&
+            section.name.toLowerCase() !== 'videoconferencias'
+        );
 
         const totalSubjects = uniqueSections.length;
 
         // Encontrar la sección "videoconferencias"
         const videoconferenciaSection = matchedResources.find(section =>
-            section && section.name.toLowerCase() === 'videoconferencias'
+            section &&
+            section.name &&
+            section.name.toLowerCase() === 'videoconferencias'
         );
 
         if (!videoconferenciaSection || !videoconferenciaSection.modules) {
-            // Si no existe la sección o no tiene módulos, no cumple
             return {
                 indicatorId: indicator.id,
                 result: 0,
@@ -521,7 +522,7 @@ export class TrainingDesignCycleIiService {
 
         // Filtrar módulos de la sección "videoconferencias" excluyendo los que tengan modname: "book"
         const validModules = videoconferenciaSection.modules.filter(
-            module => module.modname.toLowerCase() !== 'book'
+            module => module && module.modname && module.modname.toLowerCase() !== 'book'
         );
 
         const hasUrlForeachSubject = totalSubjects === validModules.length;
@@ -587,41 +588,41 @@ export class TrainingDesignCycleIiService {
             module => module.modname.toLowerCase() === 'book'
         );
 
-        const isValidName = moduleTypeBook.name.toLowerCase().includes('grabaciones');
+        const isValidName = moduleTypeBook[0].name.toLowerCase().includes('grabaciones');
 
         return {
             indicatorId: indicator.id,
             result: isValidName ? 1 : 0,
             observation: isValidName
                 ? 'Cumple con el indicador: Libro con nombre Grabaciones de videoconferencia'
-                : `No se cumple con el indicador: Nombre del libro - ${moduleTypeBook.name}`
+                : `No se cumple con el indicador: Nombre del libro - ${moduleTypeBook[0].name}`
         };
     }
 
     private hasRecordingPerPage(indicator: any, matchedResources: any[]): IndicatorResult {
+        // Verificar que matchedResources existe y es un array
+        if (!matchedResources || !Array.isArray(matchedResources)) {
+            return {
+                indicatorId: indicator.id,
+                result: 0,
+                observation: 'No hay recursos para evaluar'
+            };
+        }
+
         // Obtener las secciones únicas que no sean "videoconferencias"
-        const uniqueSections = matchedResources
-            .flatMap(item => item.matchedSection) // Aplanar el array de matchedSection
-            .filter(section =>
-                section &&
-                typeof section === 'object' &&
-                section.name.toLowerCase() !== 'videoconferencias'
-            )
-            // Eliminar duplicados basados en el id de la sección
-            .filter((section, index, self) =>
-                index === self.findIndex(t => t.id === section.id)
-            );
+        const uniqueSections = matchedResources.filter(section =>
+            section && typeof section === 'object' && section.name && section.name.toLowerCase() !== 'videoconferencias');
 
         const totalSubjects = uniqueSections.length;
-        let totalChapters = 0;
 
         // Encontrar la sección "videoconferencias"
         const videoconferenciaSection = matchedResources.find(section =>
-            section && section.name.toLowerCase() === 'videoconferencias'
+            section &&
+            section.name &&
+            section.name.toLowerCase() === 'videoconferencias'
         );
 
         if (!videoconferenciaSection || !videoconferenciaSection.modules) {
-            // Si no existe la sección o no tiene módulos, no cumple
             return {
                 indicatorId: indicator.id,
                 result: 0,
@@ -629,21 +630,28 @@ export class TrainingDesignCycleIiService {
             };
         }
 
-        // Obtener módulo de grabaciones modname: "book"
-        const moduleTypeBook = videoconferenciaSection.modules.filter(
-            module => module.modname.toLowerCase() === 'book'
+        // Obtener módulos de tipo book
+        const moduleTypeBook = videoconferenciaSection.modules.find(
+            module => module && module.modname && module.modname.toLowerCase() === 'book'
         );
 
-        if (moduleTypeBook) {
-            totalChapters = moduleTypeBook.contents?.filter(content => content.filename !== 'structure').length;
+        if (!moduleTypeBook || !moduleTypeBook.contents) {
+            return {
+                indicatorId: indicator.id,
+                result: 0,
+                observation: 'No se encontró el módulo de tipo book o no tiene contenidos'
+            };
         }
+
+        // Calcular total de capítulos, excluyendo 'structure'
+        const totalChapters = moduleTypeBook.contents.filter(content => content && content.filename !== 'structure').length;
 
         return {
             indicatorId: indicator.id,
             result: totalSubjects === totalChapters ? 1 : 0,
             observation: totalSubjects === totalChapters
                 ? 'Cumple con el indicador'
-                : 'No se cumple con el indicador'
+                : `No se cumple con el indicador: ${moduleTypeBook.name || 'Sin nombre'} - Total de páginas: ${totalChapters}`
         };
     }
 
@@ -700,108 +708,6 @@ export class TrainingDesignCycleIiService {
                 ? 'Al menos 4 lecciones tienen preguntas'
                 : 'Menos de 4 lecciones tienen preguntas'
         };
-    }
-
-    private async hasContentFiles(lessonId: number, token: string): Promise<boolean> {
-        try {
-            // 1. Obtener todas las páginas de la lección
-            const pages = await this.moodleService.getLessonPages(lessonId, token);
-
-            // 2. Filtrar solo las páginas de tipo 'Contenido'
-            const contentPages = pages.filter(page => page.typestring === 'Contenido');
-
-            // 3. Revisar cada página de contenido
-            for (const page of contentPages) {
-                const pageContent = await this.moodleService.getLessonPageContent(lessonId, page.id, token);
-
-                // Si encuentra contentfiles en alguna página, retorna true
-                if (pageContent?.contentfiles?.length > 0) {
-                    return true;
-                }
-            }
-
-            // Si no encontró contentfiles en ninguna página
-            return false;
-
-        } catch (error) {
-            console.error('Error al procesar las páginas de la lección:', error);
-        }
-    }
-
-    private async hasLessonsWithContentFiles(lessons: any[]): Promise<boolean> {
-        try {
-            // Recorrer cada lesson
-            for (const lesson of lessons) {
-                // Verificar si la lesson tiene archivos
-                const hasFiles = await this.hasContentFiles(lesson.instance, lesson.token);
-
-                // Si encuentra una lesson con archivos, retorna true inmediatamente
-                if (hasFiles) {
-                    return true;
-                }
-            }
-
-            // Si ninguna lesson tiene archivos, retorna false
-            return false;
-
-        } catch (error) {
-            console.error('Error al procesar las lecciones:', error);
-            return false; // o manejar el error como prefieras
-        }
-    }
-
-    private async evaluateImagesInLessons(indicator: any, sections: any[], token: string): Promise<IndicatorResult> {
-        try {
-            // Filtrar las secciones que contienen la palabra "unidad"
-            const lessonSections = sections.filter(section =>
-                section && section.name.toLowerCase().includes('unidad')
-            );
-
-            if (lessonSections.length === 0) {
-                return {
-                    indicatorId: indicator.id,
-                    result: 0,
-                    observation: 'No se encontraron secciones de unidades para evaluar'
-                };
-            }
-
-            // Array para almacenar todas las lecciones de todas las secciones
-            let allLessons = [];
-
-            // Obtener las lecciones de cada sección
-            for (const section of lessonSections) {
-                // Suponiendo que tienes un método para obtener las lecciones de una sección
-                const lessonsInSection = section.modules.filter(module => module.modname === 'lesson');
-                allLessons = [...allLessons, ...lessonsInSection];
-            }
-
-            if (allLessons.length === 0) {
-                return {
-                    indicatorId: indicator.id,
-                    result: 0,
-                    observation: 'No se encontraron lecciones en las unidades'
-                };
-            }
-
-            // Verificar si hay lecciones con archivos
-            const hasFiles = await this.hasLessonsWithContentFiles(allLessons);
-
-            return {
-                indicatorId: indicator.id,
-                result: hasFiles ? 1 : 0,
-                observation: hasFiles
-                    ? 'Se encontraron lecciones con imágenes en las unidades'
-                    : 'No se encontraron lecciones con imágenes en las unidades'
-            };
-
-        } catch (error) {
-            console.error('Error al evaluar imágenes en lecciones:', error);
-            return {
-                indicatorId: indicator.id,
-                result: 0,
-                observation: 'Error al evaluar imágenes en lecciones'
-            };
-        }
     }
 
     /**
