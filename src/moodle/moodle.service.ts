@@ -181,4 +181,17 @@ export class MoodleService {
       throw new HttpException('Error al obtener las páginas de la lección desde Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  async getQuizzesByCourse(courseId: number, token: string): Promise<any> {
+    const apiUrl = this.getMoodleApiUrl();
+    const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=mod_quiz_get_quizzes_by_courses&courseids[0]=${courseId}`;
+
+    try {
+      const response = await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      throw new HttpException('Error al obtener actividades del curso de Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 }

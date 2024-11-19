@@ -9,6 +9,7 @@ import { ValidRoles } from 'src/auth/enums/valid-roles';
 import { TrainingDesignService } from './organizational-aspects/training-design/training-design.service';
 import { TechnicalDesignService } from './organizational-aspects/technical-design/technical-design.service';
 import { TrainingDesignCycleIiService } from './cycle-ii/training-design-cycle-ii/training-design-cycle-ii.service';
+import { TechnicalDesignCycleIiService } from './cycle-ii/technical-design-cycle-ii/technical-design-cycle-ii.service';
 
 @ApiTags('Evaluation')
 @Controller('evaluation')
@@ -18,6 +19,7 @@ export class EvaluationController {
     private readonly trainingDesignService: TrainingDesignService,
     private readonly technicalDesignService: TechnicalDesignService,
     private readonly trainingDesignCycleService: TrainingDesignCycleIiService,
+    private readonly technicalDesignCycleService: TechnicalDesignCycleIiService,
   ) { }
 
   @Post()
@@ -230,6 +232,37 @@ export class EvaluationController {
         indicators,
         matchedContent,
         token
+      );
+
+      return {
+        success: true,
+        results,
+      };
+    } catch (error) {
+      console.error('Error evaluando contenido:', error);
+      return {
+        success: false,
+        message: 'Error evaluando contenido',
+        error: error.message,
+      };
+    }
+  }
+
+  @Post('evaluate-content-cycle-ii-technical')
+  async evaluateContentIndicatorsCIITechnical(
+    @Body('content') content: any,
+    @Body('indicators') indicators: any[],
+    @Body('matchedContent') matchedContent: any,
+    @Query('token') token?: string,
+    @Query('courseid') courseid?: number
+  ) {
+    try {
+      const results = await this.technicalDesignCycleService.evaluateContentIndicators(
+        content,
+        indicators,
+        matchedContent,
+        token, 
+        courseid
       );
 
       return {
