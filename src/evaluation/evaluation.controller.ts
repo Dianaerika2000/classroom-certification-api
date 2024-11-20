@@ -6,14 +6,14 @@ import { CreateEvaluationDto } from './dto/create-evaluation.dto';
 import { UpdateEvaluationDto } from './dto/update-evaluation.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ValidRoles } from 'src/auth/enums/valid-roles';
-import { Cycle1Service } from './cycleservice/cycle1.service';
+import { Cycle1TrainingDesignService } from './cycles/cycles';
 
 @ApiTags('Evaluation')
 @Controller('evaluation')
 export class EvaluationController {
   constructor(
     private readonly evaluationService: EvaluationService,
-    private readonly cycle1Service: Cycle1Service
+    private readonly cycle1TrainingDesignService: Cycle1TrainingDesignService
   ) {}
 
   @Post()
@@ -159,7 +159,7 @@ export class EvaluationController {
   async testEvaluatePriorKnowledgeLesson(@Body() body: { indicators: any[]; matchedContent: any }) {
     const { indicators, matchedContent } = body;
     // const result = await this.cycle1Service['evaluatePriorKnowledgeLesson'](indicators, matchedContent);
-    const result = await this.cycle1Service['evaluateBibliography'](indicators, matchedContent);
+    const result = await this.cycle1TrainingDesignService['evaluateBibliography'](indicators, matchedContent);
     return {
       indicators,
       matchedContent,

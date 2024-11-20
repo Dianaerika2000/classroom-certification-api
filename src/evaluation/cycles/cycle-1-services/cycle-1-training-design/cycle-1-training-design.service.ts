@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { IndicatorResult } from '../interfaces/indicator-result.interface';
-import { MoodleService } from '../../moodle/moodle.service';
-import { FileContent } from '../interfaces/file-content.interface';
-
+import { IndicatorResult } from '../../../interfaces/indicator-result.interface';
+import { FileContent } from '../../../interfaces/file-content.interface';
+import { MoodleService } from '../../../../moodle/moodle.service';
 
 @Injectable()
-export class Cycle1Service {
+export class Cycle1TrainingDesignService {
   constructor(
     private readonly moodleService: MoodleService,
   ){}
@@ -15,11 +14,11 @@ export class Cycle1Service {
   evaluateIndicatorsByContent(
     content: any, 
     indicators: any[], 
-    matchedContent: any
+    matchedContent: any,
+    token?: string
   ): IndicatorResult[] {
-    // Determina qué función evaluadora usar según el nombre del contenido
     const contentEvaluator = this.getContentEvaluator(content.name);
-    
+  
     if (!contentEvaluator) {
       // Si no hay evaluador para este contenido, marca todos los indicadores para revisión manual
       return indicators.map(indicator => ({
@@ -28,33 +27,37 @@ export class Cycle1Service {
         observation: `El contenido "${content.name}" requiere verificación manual`
       }));
     }
-
-    // Evalúa los indicadores usando la función específica
+  
+    if (content.name === "Lección de conocimientos previos") {
+      return contentEvaluator(indicators, matchedContent, token);
+    }
+  
     return contentEvaluator(indicators, matchedContent);
   }
+  
 
   /**
     * Retorna la función evaluadora específica según el contenido
     */
-  private getContentEvaluator(contentName: string): ((indicators: any[], matchedContent: any) => IndicatorResult[]) | null {
+  private getContentEvaluator(contentName: string): ((indicators: any[], matchedContent: any, token?: string) => IndicatorResult[]) | null {
     const contentEvaluators = {
       'Lección de conocimientos previos': this.evaluatePriorKnowledgeLesson.bind(this),
       'Cuestionario diagnóstico': this.evaluateDiagnosticQuiz.bind(this),
       'Bibliografía': this.evaluateBibliography.bind(this),
     };
-
+  
     // Busca coincidencia exacta o parcial
     const evaluator = Object.entries(contentEvaluators).find(([key]) => 
       contentName.toLowerCase().includes(key.toLowerCase())
     );
-
+  
     return evaluator ? evaluator[1] : null;
   }
 
   /**
    * Evalúa indicadores relacionados con la lección de conocimientos previos
    */
-  private async evaluatePriorKnowledgeLesson(indicators: any[], matchedContent: any): Promise<IndicatorResult[]> {
+  private async evaluatePriorKnowledgeLesson(indicators: any[], matchedContent: any, token?: string): Promise<IndicatorResult[]> {
     const results: IndicatorResult[] = [];  
 
     for (const indicator of indicators) {
@@ -62,7 +65,7 @@ export class Cycle1Service {
 
       switch (normalizedName) {
         case 'contiene lectura guía de conocimientos previos':
-          const hasGuide = await this.checkPriorKnowledgeGuide(matchedContent);  
+          const hasGuide = await this.checkPriorKnowledgeGuide(matchedContent, token);  
           results.push({
             indicatorId: indicator.id,
             result: hasGuide ? 1 : 0,
@@ -71,7 +74,7 @@ export class Cycle1Service {
           break;
   
         case 'contiene preguntas autocalificables':
-          const hasQuestions = await this.checkAutoGradedQuestions(matchedContent); 
+          const hasQuestions = await this.checkAutoGradedQuestions(matchedContent, token); 
           results.push({
             indicatorId: indicator.id,
             result: hasQuestions ? 1 : 0,
@@ -161,13 +164,13 @@ export class Cycle1Service {
   }
 
   // Métodos específicos de validación
-  private async checkPriorKnowledgeGuide(matchedContent: any): Promise<boolean> {
+  private async checkPriorKnowledgeGuide(matchedContent: any, token: string): Promise<boolean> {
     if (matchedContent.modname !== 'lesson') {
       console.log('No se encontró contenido de tipo "lesson"');
       return false;
     }
   
-    const lessonPages = await this.moodleService.getLessonPages(matchedContent.instance, '89eec6734026018ff9d283d2b5b79edc');
+    const lessonPages = await this.moodleService.getLessonPages(matchedContent.instance, token);
     if (!lessonPages) {
       return false;
     }
@@ -179,9 +182,9 @@ export class Cycle1Service {
   }
   
 
-  private async checkAutoGradedQuestions(matchedContent: any): Promise<boolean> {
+  private async checkAutoGradedQuestions(matchedContent: any, token: string): Promise<boolean> {
     // Llamamos al servicio de Moodle para obtener las páginas de la lección.
-    const pages = await this.moodleService.getLessonPages(matchedContent.instance, '89eec6734026018ff9d283d2b5b79edc');
+    const pages = await this.moodleService.getLessonPages(matchedContent.instance, token);
     
     // Tipos de preguntas autocalificables según Moodle (por ejemplo, Multiple Choice, True/False, etc.)
     const autoGradedQuestionTypes = [3, 4, 5, 8];
@@ -202,11 +205,6 @@ export class Cycle1Service {
     
     // Devolver verdadero solo si hay al menos una pregunta autocalificable
     return hasAutoGradedQuestions;
-  }
-  
-  private checkSupportMaterial(matchedContent: any): boolean {
-    // Implementar lógica de validación
-    return matchedContent.includes('material didáctico');
   }
 
   private async checkQuestionBankWithMinimumQuestions(matchedContent: any): Promise<boolean> {

@@ -10,7 +10,7 @@ import { ResourceModule } from 'src/resource/resource.module';
 import { IndicatorModule } from 'src/indicator/indicator.module';
 import { AreaModule } from 'src/area/area.module';
 import { MoodleModule } from 'src/moodle/moodle.module';
-import { Cycle1Service } from './cycleservice/cycle1.service';
+import { Cycle1TechnicalDesignService, Cycle1TrainingDesignService, Cycle3TechnicalDesignService, Cycle3TrainingDesignService } from './cycles/cycles';
 
 @Module({
   imports: [
@@ -24,6 +24,12 @@ import { Cycle1Service } from './cycleservice/cycle1.service';
     IndicatorModule
   ],
   controllers: [EvaluationController],
-  providers: [EvaluationService, Cycle1Service],
+  providers: [
+    EvaluationService, 
+    Cycle1TrainingDesignService, 
+    Cycle1TechnicalDesignService,
+    Cycle3TrainingDesignService,
+    Cycle3TechnicalDesignService,
+  ],
 })
 export class EvaluationModule {}

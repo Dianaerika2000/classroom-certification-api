@@ -129,5 +129,44 @@ export class MoodleService {
       console.error('Error al obtener las páginas de la lección desde Moodle:', error);
       throw new HttpException('Error al obtener las páginas de la lección desde Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }    
+  }
+
+  async getUserCourses(userId: number, token: string): Promise<any[]> {
+    const apiUrl = this.getMoodleApiUrl();
+    const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=core_enrol_get_users_courses&userid=${userId}`;
+  
+    try {
+      const response = await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
+      return response.data || [];
+    } catch (error) {
+      console.error('Error al obtener los cursos del usuario desde Moodle:', error);
+      throw new HttpException('Error al obtener los cursos del usuario desde Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getCategoryById(categoryId: number, token: string): Promise<any> {
+    const apiUrl = this.getMoodleApiUrl();
+    const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=core_course_get_categories&criteria[0][key]=id&criteria[0][value]=${categoryId}`;
+  
+    try {
+      const response = await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
+      return response.data?.[0] || null; 
+    } catch (error) {
+      console.error('Error al obtener la categoría desde Moodle:', error);
+      throw new HttpException('Error al obtener la categoría desde Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getQuizzesByCourse(courseId: number, token: string): Promise<any[]> {
+    const apiUrl = this.getMoodleApiUrl();
+    const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=mod_quiz_get_quizzes_by_courses&courseids[0]=${courseId}`;
+  
+    try {
+      const response = await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
+      return response.data.quizzes || [];
+    } catch (error) {
+      console.error('Error al obtener los cuestionarios del curso desde Moodle:', error);
+      throw new HttpException('Error al obtener los cuestionarios del curso desde Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 }
