@@ -4,11 +4,9 @@ import { UpdateEvaluationDto } from './dto/update-evaluation.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Evaluation } from './entities/evaluation.entity';
 import { Repository } from 'typeorm';
-import { MoodleService } from '../moodle/moodle.service';
 import { ClassroomService } from '../classroom/classroom.service';
-import { CycleService } from '../cycle/cycle.service';
-import { ResourceService } from '../resource/resource.service';
-import { IndicatorService } from '../indicator/indicator.service';
+import { MoodleAnalysisService } from './moodle-analysis/moodle-analysis.service';
+import { IndicatorEvaluationService } from './indicator-evaluation/indicator-evaluation.service';
 
 @Injectable()
 export class EvaluationService {
@@ -16,10 +14,8 @@ export class EvaluationService {
     @InjectRepository(Evaluation)
     private evaluationRepository: Repository<Evaluation>,
     private readonly classroomService: ClassroomService,
-    private readonly moodleService: MoodleService,
-    private readonly cycleService: CycleService,
-    private readonly resourceService: ResourceService,
-    private readonly indicatorService: IndicatorService,
+    private readonly moodleAnalysisService: MoodleAnalysisService,
+    private readonly indicatorEvaluationService: IndicatorEvaluationService,
   ) { }
 
   async create(createEvaluationDto: CreateEvaluationDto): Promise<Evaluation> {
@@ -83,305 +79,43 @@ export class EvaluationService {
     return await this.evaluationRepository.remove(evaluation);
   }
 
-  /**
-   * Obtiene los recursos asociados a un ciclo específico
-   */
-  async getResourcesByCycle(cycleId: number) {
-    return await this.resourceService.findAllByCycle(cycleId);
-  }
-
-  /**
-   * Obtiene los contenidos de un recurso específico
-   */
-  async getContentsByResource(resourceId: number) {
-    return await this.resourceService.findContents(resourceId);
-  }
-
-  /**
-   * Obtiene los indicadores asociados a un área específica para un recurso específico
-   */
-  async getIndicatorsByAreaAndResource(areaId: number, resourceId: number) {
-    return await this.indicatorService.findByAreaAndResource(areaId, resourceId);
-  }
-
-  /**
-   * Obtiene los indicadores asociados a un área específica para un contenido específico
-   */
-  async getIndicatorsByAreaAndContent(areaId: number, contentId: number) {
-    return await this.indicatorService.findByAreaAndContent(areaId, contentId);
-  }
-
-  /**
- * Realiza el análisis de cumplimiento del aula de Moodle contra los indicadores definidos.
- */
   async analyzeClassroomCompliance(
     moodleCourseId: number,
     token: string,
     cycleId: number,
     areaId: number
   ): Promise<any> {
-    try {
-      // Paso 1: Obtiene los contenidos del curso desde Moodle que coinciden con los recursos
-      const { matchedResources, unmatchedResources } = await this.fetchAndMatchCourseContents(moodleCourseId, token, cycleId);
+    const { matchedResources, unmatchedResources } = 
+      await this.moodleAnalysisService.analyzeClassroomContents(
+        moodleCourseId, 
+        token, 
+        cycleId
+      );
 
-      // Paso 2: Evalúa el cumplimiento de los indicadores por cuadrante (ciclo y área) solo para los recursos que hicieron match
-      const results = await this.evaluateIndicatorsForMatchedContents(matchedResources, areaId);
-
-      // Devuelve los resultados de la evaluación, incluyendo los recursos que no hicieron match
-      return {
-        message: "Análisis de cumplimiento del aula completado exitosamente",
-        data: {
-          matchedResults: results,
-          unmatchedResources: unmatchedResources
-        },
-      };
-    } catch (error) {
-      throw new Error(`Error durante el análisis de cumplimiento del aula: ${error.message}`);
-    }
-  }
-
-  /**
-   * Obtiene y verifica el contenido del curso de Moodle, buscando coincidencias con los recursos en la base de datos.
-   */
-  async fetchAndMatchCourseContents(moodleCourseId: number, token: string, cycleId: number): Promise<any> {
-    try {
-      // Obtiene el contenido del curso desde Moodle usando el ID del curso en Moodle
-      const courseContents = await this.moodleService.getCourseContents(moodleCourseId, token);
-
-      if (!courseContents || courseContents.length === 0) {
-        throw new NotFoundException(`Contenido no encontrado para el curso con ID en Moodle ${moodleCourseId}`);
+    const results = await this.indicatorEvaluationService.evaluateIndicators(
+      matchedResources,
+      {
+        areaId,
+        cycleId,
+        token,
+        courseid: moodleCourseId
       }
+    );
 
-      // Obtiene la información del ciclo
-      const cycle = await this.cycleService.findOne(cycleId);
-      const isCycle2 = cycle?.name === 'CICLO 2';
-
-      // Obtiene los recursos asociados al ciclo de la base de datos usando cycleId
-      let resources = await this.getResourcesByCycle(cycleId);
-
-      const matchedResources = [];
-      let unmatchedResources = [];
-
-      if (isCycle2) {
-        const validSections = courseContents.filter((section: any) => {
-          return section.name && section.name.trim() !== '' && section.name.toLowerCase() !== 'inicio' && section.name.toLowerCase() !== 'cierre';
-        });
-
-        for (const resource of resources) {
-          if (resource.name.includes('Retos')) {
-            const courseAssignments = await this.moodleService.getAssignmentsByCourse(moodleCourseId, token);
-            const validAssignments = courseAssignments.courses[0].assignments.filter((assign: any) => {
-              return assign.name && assign.name.toLowerCase().includes('reto') && assign.name.toLowerCase() !== 'reto';
-            });
-            matchedResources.push({
-              resource,
-              matchedSection: null, // Toda la información de la sección
-              matchedModule: validAssignments // Coincidencia en la sección, no en un módulo específico
-            });
-          } else if (resource.name.includes('Foro de debate')) {
-            const courseForums = await this.moodleService.getForumsByCourse(moodleCourseId, token);
-            const validForums = courseForums.filter((forum: any) => {
-              return forum.type && forum.type.toLowerCase() !== 'news';
-            });
-            matchedResources.push({
-              resource,
-              matchedSection: null, // Toda la información de la sección
-              matchedModule: validForums // Coincidencia en la sección, no en un módulo específico
-            });
-          } else {
-            matchedResources.push({
-              resource,
-              matchedSection: validSections, // Toda la información de la sección
-              matchedModule: null, // Coincidencia en la sección, no en un módulo específico
-            });
-          }
-        }
-      } else {
-        // Recorre cada sección del curso
-        for (const section of courseContents) {
-          // Coincidencia de nombre entre la sección y los recursos
-          resources = resources.filter(resource => {
-            if (section.name && section.name.toLowerCase() === resource.name.toLowerCase()) {
-              matchedResources.push({
-                resource,
-                matchedSection: section, // Toda la información de la sección
-                matchedModule: null, // Coincidencia en la sección, no en un módulo específico
-              });
-              return false; // Elimina el recurso coincidente de la lista
-            }
-            return true;
-          });
-
-          // Si no se encuentra coincidencia en la sección, revisa sus módulos
-          if (section.modules && section.modules.length > 0) {
-            for (const module of section.modules) {
-              resources = resources.filter(resource => {
-                if (module.name && module.name.toLowerCase() === resource.name.toLowerCase()) {
-                  matchedResources.push({
-                    resource,
-                    matchedSection: section.name,
-                    matchedModule: module, // Toda la información del módulo
-                  });
-                  return false; // Elimina el recurso coincidente de la lista
-                }
-                return true;
-              });
-            }
-          }
-        }
-
-        // Los recursos restantes son los que no hicieron match
-        unmatchedResources = resources.map(resource => ({
-          resource,
-          matchedSection: null,
-          matchedModule: null,
-        }));
-      }
-
-      return {
-        matchedResources,
+    return {
+      message: "Análisis de cumplimiento del aula completado exitosamente",
+      data: {
+        matchedResults: results,
         unmatchedResources
-      };
-    } catch (error) {
-      throw new NotFoundException(`Error obteniendo contenido del curso desde Moodle: ${error.message}`);
-    }
-  }
-
-  async evaluateIndicatorsForMatchedContents(
-    matchedContents: any[],
-    areaId: number
-  ): Promise<any> {
-    const results = [];
-
-    for (const item of matchedContents) {
-      const { resource, matchedSection, matchedModule } = item;
-
-      // Verifica si el recurso tiene contenidos específicos
-      const contents = await this.getContentsByResource(resource.id);
-
-      if (contents && contents.length > 0) {
-        // Llama a la función secundaria para evaluar el cumplimiento de indicadores en el recurso específico
-        const resourceResults = await this.evaluateContentIndicators(resource, contents, matchedSection, matchedModule, areaId);
-
-        results.push(resourceResults);
-      } else {
-        // Si no hay contenidos, evalúa los indicadores del recurso directamente
-        const resourceOnlyResults = await this.evaluateResourceIndicators(resource, matchedSection, matchedModule, areaId);
-
-        results.push(resourceOnlyResults);
-      }
-    }
-
-    console.log('Resultados finales de evaluateIndicatorsForMatchedContents:', results);
-    return results;
-  }
-
-  async evaluateResourceIndicators(
-    resource: any,
-    matchedSection: any,
-    matchedModule: any,
-    areaId: number
-  ): Promise<any> {
-    // Inicializa la estructura de respuesta para el recurso
-    const result = {
-      resourceId: resource.id,
-      contents: null, // No hay contenido específico en este caso
-      indicators: [],
-    };
-
-    // Obtiene los indicadores directamente asociados al recurso y área
-    const indicators = await this.getIndicatorsByAreaAndResource(areaId, resource.id);
-
-    for (const indicator of indicators) {
-      let indicatorResult = 0;
-
-      // Llama a una función genérica que evalúa el cumplimiento del indicador en el recurso
-      if (matchedSection) {
-        indicatorResult = this.checkIndicatorCompliance(indicator, matchedSection);
-      } else if (matchedModule) {
-        indicatorResult = this.checkIndicatorCompliance(indicator, matchedModule);
-      }
-
-      // Agrega el resultado de la evaluación del indicador a la lista de indicadores del recurso
-      result.indicators.push({
-        indicatorId: indicator.id,
-        result: indicatorResult,
-      });
-    }
-
-    return result;
-  }
-
-  async evaluateContentIndicators(
-    resource: any,
-    contents: any[],
-    matchedSection: any,
-    matchedModule: any,
-    areaId: number
-  ): Promise<any> {
-    const result = {
-      resourceId: resource.id,
-      contents: {
-        match: [],
-        noMatch: [],
       },
     };
-
-    for (const content of contents) {
-      const contentName = content?.name?.toLowerCase() || "";
-      let foundContent = null;
-      let indicatorsResult = [];
-
-      // Coincidencia en secciones o módulos con coincidencia flexible
-      if (matchedSection?.name && matchedSection.name.toLowerCase().includes(contentName)) {
-        foundContent = matchedSection;
-      } else if (matchedModule?.name && matchedModule.name.toLowerCase().includes(contentName)) {
-        foundContent = matchedModule;
-      } else if (matchedModule?.contents) {
-        // Busca en contenidos específicos dentro del módulo
-        foundContent = matchedModule.contents.find((moduleContent: any) =>
-          moduleContent?.content && moduleContent.content.toLowerCase().includes(contentName)
-        );
-      }
-
-      if (foundContent) {
-        // Evaluar los indicadores para los contenidos que hicieron match
-        const indicators = await this.getIndicatorsByAreaAndContent(areaId, content.id);
-        for (const indicator of indicators) {
-          const indicatorResult = this.checkIndicatorCompliance(indicator, foundContent);
-          indicatorsResult.push({
-            indicatorId: indicator.id,
-            result: indicatorResult,
-          });
-        }
-        result.contents.match.push({
-          contentId: content.id,
-          indicators: indicatorsResult,
-        });
-      } else {
-        // Registra el contenido en noMatch si no hizo coincidencia
-        indicatorsResult.push({
-          indicatorId: null,
-          result: 0,
-        });
-        result.contents.noMatch.push({
-          contentId: content.id,
-          indicators: indicatorsResult,
-        });
-      }
-    }
-
-    return result;
   }
 
-  /**
-   * Verifica si un contenido cumple con el indicador específico.
-   */
-  checkIndicatorCompliance(indicator: any, foundContent: any): number {
-    console.log('Evaluando indicador:', indicator);
-    console.log('Contenido encontrado:', foundContent);
-
-    // Por ahora, forzamos que siempre devuelva 1 para verificar su funcionamiento
-    return 1;
-  }
+  async fetchAndMatchCourseContents(moodleCourseId: number, token: string, cycleId: number): Promise<any> {
+    return this.moodleAnalysisService.analyzeClassroomContents(
+      moodleCourseId, 
+      token, 
+      cycleId
+    );
+  } 
 }

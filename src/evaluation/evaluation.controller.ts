@@ -153,14 +153,6 @@ export class EvaluationController {
     return await this.evaluationService.analyzeClassroomCompliance(moodleCourseId, token, cycleId, areaId);
   }
 
-  @Post('evaluate-indicators/:areaId')
-  async evaluateIndicatorsForMatchedContents(
-    @Param('areaId') areaId: number,
-    @Body('matchedContents') matchedContents: any[]
-  ): Promise<any> {
-    return await this.evaluationService.evaluateIndicatorsForMatchedContents(matchedContents, areaId);
-  }
-
   @Post('evaluate-content')
   async evaluateContentIndicatorsOA(
     @Body('content') content: any,
