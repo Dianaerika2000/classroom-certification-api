@@ -166,7 +166,7 @@ export class Cycle1TrainingDesignService {
   // Métodos específicos de validación
   private async checkPriorKnowledgeGuide(matchedContent: any, token: string): Promise<boolean> {
     if (matchedContent.modname !== 'lesson') {
-      console.log('No se encontró contenido de tipo "lesson"');
+      console.info('No se encontró contenido de tipo "lesson"');
       return false;
     }
   
@@ -191,12 +191,12 @@ export class Cycle1TrainingDesignService {
     
     // Imprimir en consola el 'qtype' de cada página para verificar
     pages.forEach(page => {
-      console.log(`Page ID: ${page.page.id}, Qtype: ${page.page.qtype}`);
+      console.info(`Page ID: ${page.page.id}, Qtype: ${page.page.qtype}`);
     });
     
     // Verificar si existe al menos una página de tipo pregunta autocalificable
     const hasAutoGradedQuestions = pages.some(page => autoGradedQuestionTypes.includes(page.page.qtype));
-    console.log(`hasAutoGradedQuestions: ${hasAutoGradedQuestions}`);
+    console.info(`hasAutoGradedQuestions: ${hasAutoGradedQuestions}`);
     
     // Si no hay ninguna página autocalificable y todas las páginas son de tipo contenido (qtype = 20), devolvemos false
     if (!hasAutoGradedQuestions && pages.every(page => page.page.qtype === 20)) {
@@ -241,10 +241,10 @@ export class Cycle1TrainingDesignService {
 
     // Obtener los grupos únicos de rutas
     const pathGroups = Object.keys(filesByPath);
-    console.log('\nRutas únicas encontradas:', pathGroups);
+    console.info('\nRutas únicas encontradas:', pathGroups);
 
     if (pathGroups.length < 2) {
-      console.log('No hay suficientes grupos diferentes');
+      console.info('No hay suficientes grupos diferentes');
       return false;
     }
 
@@ -252,7 +252,7 @@ export class Cycle1TrainingDesignService {
     const allGroupsHaveFiles = pathGroups.every(path => {
       const files = filesByPath[path];
       const hasFiles = files.length > 0;
-      console.log(`Grupo ${path} tiene ${files.length} archivos`);
+      console.info(`Grupo ${path} tiene ${files.length} archivos`);
       return hasFiles;
     });
 

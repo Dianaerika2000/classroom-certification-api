@@ -150,11 +150,13 @@ export class MoodleAnalysisService {
             }
 
             if (moduleMatch) {
-                matches.push({
-                    resource,
-                    matchedSection: section.name,
-                    matchedModule: moduleMatch
-                });
+                if (!resource.name.toLowerCase().includes('carpeta')) {
+                    matches.push({
+                        resource,
+                        matchedSection: section.name,
+                        matchedModule: moduleMatch
+                    });
+                }
             }
         }
         return matches.length > 0 ? matches : null;

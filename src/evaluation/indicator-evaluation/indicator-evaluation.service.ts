@@ -2,10 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { AreaService } from 'src/area/area.service';
 import { CycleService } from 'src/cycle/cycle.service';
 import { IndicatorService } from 'src/indicator/indicator.service';
-import { TechnicalDesignCycleIiService } from '../cycles/cycle-ii/technical-design-cycle-ii/technical-design-cycle-ii.service';
-import { TrainingDesignCycleIiService } from '../cycles/cycle-ii/training-design-cycle-ii/training-design-cycle-ii.service';
-import { TechnicalDesignService } from '../cycles/organizational-aspects/technical-design/technical-design.service';
-import { TrainingDesignService } from '../cycles/organizational-aspects/training-design/training-design.service';
+import { Cycle1TechnicalDesignService, Cycle1TrainingDesignService, Cycle3TechnicalDesignService, Cycle3TrainingDesignService, TechnicalDesignCycleIiService, TechnicalDesignService, TrainingDesignCycleIiService, TrainingDesignService } from '../cycles/cycles';
 
 enum AreaType {
     Formacion = 'formación',
@@ -14,7 +11,9 @@ enum AreaType {
 
 enum CycleType {
     Organizacionales = 'organizacionales',
-    CicloII = 'ciclo 2'
+    CicloII = 'ciclo 2',
+    CicloI = 'ciclo 1',
+    CicloIII = 'ciclo 3'
 }
 
 interface EvaluationContext {
@@ -35,12 +34,28 @@ export class IndicatorEvaluationService {
             service: this.organizationalAspectsTechnicalService,
             method: 'evaluateContentIndicators'
         },
+        [`${AreaType.Formacion}_${CycleType.CicloI}`]: {
+            service: this.cycleiTrainingService,
+            method: 'evaluateContentIndicators'
+        },
+        [`${AreaType.Tecnico}_${CycleType.CicloI}`]: {
+            service: this.cycleiTechnicalService,
+            method: 'cycleiTechnicalService'
+        },
         [`${AreaType.Formacion}_${CycleType.CicloII}`]: {
             service: this.cycleiiTrainingService,
             method: 'evaluateContentIndicators'
         },
         [`${AreaType.Tecnico}_${CycleType.CicloII}`]: {
             service: this.cycleiiTechnicalService,
+            method: 'evaluateContentIndicators'
+        },
+        [`${AreaType.Formacion}_${CycleType.CicloIII}`]: {
+            service: this.cycleiiiTrainingService,
+            method: 'evaluateContentIndicators'
+        },
+        [`${AreaType.Tecnico}_${CycleType.CicloIII}`]: {
+            service: this.cycleiiiTechnicalService,
             method: 'evaluateContentIndicators'
         },
     }
@@ -51,8 +66,12 @@ export class IndicatorEvaluationService {
         private readonly indicatorService: IndicatorService,
         private readonly organizationalAspectsTrainingService: TrainingDesignService,
         private readonly organizationalAspectsTechnicalService: TechnicalDesignService,
+        private readonly cycleiTrainingService: Cycle1TrainingDesignService,
+        private readonly cycleiTechnicalService: Cycle1TechnicalDesignService,
         private readonly cycleiiTrainingService: TrainingDesignCycleIiService,
         private readonly cycleiiTechnicalService: TechnicalDesignCycleIiService,
+        private readonly cycleiiiTrainingService: Cycle3TrainingDesignService,
+        private readonly cycleiiiTechnicalService: Cycle3TechnicalDesignService,
     ) { }
 
     async evaluateIndicators(
@@ -86,6 +105,7 @@ export class IndicatorEvaluationService {
         const { resource, matchedSection, matchedModule } = item;
         const result = {
             resourceId: resource.id,
+            resourceName: resource.name,
             contents: { match: [], noMatch: [] }
         };
 
@@ -104,6 +124,33 @@ export class IndicatorEvaluationService {
         return result;
     }
 
+    private async evaluateResourceIndicators(
+        item: any,
+        context: EvaluationContext
+    ): Promise<any> {
+        // Similar implementation to evaluateContentIndicators
+        const { resource, matchedSection, matchedModule } = item;
+        const result = {
+            resourceId: resource.id,
+            resourceName: resource.name,
+            contents: { match: [], noMatch: [] }
+        };
+
+        const matchResult = await this.evaluateContentMatch(
+            resource,
+            matchedSection,
+            matchedModule,
+            context,
+            'resource'
+        );
+
+        if (matchResult) {
+            result.contents.match.push(matchResult);
+        }
+
+        return result;
+    }
+
     private async evaluateContentMatch(
         content: any,
         matchedSection: any,
@@ -111,6 +158,8 @@ export class IndicatorEvaluationService {
         { areaId, cycleId, token, courseid }: EvaluationContext,
         type: 'content' | 'resource'
     ) {
+        if (content.name.toLowerCase().includes('carpeta')) return;
+
         const [area, cycle] = await Promise.all([
             this.areaService.findOne(areaId),
             this.cycleService.findOne(cycleId)
@@ -160,31 +209,5 @@ export class IndicatorEvaluationService {
         };
 
         return isValidContent(matchedSection) ? matchedSection : matchedModule;
-    }
-
-    private async evaluateResourceIndicators(
-        item: any,
-        context: EvaluationContext
-    ): Promise<any> {
-        // Similar implementation to evaluateContentIndicators
-        const { resource, matchedSection, matchedModule } = item;
-        const result = {
-            resourceId: resource.id,
-            contents: { match: [], noMatch: [] }
-        };
-
-        const matchResult = await this.evaluateContentMatch(
-            resource,
-            matchedSection,
-            matchedModule,
-            context,
-            'resource'
-        );
-
-        if (matchResult) {
-            result.contents.match.push(matchResult);
-        }
-
-        return result;
     }
 }

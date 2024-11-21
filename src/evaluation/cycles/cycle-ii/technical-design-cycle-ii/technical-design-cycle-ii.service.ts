@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import technicalConfig from '../technical-design-cycle-ii/config/technical-design-config.json';
 import { JSDOM } from 'jsdom';
 import { MoodleService } from 'src/moodle/moodle.service';
-import { IndicatorResult } from '../../organizational-aspects/config/indicator-result';
+import { IndicatorResult } from 'src/evaluation/interfaces/indicator-result.interface';
 
 @Injectable()
 export class TechnicalDesignCycleIiService {

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import technicalConfig from '../config/technical-design-config.json';
-import { IndicatorResult } from '../config/indicator-result';
+import { IndicatorResult } from 'src/evaluation/interfaces/indicator-result.interface';
 
 @Injectable()
 export class TechnicalDesignService {

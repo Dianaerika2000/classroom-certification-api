@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Indicator } from 'src/indicator/entities/indicator.entity';
 import { MoodleService } from 'src/moodle/moodle.service';
-import { IndicatorResult } from '../config/indicator-result';
 import { JSDOM } from 'jsdom';
+import { IndicatorResult } from 'src/evaluation/interfaces/indicator-result.interface';
 
 @Injectable()
 export class TrainingDesignService {
@@ -355,7 +355,7 @@ export class TrainingDesignService {
             case 'indica enlaces de videoconferencia para reemplazar':
                 return this.validateVideoconferencia(document);
             default:
-                console.log('Indicador no reconocido:', indicatorName);
+                console.info('Indicador no reconocido:', indicatorName);
                 return false;
         }
     }
@@ -363,13 +363,13 @@ export class TrainingDesignService {
     private validatePrerequisites(document: Document): boolean {
         const prerequisitesRow = this.findRowByHeader(document, ['pre-requisitos', 'prerequisitos']);
         if (!prerequisitesRow) {
-            console.log('No se encontró la fila de prerequisitos');
+            console.info('No se encontró la fila de prerequisitos');
             return false;
         }
 
         const content = prerequisitesRow.querySelector('td')?.textContent?.trim();
         if (!content) {
-            console.log('No se encontró contenido en prerequisitos');
+            console.info('No se encontró contenido en prerequisitos');
             return false;
         }
 
@@ -381,7 +381,7 @@ export class TrainingDesignService {
         const semestreRow = this.findRowByHeader(document, ['semestre']);
 
         if (!siglaRow || !semestreRow) {
-            console.log('No se encontró sigla/código o semestre');
+            console.info('No se encontró sigla/código o semestre');
             return false;
         }
 
@@ -389,7 +389,7 @@ export class TrainingDesignService {
         const semestreContent = semestreRow.querySelector('td')?.textContent?.trim();
 
         if (!siglaContent || !semestreContent) {
-            console.log('Falta contenido en sigla/código o semestre');
+            console.info('Falta contenido en sigla/código o semestre');
             return false;
         }
 
@@ -401,7 +401,7 @@ export class TrainingDesignService {
         const creditosRow = this.findRowByHeader(document, ['créditos', 'creditos']);
 
         if (!horasRow || !creditosRow) {
-            console.log('No se encontró horas semanales o créditos');
+            console.info('No se encontró horas semanales o créditos');
             return false;
         }
 
@@ -409,7 +409,7 @@ export class TrainingDesignService {
         const creditosContent = creditosRow.querySelector('td')?.textContent?.trim();
 
         if (!horasContent || !creditosContent) {
-            console.log('Falta contenido en horas semanales o créditos');
+            console.info('Falta contenido en horas semanales o créditos');
             return false;
         }
 
@@ -419,13 +419,13 @@ export class TrainingDesignService {
     private validateFechaRevision(document: Document): boolean {
         const revisionRow = this.findRowByHeader(document, ['revisado en', 'fecha de revisión']);
         if (!revisionRow) {
-            console.log('No se encontró la fecha de revisión');
+            console.info('No se encontró la fecha de revisión');
             return false;
         }
 
         const content = revisionRow.querySelector('td')?.textContent?.trim();
         if (!content) {
-            console.log('No se encontró contenido en fecha de revisión');
+            console.info('No se encontró contenido en fecha de revisión');
             return false;
         }
 
@@ -435,13 +435,13 @@ export class TrainingDesignService {
     private validateReferenciaBibliografica(document: Document): boolean {
         const revisionRow = this.findRowByHeader(document, ['referencia bibliográfica', 'bibliografía', 'fuentes', 'Referencia Bibliográfica']);
         if (!revisionRow) {
-            console.log('No se encontró la referencia bibliográfica');
+            console.info('No se encontró la referencia bibliográfica');
             return false;
         }
 
         const content = revisionRow.querySelector('th')?.textContent?.trim();
         if (!content) {
-            console.log('No se encontró contenido en referencia bibliográfica');
+            console.info('No se encontró contenido en referencia bibliográfica');
             return false;
         }
 
@@ -451,13 +451,13 @@ export class TrainingDesignService {
     private validateRetos(document: Document): boolean {
         const revisionRow = this.findRowByHeader(document, ['Reto', 'reto']);
         if (!revisionRow) {
-            console.log('No se encontraron los retos');
+            console.info('No se encontraron los retos');
             return false;
         }
 
         const content = revisionRow.querySelector('td')?.textContent?.trim();
         if (!content) {
-            console.log('No se encontró contenido en Retos');
+            console.info('No se encontró contenido en Retos');
             return false;
         }
 
@@ -467,13 +467,13 @@ export class TrainingDesignService {
     private validateEvaluacionSumativa(document: Document): boolean {
         const revisionRow = this.findRowByHeader(document, ['parcial', 'examen final']);
         if (!revisionRow) {
-            console.log('No se encontraron las evaluaciones');
+            console.info('No se encontraron las evaluaciones');
             return false;
         }
 
         const content = revisionRow.querySelector('th')?.textContent?.trim();
         if (!content) {
-            console.log('No se encontró contenido en parciales');
+            console.info('No se encontró contenido en parciales');
             return false;
         }
 
@@ -483,13 +483,13 @@ export class TrainingDesignService {
     private validateVideoconferencia(document: Document): boolean {
         const revisionRow = this.findRowByHeader(document, ['videoconferencia']);
         if (!revisionRow) {
-            console.log('No se encontraron las videoconferencias');
+            console.info('No se encontraron las videoconferencias');
             return false;
         }
 
         const content = revisionRow.querySelector('td')?.textContent?.trim();
         if (!content) {
-            console.log('No se encontró contenido en videoconferencia');
+            console.info('No se encontró contenido en videoconferencia');
             return false;
         }
 
@@ -702,7 +702,9 @@ export class TrainingDesignService {
     }
 
     private findContentByName(contents: any[], name: string) {
-        const result = contents.find(content => {
+        const validContents = contents.filter(item => item.filename == 'index.html');
+
+        const result = validContents.find(content => {
             if (!content.content) {
                 console.warn('Content field is undefined:', content);
                 return false;
