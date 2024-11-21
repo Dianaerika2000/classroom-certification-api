@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import technicalConfig from '../technical-design-cycle-ii/config/technical-design-config.json';
-import { IndicatorResult } from 'src/evaluation/organizational-aspects/config/indicator-result';
 import { JSDOM } from 'jsdom';
 import { MoodleService } from 'src/moodle/moodle.service';
+import { IndicatorResult } from '../../organizational-aspects/config/indicator-result';
 
 @Injectable()
 export class TechnicalDesignCycleIiService {

@@ -2,11 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { AreaService } from 'src/area/area.service';
 import { CycleService } from 'src/cycle/cycle.service';
 import { IndicatorService } from 'src/indicator/indicator.service';
-import { ResourceService } from 'src/resource/resource.service';
-import { TrainingDesignService } from '../organizational-aspects/training-design/training-design.service';
-import { TechnicalDesignService } from '../organizational-aspects/technical-design/technical-design.service';
-import { TrainingDesignCycleIiService } from '../cycle-ii/training-design-cycle-ii/training-design-cycle-ii.service';
-import { TechnicalDesignCycleIiService } from '../cycle-ii/technical-design-cycle-ii/technical-design-cycle-ii.service';
+import { TechnicalDesignCycleIiService } from '../cycles/cycle-ii/technical-design-cycle-ii/technical-design-cycle-ii.service';
+import { TrainingDesignCycleIiService } from '../cycles/cycle-ii/training-design-cycle-ii/training-design-cycle-ii.service';
+import { TechnicalDesignService } from '../cycles/organizational-aspects/technical-design/technical-design.service';
+import { TrainingDesignService } from '../cycles/organizational-aspects/training-design/training-design.service';
 
 enum AreaType {
     Formacion = 'formación',

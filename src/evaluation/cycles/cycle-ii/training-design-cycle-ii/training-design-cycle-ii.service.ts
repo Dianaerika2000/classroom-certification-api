@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { IndicatorResult } from 'src/evaluation/organizational-aspects/config/indicator-result';
 import { MoodleService } from 'src/moodle/moodle.service';
 import { JSDOM } from 'jsdom';
+import { IndicatorResult } from '../../organizational-aspects/config/indicator-result';
 
 @Injectable()
 export class TrainingDesignCycleIiService {

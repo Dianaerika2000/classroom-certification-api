@@ -10,11 +10,7 @@ import { ResourceModule } from 'src/resource/resource.module';
 import { IndicatorModule } from 'src/indicator/indicator.module';
 import { AreaModule } from 'src/area/area.module';
 import { MoodleModule } from 'src/moodle/moodle.module';
-import { Cycle1TechnicalDesignService, Cycle1TrainingDesignService, Cycle3TechnicalDesignService, Cycle3TrainingDesignService } from './cycles/cycles';
-import { TechnicalDesignService } from './organizational-aspects/technical-design/technical-design.service';
-import { TrainingDesignService } from './organizational-aspects/training-design/training-design.service';
-import { TechnicalDesignCycleIiService } from './cycle-ii/technical-design-cycle-ii/technical-design-cycle-ii.service';
-import { TrainingDesignCycleIiService } from './cycle-ii/training-design-cycle-ii/training-design-cycle-ii.service';
+import { Cycle1TechnicalDesignService, Cycle1TrainingDesignService, Cycle3TechnicalDesignService, Cycle3TrainingDesignService, TechnicalDesignCycleIiService, TechnicalDesignService, TrainingDesignCycleIiService, TrainingDesignService } from './cycles/cycles';
 import { IndicatorEvaluationService } from './indicator-evaluation/indicator-evaluation.service';
 import { MoodleAnalysisService } from './moodle-analysis/moodle-analysis.service';
 
@@ -36,6 +32,12 @@ import { MoodleAnalysisService } from './moodle-analysis/moodle-analysis.service
     Cycle1TechnicalDesignService,
     Cycle3TrainingDesignService,
     Cycle3TechnicalDesignService,
+    TechnicalDesignService, 
+    TrainingDesignService, 
+    TechnicalDesignCycleIiService, 
+    TrainingDesignCycleIiService, 
+    IndicatorEvaluationService, 
+    MoodleAnalysisService
   ],
 })
 export class EvaluationModule {}
