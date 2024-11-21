@@ -6,15 +6,11 @@ import { CreateEvaluationDto } from './dto/create-evaluation.dto';
 import { UpdateEvaluationDto } from './dto/update-evaluation.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ValidRoles } from 'src/auth/enums/valid-roles';
-import { Cycle1TrainingDesignService } from './cycles/cycles';
 
 @ApiTags('Evaluation')
 @Controller('evaluation')
 export class EvaluationController {
-  constructor(
-    private readonly evaluationService: EvaluationService,
-    private readonly cycle1TrainingDesignService: Cycle1TrainingDesignService
-  ) {}
+  constructor(private readonly evaluationService: EvaluationService) {}
 
   @Post()
   @Auth(ValidRoles.admin, ValidRoles.evaluator)
@@ -23,7 +19,7 @@ export class EvaluationController {
   @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
   async create(@Body() createEvaluationDto: CreateEvaluationDto) {
     const evaluation = await this.evaluationService.create(createEvaluationDto);
-    
+
     return {
       message: "Evaluación creada exitosamente",
       data: {
@@ -147,12 +143,122 @@ export class EvaluationController {
     return await this.evaluationService.analyzeClassroomCompliance(moodleCourseId, token, cycleId, areaId);
   }
 
-  @Post('evaluate-indicators/:areaId')
-  async evaluateIndicatorsForMatchedContents(
-    @Param('areaId') areaId: number,
-    @Body('matchedContents') matchedContents: any[]
-  ): Promise<any> {
-    return await this.evaluationService.evaluateIndicatorsForMatchedContents(matchedContents, areaId);
+  @Post('evaluate-content')
+  async evaluateContentIndicatorsOA(
+    @Body('content') content: any,
+    @Body('indicators') indicators: any[],
+    @Body('matchedContent') matchedContent: any,
+    @Query('token') token?: string
+  ) {
+    try {
+      const results = await this.trainingDesignService.evaluateContentIndicators(
+        content,
+        indicators,
+        matchedContent,
+        token
+      );
+
+      return {
+        success: true,
+        results,
+      };
+    } catch (error) {
+      console.error('Error evaluando contenido:', error);
+      return {
+        success: false,
+        message: 'Error evaluando contenido',
+        error: error.message,
+      };
+    }
+  }
+
+  @Post('evaluate-content-technical')
+  async evaluateContentIndicatorsOATech(
+    @Body('content') content: any,
+    @Body('indicators') indicators: any[],
+    @Body('matchedContent') matchedContent: any,
+    @Query('token') token?: string
+  ) {
+    try {
+      const results = await this.technicalDesignService.evaluateContentIndicators(
+        content,
+        indicators,
+        matchedContent,
+        token
+      );
+
+      return {
+        success: true,
+        results,
+      };
+    } catch (error) {
+      console.error('Error evaluando contenido:', error);
+      return {
+        success: false,
+        message: 'Error evaluando contenido',
+        error: error.message,
+      };
+    }
+  }
+
+  @Post('evaluate-content-cycle-ii')
+  async evaluateContentIndicatorsCII(
+    @Body('content') content: any,
+    @Body('indicators') indicators: any[],
+    @Body('matchedContent') matchedContent: any,
+    @Query('token') token?: string
+  ) {
+    try {
+      const results = await this.trainingDesignCycleService.evaluateContentIndicators(
+        content,
+        indicators,
+        matchedContent,
+        token
+      );
+
+      return {
+        success: true,
+        results,
+      };
+    } catch (error) {
+      console.error('Error evaluando contenido:', error);
+      return {
+        success: false,
+        message: 'Error evaluando contenido',
+        error: error.message,
+      };
+    }
+  }
+
+  @Post('evaluate-content-cycle-ii-technical')
+  async evaluateContentIndicatorsCIITechnical(
+    @Body('content') content: any,
+    @Body('indicators') indicators: any[],
+    @Body('matchedContent') matchedContent: any,
+    @Query('token') token?: string,
+    @Query('courseid') courseid?: number
+  ) {
+    try {
+      const results = await this.technicalDesignCycleService.evaluateContentIndicators(
+        content,
+        indicators,
+        matchedContent,
+        token, 
+        courseid
+      );
+
+      return {
+        success: true,
+        results,
+      };
+    } catch (error) {
+      console.error('Error evaluando contenido:', error);
+      return {
+        success: false,
+        message: 'Error evaluando contenido',
+        error: error.message,
+      };
+    }
   }
 
   @Post('test-evaluate-prior-knowledge')
