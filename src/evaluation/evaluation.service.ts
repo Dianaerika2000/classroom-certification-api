@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { ClassroomService } from '../classroom/classroom.service';
 import { MoodleAnalysisService } from './moodle-analysis/moodle-analysis.service';
 import { IndicatorEvaluationService } from './indicator-evaluation/indicator-evaluation.service';
+import { EvaluatedIndicatorsService } from 'src/evaluated-indicator/evaluated-indicator.service';
 
 @Injectable()
 export class EvaluationService {
@@ -16,6 +17,7 @@ export class EvaluationService {
     private readonly classroomService: ClassroomService,
     private readonly moodleAnalysisService: MoodleAnalysisService,
     private readonly indicatorEvaluationService: IndicatorEvaluationService,
+    private readonly evaluatedIndicatorService: EvaluatedIndicatorsService
   ) { }
 
   async create(createEvaluationDto: CreateEvaluationDto): Promise<Evaluation> {
@@ -83,12 +85,13 @@ export class EvaluationService {
     moodleCourseId: number,
     token: string,
     cycleId: number,
-    areaId: number
+    areaId: number,
+    evaluationId: number
   ): Promise<any> {
-    const { matchedResources, unmatchedResources } = 
+    const { matchedResources, unmatchedResources } =
       await this.moodleAnalysisService.analyzeClassroomContents(
-        moodleCourseId, 
-        token, 
+        moodleCourseId,
+        token,
         cycleId
       );
 
@@ -102,20 +105,53 @@ export class EvaluationService {
       }
     );
 
+    const evaluation = await this.findOne(evaluationId);
+
+    const evaluatedIndicatorsData = results.flatMap(resource =>
+      resource.contents.match.flatMap(matchGroup =>
+        matchGroup.map(indicator => ({
+          indicatorId: indicator.indicatorId,
+          results: indicator.result,
+          observation: indicator.observation,
+        }))
+      )
+    );
+
+    await this.evaluatedIndicatorService.createBulk(evaluatedIndicatorsData, evaluation)
+
     return {
       message: "Análisis de cumplimiento del aula completado exitosamente",
       data: {
-        matchedResults: results,
-        unmatchedResources
-      },
+        evaluationId: evaluation.id,
+        totalResources: results.length,
+        matchedResources: results.length,
+        unmatchedResources: unmatchedResources.length,
+        evaluatedIndicatorsCount: evaluatedIndicatorsData.length,
+        resourceDetails: results.map(resource => ({
+          resourceId: resource.resourceId,
+          resourceName: resource.resourceName,
+          indicatorsMatched: resource.contents.match.length,
+          indicatorsResult: resource.contents.match
+        })),
+        summary: {
+          averageComplianceResult: this.calculateTotalResult(evaluatedIndicatorsData)
+        }
+      }
     };
+  }
+
+  // Helper method in the service
+  private calculateTotalResult(evaluatedIndicators: any[]): number {
+    if (evaluatedIndicators.length === 0) return 0;
+
+    return evaluatedIndicators.reduce((sum, indicator) => sum + indicator.results, 0);
   }
 
   async fetchAndMatchCourseContents(moodleCourseId: number, token: string, cycleId: number): Promise<any> {
     return this.moodleAnalysisService.analyzeClassroomContents(
-      moodleCourseId, 
-      token, 
+      moodleCourseId,
+      token,
       cycleId
     );
-  } 
+  }
 }

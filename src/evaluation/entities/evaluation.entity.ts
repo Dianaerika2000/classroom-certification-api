@@ -1,5 +1,6 @@
 import { Classroom } from "src/classroom/entities/classroom.entity";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { EvaluatedIndicators } from "src/evaluated-indicator/entities/evaluated-indicator.entity";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Evaluation {
@@ -25,4 +26,11 @@ export class Evaluation {
   )
   @JoinColumn({ name: 'classroom_id' })
   classroom: Classroom;
+
+  @OneToMany(
+    () => EvaluatedIndicators,
+    (evaluated) => evaluated.evaluation,
+    { cascade: true, onDelete: 'CASCADE' }
+  )
+  evaluated_indicator: EvaluatedIndicators[];
 }
