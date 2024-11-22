@@ -244,7 +244,9 @@ export class Cycle1TechnicalDesignService {
     return {
       indicatorId: indicator.id,
       result: hasAccessRestrictions ? 1 : 0,
-      observation: hasAccessRestrictions ? '' : 'No cumple con las restricciones de acceso'
+      observation: hasAccessRestrictions
+        ? 'La actividad cumple con las restricciones de acceso requeridas, incluyendo "Carpeta pedagógica".'
+        : 'La actividad no cumple con las restricciones de acceso requeridas; no se especifica "Carpeta pedagógica" en la configuración.',
     };
   }
 
@@ -415,7 +417,7 @@ export class Cycle1TechnicalDesignService {
         moodleCourseId,
         token,
       );
-      
+
       // Buscar el cuestionario correspondiente al contenido coincidente
       const quiz = quizzes.quizzes.find((q) => q.id === matchedContent.instance);
 
