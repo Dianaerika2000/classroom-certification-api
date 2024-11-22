@@ -299,21 +299,23 @@ export class TrainingDesignCycleIiService {
     }
 
     private evaluateUnitObjectives(indicator: any, sections: any[]): IndicatorResult {
+        // Filtrar secciones que contienen "unidad" en su nombre
         const lessonSections = sections.filter(section =>
             section && section.name.toLowerCase().includes('unidad')
         );
+
         // Validar cada sección usando la función isValidUnitObjective
-        const validSections = lessonSections.filter(this.isValidUnitObjective);
+        const invalidSections = lessonSections.filter(section => !this.isValidUnitObjective(section));
 
         // Verificar si todas las secciones tienen objetivos válidos
-        const allValid = validSections.length === sections.length;
+        const allValid = invalidSections.length === 0;
 
         return {
             indicatorId: indicator.id,
             result: allValid ? 1 : 0,
             observation: allValid
-                ? 'Todas las secciones tienen objetivos de la unidad válidos'
-                : `Secciones faltantes: ${sections.length - validSections.length}`
+                ? 'Todas las secciones tienen objetivos de la unidad válidos.'
+                : `Las siguientes secciones no cumplen: ${invalidSections.map(section => section.name).join(', ')}`,
         };
     }
 
@@ -588,7 +590,8 @@ export class TrainingDesignCycleIiService {
             module => module.modname.toLowerCase() === 'book'
         );
 
-        const isValidName = moduleTypeBook[0].name.toLowerCase().includes('grabaciones');
+        const keywords = ['grabaciones', 'grabadas', 'guardadas'];
+        const isValidName = keywords.some(keyword => moduleTypeBook[0].name.toLowerCase().includes(keyword));        
 
         return {
             indicatorId: indicator.id,

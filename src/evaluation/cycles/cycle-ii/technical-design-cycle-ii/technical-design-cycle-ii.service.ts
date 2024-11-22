@@ -194,9 +194,9 @@ export class TechnicalDesignCycleIiService {
                 'disponibilidad': async (indicator: any) => {
                     return this.evaluateAvailabilityRetos(indicator, matchedContent);
                 },
-                /* 'finalización': async (indicator: any) => {
-                    return this.evaluateCompletionActivityQuizzes(indicator, matchedContent);
-                } */
+                'finalización': async (indicator: any) => {
+                    return this.evaluateCompletionDataRetos(indicator, matchedContent, courseid, token);
+                }
             };
 
             for (const indicator of indicators) {
@@ -469,12 +469,11 @@ export class TechnicalDesignCycleIiService {
         };
     }
 
-    private hasCompletionData(module: any): boolean {
-        if (!module.completiondata) return false;
-
+    private hasCompletionData(moduleContent: any): boolean {
+        if (!moduleContent.completiondata) return false;
         // Verificar si la finalización es automática y si se alcanza el final
-        const isAutomatic = module.completiondata.isautomatic;
-        const isEndReached = module.completiondata.details?.some(
+        const isAutomatic = moduleContent.completiondata.isautomatic;
+        const isEndReached = moduleContent.completiondata.details?.some(
             detail => detail.rulename === 'completionendreached'
         );
 
@@ -892,6 +891,39 @@ export class TechnicalDesignCycleIiService {
         return issues;
     }
 
+    private async evaluateCompletionDataRetos(indicator: any, matchedContent: any, courseId: number, token: string): Promise<IndicatorResult> {
+        const courseContents = await this.moodleService.getCourseContents(courseId, token);
+
+        const sections = courseContents.filter(section =>
+            section && section.name.toLowerCase().includes('unidad')
+        );
+
+        const assigns = sections.flatMap(section =>
+            section.modules?.filter(module => module.modname === 'assign') || []
+        );
+        const invalidAssigns = assigns.filter(assign => !this.hasCompletionDataRetos(assign));
+        const allRestrictions = invalidAssigns.length === 0;
+
+        return {
+            indicatorId: indicator.id,
+            result: allRestrictions ? 1 : 0,
+            observation: allRestrictions
+                ? 'Todos los retos cumplen con la configuración de finalización de la actividad.'
+                : `Los siguientes retos no cumplen con la configuración de finalización: ${invalidAssigns.map(assign => assign.name).join(', ')}`,
+        };
+    }
+
+    private hasCompletionDataRetos(module: any): boolean {
+        if (!module.completiondata) return false;
+
+        const isAutomatic = module.completiondata.isautomatic;
+        const isEndReached = module.completiondata.details?.some(
+            detail => detail.rulename === 'completionsubmit'
+        );
+
+        return isAutomatic && isEndReached;
+    }
+
     /**
      * Funciones auxiliares para evaluar Foros
      * @param indicator 
@@ -1214,14 +1246,6 @@ export class TechnicalDesignCycleIiService {
             };
         }
 
-        // Obtener las secciones únicas que no sean "videoconferencias"
-        const uniqueSections = matchedResources.filter(section =>
-            section &&
-            typeof section === 'object' &&
-            section.name &&
-            section.name.toLowerCase() !== 'videoconferencias'
-        );
-
         // Encontrar la sección "videoconferencias"
         const videoconferenciaSection = matchedResources.find(section =>
             section &&
@@ -1254,10 +1278,8 @@ export class TechnicalDesignCycleIiService {
         };
     }
 
-    private hasCompletionDataUrl(module: any): boolean {
-        // Verifica si el módulo tiene datos de finalización válidos
-        return module.completiondata?.details?.every(item =>
-            item.rulename === "completionview" && item.isautomatic
-        );
+    private hasCompletionDataUrl(moduleUrl: any): boolean {
+        const isValid = moduleUrl.completiondata?.details?.some(item => item.rulename === "completionview");
+        return isValid;
     }
 }    
