@@ -12,7 +12,7 @@ enum AreaType {
 enum CycleType {
     Organizacionales = 'organizacionales',
     CicloII = 'ciclo 2',
-    CicloI = 'ciclo 1',
+    CicloI = 'ciclo i',
     CicloIII = 'ciclo 3'
 }
 
@@ -36,11 +36,11 @@ export class IndicatorEvaluationService {
         },
         [`${AreaType.Formacion}_${CycleType.CicloI}`]: {
             service: this.cycleiTrainingService,
-            method: 'evaluateContentIndicators'
+            method: 'evaluateIndicatorsByContent'
         },
         [`${AreaType.Tecnico}_${CycleType.CicloI}`]: {
             service: this.cycleiTechnicalService,
-            method: 'cycleiTechnicalService'
+            method: 'evaluateIndicatorsByContent'
         },
         [`${AreaType.Formacion}_${CycleType.CicloII}`]: {
             service: this.cycleiiTrainingService,
@@ -182,7 +182,11 @@ export class IndicatorEvaluationService {
 
         const cycleType = cycle.name.toLowerCase().includes('organizacionales')
             ? CycleType.Organizacionales
-            : CycleType.CicloII;
+            : cycle.name.toLowerCase().includes('ciclo i')
+            ? CycleType.CicloI
+            : cycle.name.toLowerCase().includes('ciclo 2')
+            ? CycleType.CicloII
+            : CycleType.CicloIII
 
         const evaluationKey = `${areaType}_${cycleType}`;
         const evaluationConfig = this.evaluationServices[evaluationKey];

@@ -5,7 +5,7 @@ import technicalDesignConfig from '../config/technical-design.config.json';
 
 @Injectable()
 export class Cycle1TechnicalDesignService {
-  constructor(private readonly moodleService: MoodleService) {}
+  constructor(private readonly moodleService: MoodleService) { }
 
   evaluateIndicatorsByContent(
     content: any,
@@ -41,22 +41,12 @@ export class Cycle1TechnicalDesignService {
   /**
    * Retorna la función evaluadora específica según el contenido
    */
-  private getContentEvaluator(
-    contentName: string,
-  ):
-    | ((
-        indicators: any[],
-        matchedContent: any,
-        token?: string,
-        moodleCourseId?: string,
-      ) => IndicatorResult[])
-    | null {
+  private getContentEvaluator(contentName: string,): ((indicators: any[], matchedContent: any, token?: string, moodleCourseId?: string) => IndicatorResult[]) | null {
     const contentEvaluators = {
       'Mapa de inicio': this.evaluateStartMap.bind(this),
-      'Lección de conocimientos previos':
-        this.evaluatePriorKnowledgeLesson.bind(this),
+      'Lección de conocimientos previos': this.evaluatePriorKnowledgeLesson.bind(this),
       'Cuestionario diagnóstico': this.evaluateDiagnosticQuiz.bind(this),
-      Bibliografía: this.evaluateBibliography.bind(this),
+      'Bibliografía': this.evaluateBibliography.bind(this),
     };
 
     // Busca coincidencia exacta o parcial
@@ -70,36 +60,31 @@ export class Cycle1TechnicalDesignService {
   /**
    * Evalúa indicadores relacionados con el Mapa de inicio
    */
-  private async evaluateStartMap(
-    indicators: any[],
-    matchedContent: any,
-  ): Promise<IndicatorResult[]> {
+  private async evaluateStartMap(indicators: any[], matchedContent: any): Promise<IndicatorResult[]> {
     const results: IndicatorResult[] = [];
 
+    const indicatorHandlers = {
+      'general': async (indicator: any) => {
+        return this.evaluateGeneralMapaInicio(indicator, matchedContent)
+      },
+      'acceso': async (indicator: any) => {
+        return this.checkAccessRestrictions(indicator, matchedContent);
+      }
+    };
+
     for (const indicator of indicators) {
-      const normalizedName = this.normalizeIndicatorName(indicator.name);
+      const handlerKey = Object.keys(indicatorHandlers).find(key => indicator.name.toLowerCase().includes(key));
 
-      switch (normalizedName) {
-        case 'cumple con la configuración de las restricciones de acceso: ver carpeta pedagógica':
-          const hasValidAccessRestrictions =
-            this.checkAccessRestrictions(matchedContent);
-          results.push({
-            indicatorId: indicator.id,
-            result: hasValidAccessRestrictions ? 1 : 0,
-            observation: hasValidAccessRestrictions
-              ? ''
-              : 'Las restricciones de acceso no cumplen con los criterios: no se encontró la condición "Carpeta pedagógica completada".',
-          });
-          break;
-
-        default:
-          // Indicadores no evaluables automáticamente
-          results.push({
-            indicatorId: indicator.id,
-            result: 0,
-            observation: `El indicador "${indicator.name}" requiere verificación manual`,
-          });
-          break;
+      if (handlerKey) {
+        const result = await indicatorHandlers[handlerKey](indicator);
+        results.push(result);
+      } else {
+        // Agregar un resultado para revisión manual si no hay handler
+        results.push({
+          indicatorId: indicator.id,
+          result: 0,
+          observation: 'Este indicador requiere verificación manual',
+        });
       }
     }
 
@@ -109,35 +94,33 @@ export class Cycle1TechnicalDesignService {
   /**
    * Evalúa indicadores relacionados con la lección de conocimientos previos
    */
-  private async evaluatePriorKnowledgeLesson(
-    indicators: any[],
-    matchedContent: any,
-  ): Promise<IndicatorResult[]> {
-    const results: IndicatorResult[] = [];
+  private async evaluatePriorKnowledgeLesson(indicators: any[], matchedContent: any, token: any): Promise<IndicatorResult[]> {
+    const results: IndicatorResult[] = []; // Array para almacenar resultados
 
-    for (const indicator of indicators) {
-      const normalizedName = this.normalizeIndicatorName(indicator.name);
+    if (matchedContent != null) {
+      const indicatorHandlers = {
+        'finalización de actividad': async (indicator: any) => {
+          return this.evaluateCompletionActivity(indicator, matchedContent)
+        },
+        'respuestas incorrectas': async (indicator: any) => {
+          return this.evaluateRedirectionPage(indicator, matchedContent, token)
+        },
+      };
 
-      switch (normalizedName) {
-        // case 'esta lección está añadida en la categoría sin calificación':
-        //   const isInNoGradingCategory = this.checkLessonInNoGradingCategory(matchedContent);
-        //   results.push({
-        //     indicatorId: indicator.id,
-        //     result: isInNoGradingCategory ? 1 : 0,
-        //     observation: isInNoGradingCategory
-        //       ? ''
-        //       : 'La lección no está asignada a la categoría "Sin calificación".',
-        //   });
-        //   break;
+      for (const indicator of indicators) {
+        const handlerKey = Object.keys(indicatorHandlers).find(key => indicator.name.includes(key));
 
-        default:
-          // Indicadores no evaluables automáticamente
+        if (handlerKey) {
+          const result = await indicatorHandlers[handlerKey](indicator);
+          results.push(result);
+        } else {
+          // Agregar un resultado para revisión manual si no hay handler
           results.push({
             indicatorId: indicator.id,
             result: 0,
-            observation: `El indicador "${indicator.name}" requiere verificación manual`,
+            observation: 'Este indicador requiere verificación manual',
           });
-          break;
+        }
       }
     }
 
@@ -147,199 +130,443 @@ export class Cycle1TechnicalDesignService {
   /**
    * Evalúa indicadores relacionados con el cuestionario diagnóstico
    */
-  private evaluateDiagnosticQuiz(
-    indicators: any[],
-    matchedContent: any,
-    token?: string,
-    moodleCourseId?: number,
-  ): IndicatorResult[] {
-    return indicators.map((indicator) => {
-      const normalizedName = this.normalizeIndicatorName(indicator.name);
+  private async evaluateDiagnosticQuiz(indicators: any[], matchedContent: any, token?: string, moodleCourseId?: number): Promise<IndicatorResult[]> {
+    const results: IndicatorResult[] = [];
+    if (matchedContent != null) {
+      const indicatorHandlers = {
+        'temporalización y calificación': async (indicator: any) => {
+          return this.evaluateTimingQualificationQuizzes(indicator, matchedContent, token, moodleCourseId)
+        },
+        'Intentos ilimitados': async (indicator: any) => {
+          return this.checkUnlimitedAttemptsConfiguration(indicator, matchedContent, token, moodleCourseId)
+        },
+        'restricciones': async (indicator: any) => {
+          return this.evaluateAccessRestrictionsQuizzes(indicator, matchedContent);
+        },
+        'aprobado': async (indicator: any) => {
+          return this.checkActivityCompletionConfiguration(indicator, matchedContent);
+        }
+      };
 
-      switch (normalizedName) {
-        case 'cumple con la configuración intentos ilimitados':
-          const unlimitedAttemptsConfigured =
-            this.checkUnlimitedAttemptsConfiguration(
-              matchedContent,
-              token,
-              moodleCourseId,
-            );
-          return {
-            indicatorId: indicator.id,
-            result: unlimitedAttemptsConfigured ? 1 : 0,
-            observation: unlimitedAttemptsConfigured
-              ? ''
-              : 'El cuestionario no está configurado con intentos ilimitados.',
-          };
+      for (const indicator of indicators) {
+        const handlerKey = Object.keys(indicatorHandlers).find(key => indicator.name.includes(key));
 
-        case 'finalización de la actividad: "recibir calificación de aprobado"':
-          const activityCompletionConfigured =
-            this.checkActivityCompletionConfiguration(matchedContent);
-          return {
-            indicatorId: indicator.id,
-            result: activityCompletionConfigured ? 1 : 0,
-            observation: activityCompletionConfigured
-              ? ''
-              : 'El cuestionario no cumple con la configuración de finalización: "Recibir calificación de aprobado".',
-          };
-
-        default:
-          // Indicadores no evaluables automáticamente
-          return {
+        if (handlerKey) {
+          const result = await indicatorHandlers[handlerKey](indicator);
+          results.push(result);
+        } else {
+          // Agregar un resultado para revisión manual si no hay handler
+          results.push({
             indicatorId: indicator.id,
             result: 0,
-            observation: `El indicador "${indicator.name}" requiere verificación manual.`,
-          };
+            observation: 'Este indicador requiere verificación manual',
+          });
+        }
       }
-    });
+    }
+
+    return results;
   }
 
   /**
    * Evalúa indicadores relacionados con la bibliografía
    */
-  private evaluateBibliography(
-    indicators: any[],
-    matchedContent: any,
-  ): IndicatorResult[] {
-    return indicators.map((indicator) => {
-      const normalizedName = this.normalizeIndicatorName(indicator.name);
+  private async evaluateBibliography(indicators: any[], matchedContent: any): Promise<IndicatorResult[]> {
+    const results: IndicatorResult[] = []; // Array para almacenar resultados
 
-      switch (normalizedName) {
-        case 'cumple con la configuración':
-          const configurationValid =
-            this.checkBibliographyConfiguration(matchedContent);
-          return {
-            indicatorId: indicator.id,
-            result: configurationValid ? 1 : 0,
-            observation: configurationValid
-              ? ''
-              : 'La bibliografía no cumple con la configuración.',
-          };
+    if (matchedContent != null) {
+      const indicatorHandlers = {
+        'cumple con la configuración': async (indicator: any) => {
+          return this.checkBibliographyConfiguration(indicator, matchedContent)
+        },
+        'restricciones de acceso': async (indicator: any) => {
+          return this.evaluateAccessRestrictionsQuizzes(indicator, matchedContent);
+        },
+        'configuración finalización': async (indicator: any) => {
+          return this.checkBibliographyActivityCompletion(indicator, matchedContent);
+        }
+      };
 
-        case 'cumple con la configuración finalización de actividad: "ver"':
-          const activityCompletionValid =
-            this.checkBibliographyActivityCompletion(matchedContent);
-          return {
-            indicatorId: indicator.id,
-            result: activityCompletionValid ? 1 : 0,
-            observation: activityCompletionValid
-              ? ''
-              : 'La bibliografía no cumple con la configuración de finalización: "Ver".',
-          };
+      for (const indicator of indicators) {
+        const handlerKey = Object.keys(indicatorHandlers).find(key => indicator.name.includes(key));
 
-        default:
-          // Indicadores no evaluables automáticamente
-          return {
+        if (handlerKey) {
+          const result = await indicatorHandlers[handlerKey](indicator);
+          results.push(result);
+        } else {
+          // Agregar un resultado para revisión manual si no hay handler
+          results.push({
             indicatorId: indicator.id,
             result: 0,
-            observation: `El indicador "${indicator.name}" requiere verificación manual.`,
-          };
+            observation: 'Este indicador requiere verificación manual',
+          });
+        }
       }
-    });
-  }
+    }
 
-  // Métodos específicos de validación
-  private checkAccessRestrictions(matchedContent: any): boolean {
-    return true;
+    return results;
   }
 
   /**
-   * Verifica si el cuestionario está configurado con intentos ilimitados.
+   * Funciones auxiliares para evaluar Mapa de inicio
+   * @param indicator 
+   * @param matchedContent 
+   * @returns 
    */
-  private async checkUnlimitedAttemptsConfiguration(
-    matchedContent: any,
-    token: string,
-    moodleCourseId: number,
-  ): Promise<boolean> {
-    const quizzes = await this.moodleService.getQuizzesByCourse(
-      moodleCourseId,
-      token,
+  private evaluateGeneralMapaInicio(indicator: any, matchedContent: any): IndicatorResult {
+    const inicioConfig = technicalDesignConfig.resources.find(resource =>
+      resource.name.toLowerCase() === 'sección inicio'
     );
 
-    const quiz = quizzes.find((q) => q.id === matchedContent.instance);
-    if (!quiz) {
-      console.warn(
-        `Cuestionario con ID ${matchedContent.instance} no encontrado en el curso ${moodleCourseId}`,
-      );
-      return false;
+    const mapaConfig = inicioConfig.contents.find(item => item.name.toLowerCase() === 'mapa de inicio');
+
+    if (!inicioConfig || !mapaConfig) {
+      return {
+        indicatorId: indicator.id,
+        result: 0,
+        observation: 'Configuración de "Mapa de Inicio" no encontrada en el archivo de configuración.',
+      };
     }
 
-    const attempts = quiz.attempts;
-    return attempts === 0;
+    const configName = mapaConfig.configuration.general.sectionName;
+    const isValidName = matchedContent.name.toLowerCase().includes(configName.name.toLowerCase());
+
+    return {
+      indicatorId: indicator.id,
+      result: isValidName ? 1 : 0,
+      observation: isValidName ? '' : 'No cumple con la configuración general'
+    }
+  }
+
+  private checkAccessRestrictions(indicator: any, matchedContent: any): IndicatorResult {
+    const hasAccessRestrictions = matchedContent.availabilityinfo?.includes('Carpeta pedagógica');
+
+    return {
+      indicatorId: indicator.id,
+      result: hasAccessRestrictions ? 1 : 0,
+      observation: hasAccessRestrictions ? '' : 'No cumple con las restricciones de acceso'
+    };
   }
 
   /**
-   * Verifica si la configuración de finalización requiere recibir calificación de aprobado.
-   */
-  private checkActivityCompletionConfiguration(matchedContent: any): boolean {
-    if (
-      !matchedContent.completiondata ||
-      !Array.isArray(matchedContent.completiondata.details)
-    ) {
-      console.warn(
-        'No se encontró información de finalización en el contenido proporcionado.',
-      );
-      return false;
-    }
+     * Funciones auxiliares para evaluar indicadores de Leccion
+     * @param indicator 
+     * @param matchedContent 
+     * @returns 
+     */
+  private evaluateCompletionActivity(indicator: any, matchedContent: any): IndicatorResult {
+    const allRestrictions = this.hasCompletionData(matchedContent);
 
-    const completionRules = matchedContent.completiondata.details;
-    const passGradeRule = completionRules.find(
-      (rule) => rule.rulename === 'completionpassgrade',
+    return {
+      indicatorId: indicator.id,
+      result: allRestrictions ? 1 : 0,
+      observation: allRestrictions
+        ? 'Cumple con la configuración de finalización de todas las actividades.'
+        : `No cumple con la configuración de finalización: ${matchedContent.name}.`,
+    };
+  }
+
+  private hasCompletionData(module: any): boolean {
+    if (!module.completiondata) return false;
+
+    // Verificar si la finalización es automática y si se alcanza el final
+    const isAutomatic = module.completiondata.isautomatic;
+    const isEndReached = module.completiondata.details?.some(
+      detail => detail.rulename === 'completionendreached'
     );
 
-    if (passGradeRule && passGradeRule.rulevalue?.status === 2) {
-      return true;
+    return isAutomatic && isEndReached;
+  }
+
+  private async evaluateRedirectionPage(indicator: any, lesson: any, token: string): Promise<IndicatorResult> {
+    try {
+      // Verificar redirecciones para cada lección
+      const isRedirectionCorrect = await this.isRedirectionCorrect(lesson, token);
+
+      // Crear y devolver el IndicatorResult
+      return {
+        indicatorId: indicator.id,
+        result: isRedirectionCorrect ? 1 : 0,
+        observation: isRedirectionCorrect
+          ? 'Cumple con la configuración para respuestas incorrectas.'
+          : `No cumple con la configuración: ${lesson.name}.`,
+      };
+    } catch (error) {
+      console.error('Error evaluando las páginas de redirección:', error);
+      return {
+        indicatorId: indicator.id,
+        result: 0,
+        observation: 'Error al evaluar las configuraciones de redirección.',
+      };
+    }
+  }
+
+  private async isRedirectionCorrect(lesson: any, token: string): Promise<boolean> {
+    try {
+      // Obtener las páginas de la lección
+      const pagesInLesson = await this.moodleService.getLessonPages(lesson.instance, token);
+
+      if (pagesInLesson && Array.isArray(pagesInLesson)) {
+        // Filtrar las páginas que son de tipo "Pregunta"
+        const questionPages = pagesInLesson.filter(page => page.page.typestring !== 'Contenido');
+
+        // Verificar redirecciones correctas
+        const isRedirectCorrect = questionPages.every((page) => {
+          const prevpage = page.page.prevpageid;
+          return page.jumps.includes(prevpage);
+        });
+
+        return isRedirectCorrect;
+      }
+    } catch (error) {
+      console.error(`Error verificando redirecciones para la lección ${lesson.instance}:`, error);
     }
 
     return false;
   }
 
   /**
-   * Verifica si la bibliografía cumple con la configuración.
-   */
-  private checkBibliographyConfiguration(matchedContent: any): boolean {
-    try {
-      const generalConfig = technicalDesignConfig.resources[0]?.contents.find(
-        (content: any) => content.name === 'Bibliografía',
-      )?.configuration.general;
+     * Funciones auxiliares para evaluar indicadores de Cuestionario Diagnóstico
+     * @param indicator 
+     * @param matchedContent 
+     * @returns 
+     */
+  private async evaluateTimingQualificationQuizzes(indicator: any, matchedContent: any, token: string, courseid: number): Promise<IndicatorResult> {
+    const initConfig = technicalDesignConfig.resources.find(resource => resource.name.toLowerCase() === 'sección inicio');
+    const quizConfig = initConfig.contents.find(item => item.name.toLowerCase() === 'cuestionario diagnóstico');
 
-      return generalConfig?.name === matchedContent.name;
+    // Verificar si la configuración del cuestionario existe
+    if (!quizConfig || !initConfig) {
+      return {
+        indicatorId: indicator.id,
+        result: 0,
+        observation: 'Configuración de "Cuestionario Diagnóstico" no encontrada en el archivo de configuración.',
+      };
+    }
+
+    const config = quizConfig.configuration;
+    const isValidResult = await this.checkQuiz(matchedContent, courseid, token, config);
+
+    return {
+      indicatorId: indicator.id,
+      result: isValidResult ? 1 : 0,
+      observation: isValidResult
+        ? 'Todos los cuestionarios cumplen con la configuración de temporalización y calificación.'
+        : `No cumple con las configuraciones: ${matchedContent.name}.`,
+    };
+  }
+
+  private async checkQuiz(quiz: any, courseid: number, token: string, config: any): Promise<boolean> {
+    try {
+      // Verificar si el cuestionario tiene fechas configuradas
+      const hasDates = quiz.dates != null;
+
+      // Obtener los datos de los cuestionarios desde Moodle
+      const quizzesFromMoodle = await this.moodleService.getQuizzesByCourse(courseid, token);
+      const quizData = quizzesFromMoodle?.quizzes?.find((item) => item.coursemodule == quiz.id);
+
+      if (quizData) {
+        // Verificar configuración específica del cuestionario
+        const isAutosubmit = quizData.overduehandling === config.submission;
+        const hasTimeLimit = quizData.timelimit <= 1200 || quizData.timelimit >= 600;
+
+        return isAutosubmit && hasTimeLimit && hasDates;
+      }
+    } catch (error) {
+      console.error(`Error verificando el cuestionario ${quiz.id}:`, error);
+    }
+
+    return false;
+  }
+
+  private evaluateAccessRestrictionsQuizzes(indicator: any, matchedContent: any): IndicatorResult {
+    if (!matchedContent || !matchedContent.availability) {
+      return {
+        indicatorId: indicator.id,
+        result: 0,
+        observation: `No cumple con las restricciones de acceso: ${matchedContent.name}`,
+      };
+    };
+
+    // Verificar si el texto 'no disponible' está presente en la información de restricciones
+    const isValidRestriction = matchedContent.availabilityinfo != null || matchedContent.availability != null;
+
+    return {
+      indicatorId: indicator.id,
+      result: isValidRestriction ? 1 : 0,
+      observation: isValidRestriction
+        ? 'Cumple con las restricciones de acceso.'
+        : `No cumple con las restricciones de acceso: ${matchedContent.name}`,
+    };
+  }
+
+  /**
+   * Verifica si el cuestionario está configurado con intentos ilimitados.
+   */
+  private async checkUnlimitedAttemptsConfiguration(
+    indicator: any,
+    matchedContent: any,
+    token: string,
+    moodleCourseId: number,
+  ): Promise<any> {
+    try {
+      // Obtener los cuestionarios del curso desde Moodle
+      const quizzes = await this.moodleService.getQuizzesByCourse(
+        moodleCourseId,
+        token,
+      );
+      
+      // Buscar el cuestionario correspondiente al contenido coincidente
+      const quiz = quizzes.quizzes.find((q) => q.id === matchedContent.instance);
+
+      if (!quiz) {
+        console.warn(
+          `Cuestionario con ID ${matchedContent.instance} no encontrado en el curso ${moodleCourseId}`,
+        );
+        return {
+          indicatorId: indicator.id,
+          result: 0,
+          observation: `No se encontró el cuestionario con ID ${matchedContent.instance} en el curso ${moodleCourseId}.`,
+        };
+      }
+
+      // Verificar si el número de intentos es ilimitado (0)
+      const isValid = quiz.attempts === 0;
+
+      return {
+        indicatorId: indicator.id,
+        result: isValid ? 1 : 0,
+        observation: isValid
+          ? 'El cuestionario está configurado con intentos ilimitados.'
+          : 'El cuestionario no está configurado con intentos ilimitados.',
+      };
     } catch (error) {
       console.error(
-        'Error al verificar la configuración de la bibliografía:',
+        'Error al verificar la configuración de intentos ilimitados:',
         error,
       );
-      return false;
+      return {
+        indicatorId: indicator.id,
+        result: 0,
+        observation:
+          'Ocurrió un error al verificar la configuración de intentos ilimitados.',
+      };
     }
   }
 
   /**
-   * Verifica si la configuración de finalización de la actividad es "Ver".
+   * Verifica si la configuración de finalización requiere recibir calificación de aprobado.
    */
-  private checkBibliographyActivityCompletion(matchedContent: any): boolean {
+  private checkActivityCompletionConfiguration(indicator: any, matchedContent: any): any {
     try {
-      // Extraer detalles de completiondata
-      const completionDetails = matchedContent?.completiondata?.details;
+      // Validar si existen datos de finalización y son un array
+      if (
+        !matchedContent.completiondata ||
+        !Array.isArray(matchedContent.completiondata.details)
+      ) {
+        console.warn(
+          'No se encontró información de finalización en el contenido proporcionado.',
+        );
+        return {
+          indicatorId: indicator.id,
+          result: 0,
+          observation: 'No se encontró información de finalización en el contenido proporcionado.',
+        };
+      }
 
-      // Verificar si existe el detalle con "Ver"
-      return (
-        Array.isArray(completionDetails) &&
-        completionDetails.some(
-          (detail: any) =>
-            detail.rulename === 'completionview' &&
-            detail.rulevalue?.description === 'Ver',
-        )
+      const completionRules = matchedContent.completiondata.details;
+
+      // Buscar la regla "completionpassgrade"
+      const passGradeRule = completionRules.find(
+        (rule) => rule.rulename === 'completionpassgrade',
       );
+
+      const isValid = passGradeRule && passGradeRule.rulevalue?.status === 2;
+
+      return {
+        indicatorId: indicator.id,
+        result: isValid ? 1 : 0,
+        observation: isValid
+          ? 'La actividad está configurada para completarse con una calificación aprobatoria.'
+          : 'La actividad no está configurada para completarse con una calificación aprobatoria.',
+      };
     } catch (error) {
       console.error(
         'Error al verificar la configuración de finalización:',
         error,
       );
-      return false;
+      return {
+        indicatorId: indicator.id,
+        result: 0,
+        observation:
+          'Ocurrió un error al verificar la configuración de finalización.',
+      };
     }
   }
 
-  private normalizeIndicatorName(name: string): string {
-    return name.trim().replace(/\.$/, '').toLowerCase();
+  /**
+   * Funciones auxiliares para evaluar Bibliografía
+   * @param indicator 
+   * @param matchedContent 
+   * @returns 
+   */
+  private checkBibliographyActivityCompletion(indicator: any, matchedContent: any): any {
+    try {
+      // Extraer detalles de completiondata
+      const completionDetails = matchedContent?.completiondata?.details;
+
+      // Verificar si existe el detalle con "Ver"
+      const isValid =
+        Array.isArray(completionDetails) &&
+        completionDetails.some(
+          (detail: any) =>
+            detail.rulename === 'completionview' &&
+            detail.rulevalue?.description === 'Ver',
+        );
+
+      return {
+        indicatorId: indicator.id,
+        result: isValid ? 1 : 0, // Resultado 1 si cumple con la regla, 0 de lo contrario.
+        observation: isValid
+          ? 'La actividad está configurada correctamente para completarse al ser vista.'
+          : 'La actividad no tiene configurada la finalización al ser vista.',
+      };
+    } catch (error) {
+      console.error(
+        'Error al verificar la configuración de finalización:',
+        error,
+      );
+      return {
+        indicatorId: indicator.id,
+        result: 0,
+        observation: 'Ocurrió un error al verificar la configuración de finalización.',
+      };
+    }
+  }
+
+  private checkBibliographyConfiguration(indicator: any, matchedContent: any): any {
+    try {
+      const generalConfig = technicalDesignConfig.resources[0]?.contents.find(
+        (content: any) => content.name === 'Bibliografía',
+      )?.configuration.general;
+
+      const isValid = generalConfig?.name === matchedContent.name;
+
+      return {
+        indicatorId: indicator.id,
+        result: isValid ? 1 : 0, // Si la configuración es válida, el resultado es 1; de lo contrario, 0.
+        observation: isValid ? 'La configuración de la bibliografía es correcta.' : 'La configuración de la bibliografía no coincide.',
+      };
+    } catch (error) {
+      console.error(
+        'Error al verificar la configuración de la bibliografía:',
+        error,
+      );
+      return {
+        indicatorId: indicator.id,
+        result: 0,
+        observation: 'Ocurrió un error al verificar la configuración de la bibliografía.',
+      };
+    }
   }
 }

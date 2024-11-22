@@ -100,30 +100,21 @@ export class MoodleAnalysisService {
         };
     }
 
-    private async matchDefaultResources(courseContents: any[], resources: any[]) {
-        const matches = { matched: [], unmatched: [] };
-
-        for (const resource of resources) {
-            const match = await this.findResourceMatch(resource, courseContents);
-            if (match) {
-                const flattenedMatches = match.flat();
-                matches.matched.push(...flattenedMatches);
-                //matches.matched.push(match);
-            } else {
-                matches.unmatched.push({ resource, matchedSection: null, matchedModule: null });
-            }
-        }
-
-        return {
-            matchedResources: matches.matched,
-            unmatchedResources: matches.unmatched
-        };
-    }
-
     private async findResourceMatch(resource: any, courseContents: any[]) {
         const matches = [];
 
         for (const section of courseContents) {
+            // Si el recurso es 'inicio', solo procesar sus contenidos y no agregar la sección
+            if (resource.name.toLowerCase().includes('inicio')) {
+                const contents = await this.resourceService.findContents(resource.id);
+                if (section.name.toLowerCase().includes('inicio')) {
+                    const contentMatches = this.matchInitialSection(section, contents);
+                    matches.push(...contentMatches.filter(match => match !== null));
+                }
+                continue;
+            }
+
+            // Para recursos que no son 'inicio', proceder con el matching normal
             if (this.namesMatch(section.name, resource.name)) {
                 matches.push({
                     resource,
@@ -132,34 +123,100 @@ export class MoodleAnalysisService {
                 });
             }
 
+            if (resource.name.toLowerCase().includes('carpeta pedagógica')) {
+                const contents = await this.resourceService.findContents(resource.id);
+                const moduleMatch = section.modules?.find(module =>
+                    this.namesMatch(module.name, resource.name)
+                );
+
+                if (moduleMatch) {
+                    const contentMatches = this.matchPedagogicalFolder(moduleMatch, contents);
+                    matches.push(...contentMatches);
+                }
+                continue;
+            }
+
             const moduleMatch = section.modules?.find(module =>
                 this.namesMatch(module.name, resource.name)
             );
 
-            if (resource.name.toLowerCase().includes('carpeta pedagógica')) {
-                const contents = await this.resourceService.findContents(resource.id);
-                const contentMatches = this.matchPedagogicalFolder(moduleMatch, contents);
-
-                for (const content of contentMatches) {
-                    matches.push({
-                        resource: content.resource,
-                        matchedSection: content.matchedSection,
-                        matchedModule: content.matchedModule
-                    })
-                }
-            }
-
             if (moduleMatch) {
-                if (!resource.name.toLowerCase().includes('carpeta')) {
-                    matches.push({
-                        resource,
-                        matchedSection: section.name,
-                        matchedModule: moduleMatch
-                    });
-                }
+                matches.push({
+                    resource,
+                    matchedSection: section.name,
+                    matchedModule: moduleMatch
+                });
             }
         }
+
         return matches.length > 0 ? matches : null;
+    }
+
+    private matchInitialSection(matchSection: any, contents: any[]): any[] {
+        if (!matchSection || !matchSection.modules || !contents) return [];
+
+        return contents.map(content => {
+            // Special handling for 'mapa' content
+            if (content.name.toLowerCase().includes('mapa')) {
+                return {
+                    resource: content,
+                    matchedSection: matchSection,
+                    matchedModule: null
+                };
+            }
+
+            // For other contents, try to find matching module
+            const matchedModule = matchSection.modules?.find((item: any) => {
+                const normalizedContent = this.normalizeString(item.name);
+                const normalizedName = this.normalizeString(content.name);
+
+                const contentWords = normalizedContent.split(/\s+/);
+                const nameWords = normalizedName.split(/\s+/);
+
+                const matchingWords = nameWords.filter(word =>
+                    contentWords.includes(word)
+                );
+                const matchPercentage = (matchingWords.length / nameWords.length) * 100;
+
+                return matchPercentage >= 50;
+            });
+
+            if (matchedModule) {
+                return {
+                    resource: content,
+                    matchedSection: matchSection.name,
+                    matchedModule: matchedModule
+                };
+            }
+
+            // If no match found, skip this content
+            return null;
+        }).filter(match => match !== null); // Remove null matches
+    }
+
+    private async matchDefaultResources(courseContents: any[], resources: any[]) {
+        const matches = { matched: [], unmatched: [] };
+
+        for (const resource of resources) {
+            const match = await this.findResourceMatch(resource, courseContents);
+            if (match) {
+                matches.matched.push(...match);
+            } else {
+                matches.unmatched.push({
+                    resource: {
+                        id: resource.id,
+                        name: resource.name
+                    },
+                    matchedSection: null,
+                    matchedModule: null
+                });
+            }
+        }
+
+        return {
+            matchedResources: matches.matched,
+            unmatchedResources: matches.unmatched
+        };
     }
 
     private namesMatch(name1?: string, name2?: string): boolean {
