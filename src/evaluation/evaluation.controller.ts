@@ -19,7 +19,7 @@ export class EvaluationController {
   @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
   async create(@Body() createEvaluationDto: CreateEvaluationDto) {
     const evaluation = await this.evaluationService.create(createEvaluationDto);
-    
+
     return {
       message: "Evaluación creada exitosamente",
       data: {
@@ -141,13 +141,5 @@ export class EvaluationController {
     @Query('areaId') areaId: number,
   ): Promise<any> {
     return await this.evaluationService.analyzeClassroomCompliance(moodleCourseId, token, cycleId, areaId);
-  }
-
-  @Post('evaluate-indicators/:areaId')
-  async evaluateIndicatorsForMatchedContents(
-    @Param('areaId') areaId: number,
-    @Body('matchedContents') matchedContents: any[]
-  ): Promise<any> {
-    return await this.evaluationService.evaluateIndicatorsForMatchedContents(matchedContents, areaId);
   }
 }

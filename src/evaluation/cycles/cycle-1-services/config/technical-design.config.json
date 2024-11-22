@@ -1,0 +1,87 @@
+{
+  "cycle": "Ciclo 1",
+  "resources": [
+    {
+      "name": "Sección Inicio",
+      "contents": [
+        {
+          "name": "Mapa de inicio",
+          "configuration": {
+            "general": {
+              "sectionName": {
+                "customize": true,
+                "name": "Inicio"
+              },
+              "summary": {
+                "required": true,
+                "description": "Agregar la imagen del Mapa mental de la Introducción o inicio. Formato de imagen aprobado por UAGRM (Ver anexo 3)."
+              }
+            },
+            "accessRestrictions": {
+              "conditions": [
+                {
+                  "type": "activityCompletion",
+                  "activityName": "Carpeta pedagógica",
+                  "completionStatus": "markedComplete"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Lección de conocimientos previos",
+          "configuration": {
+            "general": {
+              "sectionName": {
+                "customize": true,
+                "name": "Conocimientos previos"
+              }
+            },
+            "grading": {
+              "gradeEnabled": false,
+              "gradeCategory": "Actividades sin calificación"
+            }
+          }
+        },
+        {
+          "name": "Cuestionario diagnóstico",
+          "configuration": {
+            "general": {
+              "sectionName": {
+                "customize": false,
+                "name": "Cuestionario Diagnóstico"
+              }
+            },
+            "timing": {
+              "dates": [],
+              "timeLimit": {
+                "description": "1 minuto por pregunta si tiene 10 preguntas sencillas; 10 minutos, si son de análisis, 2 minutos por pregunta",
+                "autoSubmit": true
+              }
+            },
+            "grading": {
+              "gradeCategory": "Actividades sin calificación",
+              "passingGrade": 80,
+              "allowedAttempts": "unlimited"
+            }
+          }
+        },
+        {
+          "name": "Bibliografía",
+          "configuration": {
+            "general": {
+              "name": "Bibliografía",
+              "description": ""
+            },
+            "accessRestrictions": {
+              "conditions": []
+            },
+            "activityCompletion": {
+              "conditions": ["ver"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

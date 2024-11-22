@@ -1,0 +1,63 @@
+{
+    "resources": [
+        {
+            "name": "Mapa mental",
+            "general": {
+                "name": "unidad",
+                "description": "objetivo"
+            }
+        },
+        {
+            "name": "Cuestionario de autoevaluación",
+            "timing-qualification": {
+                "open": "inactive",
+                "timelimit": 600,
+                "submission": "autosubmit",
+                "graceperiod": 0,
+                "category": "sin calificación",
+                "grade": 80,
+                "attempts": "sin límite",
+                "grademethod": 1
+            }
+        },
+        {
+            "name": "Retos",
+            "general": {
+                "name": "Nombre del reto",
+                "intro": true,
+                "description": false,
+                "contentfiles": true
+            },
+            "submission": {
+                "maxsubmissionsizebytes": 500,
+                "commentinline": 0
+            }
+        },
+        {
+            "name": "Foro de debate",
+            "general": {
+                "name": "debate",
+                "description": true,
+                "type": "eachuser"
+            },
+            "attachment": {
+                "maxfilebytes": 512000,
+                "maxfiles": 10
+            }
+        },
+        {
+            "name": "Videoconferencias",
+            "general": {
+                "name": "videoconferencia",
+                "description": "img src"
+            },
+            "generalunit": {
+                "name": "grabadas",
+                "description": false
+            },
+            "completiondata": {
+                "rulename": "completionview"
+            }
+        }
+    ]
+}

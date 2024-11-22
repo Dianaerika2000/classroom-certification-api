@@ -10,6 +10,9 @@ import { ResourceModule } from 'src/resource/resource.module';
 import { IndicatorModule } from 'src/indicator/indicator.module';
 import { AreaModule } from 'src/area/area.module';
 import { MoodleModule } from 'src/moodle/moodle.module';
+import { Cycle1TechnicalDesignService, Cycle1TrainingDesignService, Cycle3TechnicalDesignService, Cycle3TrainingDesignService, TechnicalDesignCycleIiService, TechnicalDesignService, TrainingDesignCycleIiService, TrainingDesignService } from './cycles/cycles';
+import { IndicatorEvaluationService } from './indicator-evaluation/indicator-evaluation.service';
+import { MoodleAnalysisService } from './moodle-analysis/moodle-analysis.service';
 
 @Module({
   imports: [
@@ -23,6 +26,18 @@ import { MoodleModule } from 'src/moodle/moodle.module';
     IndicatorModule
   ],
   controllers: [EvaluationController],
-  providers: [EvaluationService],
+  providers: [
+    EvaluationService, 
+    Cycle1TrainingDesignService, 
+    Cycle1TechnicalDesignService,
+    Cycle3TrainingDesignService,
+    Cycle3TechnicalDesignService,
+    TechnicalDesignService, 
+    TrainingDesignService, 
+    TechnicalDesignCycleIiService, 
+    TrainingDesignCycleIiService, 
+    IndicatorEvaluationService, 
+    MoodleAnalysisService
+  ],
 })
 export class EvaluationModule {}
