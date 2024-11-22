@@ -52,11 +52,11 @@ export class IndicatorEvaluationService {
         },
         [`${AreaType.Formacion}_${CycleType.CicloIII}`]: {
             service: this.cycleiiiTrainingService,
-            method: 'evaluateContentIndicators'
+            method: 'evaluateIndicatorsByResource'
         },
         [`${AreaType.Tecnico}_${CycleType.CicloIII}`]: {
             service: this.cycleiiiTechnicalService,
-            method: 'evaluateContentIndicators'
+            method: 'evaluateIndicatorsByResource'
         },
     }
 

@@ -220,7 +220,13 @@ export class MoodleAnalysisService {
     }
 
     private namesMatch(name1?: string, name2?: string): boolean {
-        return name1?.toLowerCase() === name2?.toLowerCase();
+        if (name2.toLowerCase().includes('mapa de cierre')) {
+            return name1?.toLowerCase().includes('cierre');
+        } else if (name2.toLowerCase().includes('evaluación')) {
+            return name1?.toLowerCase().includes('cierre');
+        } else {
+            return name1?.toLowerCase().includes(name2?.toLowerCase());
+        }
     }
 
     private matchPedagogicalFolder(moduleMatch: any, contents: any[]): any[] {
