@@ -139,7 +139,8 @@ export class EvaluationController {
     @Query('token') token: string,
     @Query('cycleId') cycleId: number,
     @Query('areaId') areaId: number,
+    @Query('evaluationId') evaluationId: number,
   ): Promise<any> {
-    return await this.evaluationService.analyzeClassroomCompliance(moodleCourseId, token, cycleId, areaId);
+    return await this.evaluationService.analyzeClassroomCompliance(moodleCourseId, token, cycleId, areaId, evaluationId);
   }
 }

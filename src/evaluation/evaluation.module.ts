@@ -13,6 +13,7 @@ import { MoodleModule } from 'src/moodle/moodle.module';
 import { Cycle1TechnicalDesignService, Cycle1TrainingDesignService, Cycle3TechnicalDesignService, Cycle3TrainingDesignService, TechnicalDesignCycleIiService, TechnicalDesignService, TrainingDesignCycleIiService, TrainingDesignService } from './cycles/cycles';
 import { IndicatorEvaluationService } from './indicator-evaluation/indicator-evaluation.service';
 import { MoodleAnalysisService } from './moodle-analysis/moodle-analysis.service';
+import { EvaluatedIndicatorModule } from 'src/evaluated-indicator/evaluated-indicator.module';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { MoodleAnalysisService } from './moodle-analysis/moodle-analysis.service
     CycleModule,
     AreaModule,
     ResourceModule,
-    IndicatorModule
+    IndicatorModule,
+    EvaluatedIndicatorModule
   ],
   controllers: [EvaluationController],
   providers: [
@@ -37,7 +39,7 @@ import { MoodleAnalysisService } from './moodle-analysis/moodle-analysis.service
     TechnicalDesignCycleIiService, 
     TrainingDesignCycleIiService, 
     IndicatorEvaluationService, 
-    MoodleAnalysisService
+    MoodleAnalysisService,
   ],
 })
 export class EvaluationModule {}
