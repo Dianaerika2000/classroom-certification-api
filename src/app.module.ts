@@ -22,6 +22,7 @@ import { EvaluationModule } from './evaluation/evaluation.module';
 import { FormModule } from './form/form.module';
 import { AssessmentModule } from './assessment/assessment.module';
 import { SummaryModule } from './summary/summary.module';
+import { EvaluatedIndicatorModule } from './evaluated-indicator/evaluated-indicator.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { SummaryModule } from './summary/summary.module';
     FormModule,
     AssessmentModule,
     SummaryModule,
+    EvaluatedIndicatorModule,
   ],
   controllers: [AppController],
   providers: [AppService],
