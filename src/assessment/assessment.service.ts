@@ -181,4 +181,22 @@ export class AssessmentService {
 
     return await this.assessmentRepository.remove(assessment);
   }
+
+  async getAverageByAreaAndForm(areaId: number, formId: number): Promise<number> {
+    const assessments = await this.assessmentRepository.find({
+      where: {
+        area: { id: areaId }, 
+        form: { id: formId }, 
+      },
+    });
+
+    if (assessments.length === 0) {
+      return 0;
+    }
+
+    const total = assessments.reduce((sum, assessment) => sum + assessment.assessment, 0);
+    const average = total / assessments.length;
+
+    return parseFloat(average.toFixed(2));
+  }
 }

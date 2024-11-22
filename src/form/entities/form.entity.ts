@@ -1,6 +1,7 @@
-import { Assessment } from "src/assessment/entities/assessment.entity";
-import { Classroom } from "src/classroom/entities/classroom.entity";
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Assessment } from "../../assessment/entities/assessment.entity";
+import { Classroom } from "../../classroom/entities/classroom.entity";
+import { Summary } from "../../summary/entities/summary.entity";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: 'forms' })
 export class Form {
@@ -48,4 +49,7 @@ export class Form {
     { cascade: true, onDelete: 'CASCADE' }
   )
   assessment: Assessment[];
+
+  @OneToOne(() => Summary, (summary) => summary.form, { cascade: true })
+  summary: Summary;
 }

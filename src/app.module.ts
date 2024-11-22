@@ -21,6 +21,7 @@ import { ClassroomModule } from './classroom/classroom.module';
 import { EvaluationModule } from './evaluation/evaluation.module';
 import { FormModule } from './form/form.module';
 import { AssessmentModule } from './assessment/assessment.module';
+import { SummaryModule } from './summary/summary.module';
 import { EvaluatedIndicatorModule } from './evaluated-indicator/evaluated-indicator.module';
 
 @Module({
@@ -64,6 +65,7 @@ import { EvaluatedIndicatorModule } from './evaluated-indicator/evaluated-indica
     EvaluationModule,
     FormModule,
     AssessmentModule,
+    SummaryModule,
     EvaluatedIndicatorModule,
   ],
   controllers: [AppController],
