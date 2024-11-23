@@ -8,6 +8,9 @@ import { ClassroomService } from '../classroom/classroom.service';
 import { MoodleAnalysisService } from './moodle-analysis/moodle-analysis.service';
 import { IndicatorEvaluationService } from './indicator-evaluation/indicator-evaluation.service';
 import { EvaluatedIndicatorsService } from 'src/evaluated-indicator/evaluated-indicator.service';
+import { ClassroomStatus } from 'src/classroom/enums/classroom-status.enum';
+import { AreaService } from 'src/area/area.service';
+import { CycleService } from 'src/cycle/cycle.service';
 
 @Injectable()
 export class EvaluationService {
@@ -17,7 +20,9 @@ export class EvaluationService {
     private readonly classroomService: ClassroomService,
     private readonly moodleAnalysisService: MoodleAnalysisService,
     private readonly indicatorEvaluationService: IndicatorEvaluationService,
-    private readonly evaluatedIndicatorService: EvaluatedIndicatorsService
+    private readonly evaluatedIndicatorService: EvaluatedIndicatorsService,
+    private readonly areaService: AreaService,
+    private readonly cycleService: CycleService
   ) { }
 
   async create(createEvaluationDto: CreateEvaluationDto): Promise<Evaluation> {
@@ -88,6 +93,9 @@ export class EvaluationService {
     areaId: number,
     evaluationId: number
   ): Promise<any> {
+    const evaluation = await this.findOne(evaluationId);
+    const classroom = await this.classroomService.findOne(evaluation.classroom.id);
+
     const { matchedResources, unmatchedResources } =
       await this.moodleAnalysisService.analyzeClassroomContents(
         moodleCourseId,
@@ -105,8 +113,6 @@ export class EvaluationService {
       }
     );
 
-    const evaluation = await this.findOne(evaluationId);
-
     const evaluatedIndicatorsData = results.flatMap(resource =>
       resource.contents.match.flatMap(matchGroup =>
         matchGroup.map(indicator => ({
@@ -118,6 +124,17 @@ export class EvaluationService {
     );
 
     await this.evaluatedIndicatorService.createBulk(evaluatedIndicatorsData, evaluation)
+    const isFullyEvaluated = await this.checkIfClassroomFullyEvaluated(classroom.id);
+
+    if (isFullyEvaluated) {
+      await this.classroomService.update(classroom.id, {
+        status: ClassroomStatus.EVALUADA
+      });
+    } else {
+      await this.classroomService.update(classroom.id, {
+        status: ClassroomStatus.EN_PROCESO
+      });
+    }
 
     return {
       message: "Análisis de cumplimiento del aula completado exitosamente",
@@ -140,6 +157,14 @@ export class EvaluationService {
     };
   }
 
+  async fetchAndMatchCourseContents(moodleCourseId: number, token: string, cycleId: number): Promise<any> {
+    return this.moodleAnalysisService.analyzeClassroomContents(
+      moodleCourseId,
+      token,
+      cycleId
+    );
+  }
+
   // Helper method in the service
   private calculateTotalResult(evaluatedIndicators: any[]): number {
     if (evaluatedIndicators.length === 0) return 0;
@@ -147,11 +172,29 @@ export class EvaluationService {
     return evaluatedIndicators.reduce((sum, indicator) => sum + indicator.results, 0);
   }
 
-  async fetchAndMatchCourseContents(moodleCourseId: number, token: string, cycleId: number): Promise<any> {
-    return this.moodleAnalysisService.analyzeClassroomContents(
-      moodleCourseId,
-      token,
-      cycleId
-    );
+  private async checkIfClassroomFullyEvaluated(classroomId: number): Promise<boolean> {
+    // Obtener todas las evaluaciones para este classroom con sus relaciones
+    const evaluations = await this.evaluationRepository.find({
+      where: { classroom: { id: classroomId } },
+      relations: ['classroom']
+    });
+
+    if (evaluations.length === 0) {
+      return false;
+    }
+
+    // Obtener conjuntos únicos de ciclos y áreas evaluados
+    const evaluatedCycles = new Set(evaluations.map(item => item.cycleId));
+    const evaluatedAreas = new Set(evaluations.map(item => item.areaId));
+
+    // Obtener la cantidad total de ciclos y áreas que deberían evaluarse
+    const requiredCycles = await this.cycleService.findAll();
+    const requiredAreas = await this.areaService.findAll();
+
+    // Verificar si se han evaluado todos los ciclos y áreas requeridos
+    const allCyclesEvaluated = requiredCycles.every(cycle => evaluatedCycles.has(cycle.id));
+    const allAreasEvaluated = requiredAreas.every(area => evaluatedAreas.has(area.id));
+
+    return allCyclesEvaluated && allAreasEvaluated;
   }
 }
