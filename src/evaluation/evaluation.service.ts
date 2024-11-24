@@ -123,6 +123,11 @@ export class EvaluationService {
       )
     );
 
+    const totalResult = this.calculateTotalResult(evaluatedIndicatorsData);
+    await this.update(evaluationId, {
+      result: totalResult
+    })
+
     await this.evaluatedIndicatorService.createBulk(evaluatedIndicatorsData, evaluation)
     const isFullyEvaluated = await this.checkIfClassroomFullyEvaluated(classroom.id);
 
@@ -151,7 +156,7 @@ export class EvaluationService {
           indicatorsResult: resource.contents.match
         })),
         summary: {
-          averageComplianceResult: this.calculateTotalResult(evaluatedIndicatorsData)
+          averageComplianceResult: totalResult
         }
       }
     };

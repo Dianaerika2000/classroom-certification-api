@@ -590,8 +590,16 @@ export class TrainingDesignCycleIiService {
             module => module.modname.toLowerCase() === 'book'
         );
 
+        if (!moduleTypeBook || !Array.isArray(moduleTypeBook) || moduleTypeBook.length === 0) {
+            return {
+                indicatorId: indicator.id,
+                result: 0,
+                observation: 'No se encontraron módulos tipo libro en la sección de videoconferencias'
+            };
+        }
+
         const keywords = ['grabaciones', 'grabadas', 'guardadas'];
-        const isValidName = keywords.some(keyword => moduleTypeBook[0].name.toLowerCase().includes(keyword));        
+        const isValidName = keywords.some(keyword => moduleTypeBook[0].name.toLowerCase().includes(keyword));
 
         return {
             indicatorId: indicator.id,

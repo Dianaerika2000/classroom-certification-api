@@ -1123,6 +1123,14 @@ export class TechnicalDesignCycleIiService {
 
         const config = videoConfig.generalunit; // Acceder a la propiedad 'general'
         const moduleBook = videoSection.modules?.find(item => item.modname == 'book');
+        if (!moduleBook) {
+            return {
+                indicatorId: indicator.id,
+                result: 0,
+                observation: 'No se encontraron módulos tipo libro en la sección de videoconferencias'
+            };
+        }
+        
         const isValidName = moduleBook.name.toLowerCase().includes(config.name);
 
         return {
@@ -1171,6 +1179,14 @@ export class TechnicalDesignCycleIiService {
             module => module.modname.toLowerCase() == 'book'
         );
 
+        if (!moduleBook) {
+            return {
+                indicatorId: indicator.id,
+                result: 0,
+                observation: 'No se encontraron módulos tipo libro en la sección de videoconferencias'
+            };
+        }
+
         const hasUrlForeachSubject = totalSubjects === moduleBook.contents?.filter(item => item.filename != 'structure').length;
 
         return {
@@ -1196,6 +1212,15 @@ export class TechnicalDesignCycleIiService {
         }
 
         const moduleBook = videoSection.modules?.find(item => item.modname == 'book');
+
+        if (!moduleBook) {
+            return {
+                indicatorId: indicator.id,
+                result: 0,
+                observation: 'No se encontraron módulos tipo libro en la sección de videoconferencias'
+            };
+        }
+
         const isAvailable = moduleBook.availability == null;
 
         return {
@@ -1224,6 +1249,14 @@ export class TechnicalDesignCycleIiService {
 
         const config = videoConfig.completiondata;
         const moduleBook = videoSection.modules?.find(item => item.modname == 'book');
+        if (!moduleBook) {
+            return {
+                indicatorId: indicator.id,
+                result: 0,
+                observation: 'No se encontraron módulos tipo libro en la sección de videoconferencias'
+            };
+        }
+
         const isAutomatic = moduleBook.completiondata.isautomatic;
         const isAvailable = moduleBook.completiondata.details?.some(
             detail => detail.rulename === config.rulename
