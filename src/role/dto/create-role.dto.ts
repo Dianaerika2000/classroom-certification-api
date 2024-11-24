@@ -1,6 +1,9 @@
-import { IsString } from "class-validator";
+import { IsEnum, IsString } from "class-validator";
+import { ValidRoles } from "../../common/enums/valid-roles";
 
 export class CreateRoleDto {
-  @IsString()
-  name: string;
+  @IsEnum(ValidRoles, {
+    message: 'The role must be ADMINISTRATOR or EVALUATOR'
+  })
+  name: ValidRoles;
 }

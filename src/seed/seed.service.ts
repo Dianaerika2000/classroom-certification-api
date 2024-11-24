@@ -3,6 +3,7 @@ import { RoleService } from 'src/role/role.service';
 import { UserService } from '../user/user.service';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { ConfigService } from '@nestjs/config';
+import { ValidRoles } from '../common/enums/valid-roles';
 
 @Injectable()
 export class SeedService {
@@ -14,8 +15,8 @@ export class SeedService {
 
   async executeSeed(): Promise<void> {
     const roles = [
-      { name: 'Administrador' },
-      { name: 'Evaluador' },
+      { name: ValidRoles.admin },
+      { name: ValidRoles.evaluator },
     ];
 
     for (const role of roles) {
@@ -25,7 +26,7 @@ export class SeedService {
       }
     }
 
-    const adminRole = await this.roleService.findByName('Administrador');
+    const adminRole = await this.roleService.findByName(ValidRoles.admin);
     const adminUser:CreateUserDto = {
       name: this.configService.get('ADMIN_NAME'),
       username: this.configService.get('ADMIN_USERNAME'),
