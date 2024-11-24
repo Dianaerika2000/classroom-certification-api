@@ -1,3 +1,4 @@
+import { Certification } from 'src/certification/entities/certification.entity';
 import { Evaluation } from 'src/evaluation/entities/evaluation.entity';
 import { Form } from 'src/form/entities/form.entity';
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
@@ -24,4 +25,7 @@ export class Classroom {
 
   @OneToMany(() => Form, form => form.classroom)
   forms: Form[];
+
+  @OneToMany(() => Certification, certification => certification.classroom)
+  certifications: Certification[];
 }
