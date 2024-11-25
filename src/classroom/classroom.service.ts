@@ -6,6 +6,7 @@ import { UpdateClassroomDto } from './dto/update-classroom.dto';
 import { Classroom } from './entities/classroom.entity';
 import { MoodleService } from '../moodle/moodle.service';
 import { FindClassroomMoodleDto } from '../moodle/dto/find-classroom-moodle.dto';
+import { TeamService } from '../team/team.service';
 
 @Injectable()
 export class ClassroomService {
@@ -13,10 +14,18 @@ export class ClassroomService {
     @InjectRepository(Classroom)
     private readonly classroomRepository: Repository<Classroom>,
     private readonly moodleService: MoodleService,
+    private readonly teamService: TeamService,
   ){}
 
   async create(createClassroomDto: CreateClassroomDto): Promise<Classroom> {
-    const classroom = this.classroomRepository.create(createClassroomDto);
+    const { teamId, ...classroomData } = createClassroomDto;
+    const team = await this.teamService.findOne(teamId);
+    
+    const classroom = this.classroomRepository.create({
+      ...classroomData,
+      team
+    });
+  
     return await this.classroomRepository.save(classroom);
   }
 
@@ -39,7 +48,7 @@ export class ClassroomService {
 
   async update(id: number, updateClassroomDto: UpdateClassroomDto): Promise<Classroom> {
     const preloadedClassroom = await this.classroomRepository.preload({
-      id: id,
+      id,
       ...updateClassroomDto,
     });
     
@@ -47,6 +56,12 @@ export class ClassroomService {
       throw new NotFoundException(`Classroom with ID "${id}" not found`);
     }
     
+    const { teamId } = updateClassroomDto;
+    if (teamId) {
+      const team = await this.teamService.findOne(teamId);
+      preloadedClassroom.team = team;
+    }
+
     return await this.classroomRepository.save(preloadedClassroom);
   }
 
