@@ -16,6 +16,9 @@ export class Classroom {
   @Column({ default: 'pendiente' })
   status: string;
 
+  @Column({ name: 'moodle_course_id', nullable: true })
+  moodleCourseId: number;
+
   @CreateDateColumn({ name: 'created_at'})
   createdAt: string;
 

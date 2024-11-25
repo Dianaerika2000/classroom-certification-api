@@ -11,6 +11,7 @@ import { EvaluatedIndicatorsService } from 'src/evaluated-indicator/evaluated-in
 import { ClassroomStatus } from 'src/classroom/enums/classroom-status.enum';
 import { AreaService } from 'src/area/area.service';
 import { CycleService } from 'src/cycle/cycle.service';
+import { IndicatorService } from 'src/indicator/indicator.service';
 
 @Injectable()
 export class EvaluationService {
@@ -22,7 +23,8 @@ export class EvaluationService {
     private readonly indicatorEvaluationService: IndicatorEvaluationService,
     private readonly evaluatedIndicatorService: EvaluatedIndicatorsService,
     private readonly areaService: AreaService,
-    private readonly cycleService: CycleService
+    private readonly cycleService: CycleService,
+    private readonly indicatorService: IndicatorService
   ) { }
 
   async create(createEvaluationDto: CreateEvaluationDto): Promise<Evaluation> {
@@ -43,41 +45,82 @@ export class EvaluationService {
     return await this.evaluationRepository.find();
   }
 
-  async findByClassroom(classroomId: number): Promise<Evaluation[]> {
+  async findByClassroom(classroomId: number): Promise<any[]> {
     const classroom = await this.classroomService.findOne(classroomId);
 
     if (!classroom) {
       throw new NotFoundException(`Aula con ID ${classroomId} no encontrada`);
     }
 
+    // Obtener las evaluaciones
     const evaluations = await this.evaluationRepository.find({
       where: { classroom: { id: classroomId } },
-      relations: ['classroom'],
     });
 
-    return evaluations;
+    if (!evaluations.length) {
+      return [];
+    }
+
+    // Consultar ciclos y áreas
+    const cycles = await this.cycleService.findAll();
+    const areas = await this.areaService.findAll();
+
+    // Mapear ciclos y áreas por su ID para acceso rápido
+    const cycleMap = new Map(cycles.map(cycle => [cycle.id, cycle]));
+    const areaMap = new Map(areas.map(area => [area.id, area]));
+
+    // Combinar datos
+    return evaluations.map(evaluation => ({
+      id: evaluation.id,
+      classroom: classroom, // Puedes incluir más detalles del aula si lo necesitas
+      cycle: cycleMap.get(evaluation.cycleId) || null,
+      area: areaMap.get(evaluation.areaId) || null,
+      result: evaluation.result,
+    }));
   }
 
-  async findOne(id: number): Promise<Evaluation> {
+  async findOne(id: number): Promise<any> {
+    // Obtener la evaluación
+    const evaluation = await this.evaluationRepository.findOneBy({ id });
+
+    if (!evaluation) {
+      throw new NotFoundException(`Evaluation with ID "${id}" not found`);
+    }
+
+    const evaluatedIndicators = await this.evaluatedIndicatorService.findByEvaluation(id);
+
+    return {
+      ...evaluation,
+      evaluatedIndicators,
+    };
+  }
+
+  async findOneById(id: number): Promise<any> {
     const evaluation = await this.evaluationRepository.findOneBy({ id });
     if (!evaluation) {
       throw new NotFoundException(`Evaluation with ID "${id}" not found`);
     }
-
     return evaluation;
   }
 
   async update(id: number, updateEvaluationDto: UpdateEvaluationDto): Promise<Evaluation> {
-    const evaluation = await this.evaluationRepository.preload({
-      id: id,
-      ...updateEvaluationDto,
-    });
+    // Busca la evaluación existente para asegurarte de que exista
+    const existingEvaluation = await this.evaluationRepository.findOneBy({ id });
 
-    if (!evaluation) {
+    if (!existingEvaluation) {
       throw new NotFoundException(`Evaluation with ID "${id}" not found`);
     }
 
-    return await this.evaluationRepository.save(evaluation);
+    // Mezcla la entidad existente con las nuevas propiedades del DTO
+    const evaluationToUpdate = this.evaluationRepository.create({
+      ...existingEvaluation,
+      ...updateEvaluationDto,
+    });
+
+    // Guarda la evaluación actualizada
+    const updatedEvaluation = await this.evaluationRepository.save(evaluationToUpdate);
+
+    return updatedEvaluation;
   }
 
   async remove(id: number) {
@@ -93,7 +136,7 @@ export class EvaluationService {
     areaId: number,
     evaluationId: number
   ): Promise<any> {
-    const evaluation = await this.findOne(evaluationId);
+    const evaluation = await this.findOneById(evaluationId);
     const classroom = await this.classroomService.findOne(evaluation.classroom.id);
 
     const { matchedResources, unmatchedResources } =
@@ -113,7 +156,7 @@ export class EvaluationService {
       }
     );
 
-    const evaluatedIndicatorsData = results.flatMap(resource =>
+    const evaluatedIndicatorsData = results.flatMap(resource => 
       resource.contents.match.flatMap(matchGroup =>
         matchGroup.map(indicator => ({
           indicatorId: indicator.indicatorId,
@@ -126,9 +169,28 @@ export class EvaluationService {
     const totalResult = this.calculateTotalResult(evaluatedIndicatorsData);
     await this.update(evaluationId, {
       result: totalResult
-    })
+    });
+    for (const data of evaluatedIndicatorsData) {
+      const indicatorExists = await this.indicatorService.findOne(data.indicatorId);
+      const evaluationExists = await this.evaluationRepository.findOneBy({
+        id: evaluation.id,
+      });
+    
+      if (!indicatorExists) {
+        throw new Error(
+          `El indicador con ID ${data.indicatorId} no existe en la base de datos.`
+        );
+      }
+    
+      if (!evaluationExists) {
+        throw new Error(
+          `La evaluación con ID ${evaluation.id} no existe en la base de datos.`
+        );
+      }
+    }
+    
 
-    await this.evaluatedIndicatorService.createBulk(evaluatedIndicatorsData, evaluation)
+    await this.evaluatedIndicatorService.createBulk(evaluatedIndicatorsData, evaluation);
     const isFullyEvaluated = await this.checkIfClassroomFullyEvaluated(classroom.id);
 
     if (isFullyEvaluated) {
@@ -173,7 +235,6 @@ export class EvaluationService {
   // Helper method in the service
   private calculateTotalResult(evaluatedIndicators: any[]): number {
     if (evaluatedIndicators.length === 0) return 0;
-
     return evaluatedIndicators.reduce((sum, indicator) => sum + indicator.results, 0);
   }
 

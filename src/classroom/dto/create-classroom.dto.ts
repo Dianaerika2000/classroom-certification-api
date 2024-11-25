@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString } from "class-validator";
+import { IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
 import { ClassroomStatus } from "../enums/classroom-status.enum";
 
 export class CreateClassroomDto {
@@ -11,4 +11,8 @@ export class CreateClassroomDto {
   @IsEnum(ClassroomStatus)
   @IsOptional()
   status: ClassroomStatus;
+
+  @IsNumber()
+  @IsOptional()
+  moodleCourseId: number;
 }
