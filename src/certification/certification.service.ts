@@ -6,9 +6,8 @@ import { CreateCertificationDto } from './dto/create-certification.dto';
 import { UpdateCertificationDto } from './dto/update-certification.dto';
 import { ClassroomService } from '../classroom/classroom.service';
 import { ClassroomStatus } from '../classroom/enums/classroom-status.enum';
-import { ValidRoles } from '../common/enums/valid-roles';
-import { TeamService } from '../team/team.service';
 import { UserService } from '../user/user.service';
+import { ValidRoles } from '../common/enums/valid-roles';
 
 @Injectable()
 export class CertificationService {
@@ -16,12 +15,11 @@ export class CertificationService {
     @InjectRepository(Certification)
     private readonly certificationRepository: Repository<Certification>,
     private readonly classroomService: ClassroomService,
-    private readonly teamService: TeamService,
     private readonly userService: UserService,
   ) {}
 
   async create(createCertificationDto: CreateCertificationDto, username: string) {
-    const { classroomId, teamId, evaluatorUsername, ...otherAttributes } = createCertificationDto;
+    const { classroomId, evaluatorUsername, ...otherAttributes } = createCertificationDto;
 
     const classroom = await this.classroomService.findOne(classroomId);
 
@@ -31,7 +29,9 @@ export class CertificationService {
       );
     }
 
-    await this.teamService.findOne(teamId);
+    if (!classroom.team) {
+      throw new BadRequestException(`Classroom with ID ${classroomId} does not have an associated team.`);
+    }
 
     const evaluator = await this.determineEvaluatorName(
       username,
@@ -40,7 +40,7 @@ export class CertificationService {
 
     const certification = this.certificationRepository.create({
       classroom,
-      teamId,
+      teamId: classroom.team.id,
       evaluatorName: evaluator,
       ...otherAttributes,
     });
@@ -50,7 +50,11 @@ export class CertificationService {
 
   async findAll() {
     const certifications = await this.certificationRepository.find({
-      relations: ['classroom'],
+      relations: [
+        'classroom',
+        'classroom.team',
+        'classroom.team.personals'
+      ],
       order: {
         createdAt: 'DESC',
       },
@@ -62,7 +66,11 @@ export class CertificationService {
   async findOne(id: number) {
     const certification = await this.certificationRepository.findOne({
       where: { id },
-      relations: ['classroom'],
+      relations: [
+        'classroom',
+        'classroom.team',
+        'classroom.team.personals'
+      ],
     });
 
     if (!certification) {
@@ -77,7 +85,11 @@ export class CertificationService {
       where: {
         classroom: { id: classroomId },
       },
-      relations: ['classroom'],
+      relations: [
+        'classroom',
+        'classroom.team',
+        'classroom.team.personals'
+      ],
       order: {
         createdAt: 'DESC',
       },
@@ -95,7 +107,7 @@ export class CertificationService {
       throw new NotFoundException(`Certification with ID ${id} not found`);
     }
 
-    const { evaluatorUsername, classroomId, teamId, ...updateData } = updateCertificationDto;
+    const { evaluatorUsername, classroomId, ...updateData } = updateCertificationDto;
 
     if (classroomId) {
       const classroom = await this.classroomService.findOne(classroomId);
@@ -104,12 +116,14 @@ export class CertificationService {
           `Classroom with ID ${classroomId} is not eligible for certification. Current status: ${classroom.status}`,
         );
       }
-      preloadedCertification.classroom = classroom;
-    }
 
-    if (teamId) {
-      await this.teamService.findOne(teamId);
-      preloadedCertification.teamId = teamId;
+      if (!classroom.team) {
+        throw new BadRequestException(
+          `Classroom with ID ${classroomId} does not have an associated team.`,
+        );
+      }
+      preloadedCertification.classroom = classroom;
+      preloadedCertification.teamId = classroom.team.id;
     }
 
     if (evaluatorUsername !== undefined) {
@@ -122,7 +136,12 @@ export class CertificationService {
 
     Object.assign(preloadedCertification, updateData);
 
-    return this.certificationRepository.save(preloadedCertification);
+    await this.certificationRepository.save(preloadedCertification);
+
+    return await this.certificationRepository.findOne({
+      where: { id },
+      relations: ['classroom', 'classroom.team', 'classroom.team.personals']
+    });
   }
 
   async remove(id: number) {

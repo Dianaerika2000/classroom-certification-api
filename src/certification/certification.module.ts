@@ -12,7 +12,6 @@ import { Certification } from './entities/certification.entity';
   imports: [
     TypeOrmModule.forFeature([Certification]),
     ClassroomModule,
-    TeamModule,
     UserModule,
     AuthModule
   ],

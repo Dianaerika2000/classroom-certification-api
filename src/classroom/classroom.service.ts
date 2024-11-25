@@ -31,14 +31,21 @@ export class ClassroomService {
 
   async findAll(status?: string): Promise<Classroom[]> {
     if (status) {
-      return await this.classroomRepository.find({ where: { status } });
+      return await this.classroomRepository.find({ 
+        where: { status },
+        relations: ['team', 'team.personals'] 
+      });
     }
     
     return await this.classroomRepository.find();
   }
 
   async findOne(id: number): Promise<Classroom> {
-    const classroom = await this.classroomRepository.findOneBy({ id });
+    const classroom = await this.classroomRepository.findOne({
+      where: { id },
+      relations: ['team', 'team.personals'] 
+    });
+
     if (!classroom) {
       throw new NotFoundException(`Classroom with ID "${id}" not found`);
     }
