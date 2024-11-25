@@ -1,9 +1,12 @@
 import { Controller, Get, Post, Param } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { SummaryService } from './summary.service';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { ValidRoles } from '../auth/enums/valid-roles';
 
 @ApiTags('Summary')
 @Controller('summary')
+@Auth(ValidRoles.admin, ValidRoles.evaluator)
 export class SummaryController {
   constructor(private readonly summaryService: SummaryService) {}
 
