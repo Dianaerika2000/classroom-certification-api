@@ -1,7 +1,8 @@
-import { Certification } from 'src/certification/entities/certification.entity';
-import { Evaluation } from 'src/evaluation/entities/evaluation.entity';
-import { Form } from 'src/form/entities/form.entity';
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Certification } from '../../certification/entities/certification.entity';
+import { Evaluation } from '../../evaluation/entities/evaluation.entity';
+import { Form } from '../../form/entities/form.entity';
+import { Team } from '../../team/entities/team.entity';
+import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'classrooms'})
 export class Classroom {
@@ -28,4 +29,7 @@ export class Classroom {
 
   @OneToMany(() => Certification, certification => certification.classroom)
   certifications: Certification[];
+
+  @ManyToOne(() => Team, (team) => team.classrooms)
+  team: Team;
 }
