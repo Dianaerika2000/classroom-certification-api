@@ -2,11 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { AreaService } from 'src/area/area.service';
 import { CycleService } from 'src/cycle/cycle.service';
 import { IndicatorService } from 'src/indicator/indicator.service';
-import { Cycle1TechnicalDesignService, Cycle1TrainingDesignService, Cycle3TechnicalDesignService, Cycle3TrainingDesignService, TechnicalDesignCycleIiService, TechnicalDesignService, TrainingDesignCycleIiService, TrainingDesignService } from '../cycles/cycles';
+import { Cycle1TechnicalDesignService, Cycle1TrainingDesignService, Cycle3TechnicalDesignService, Cycle3TrainingDesignService, TechnicalDesignCycleIiService, TechnicalDesignService, TrainingDesignCycleIiService, TrainingDesignService, GraphicDesignService } from '../cycles/cycles';
 
 enum AreaType {
     Formacion = 'formación',
-    Tecnico = 'técnico'
+    Tecnico = 'técnico',
+    Grafico = 'gráfico'
 }
 
 enum CycleType {
@@ -34,6 +35,10 @@ export class IndicatorEvaluationService {
             service: this.organizationalAspectsTechnicalService,
             method: 'evaluateContentIndicators'
         },
+        [`${AreaType.Grafico}_${CycleType.Organizacionales}`]: {
+            service: this.graphicDesignService,
+            method: 'evaluateContentIndicators'
+        },
         [`${AreaType.Formacion}_${CycleType.CicloI}`]: {
             service: this.cycleiTrainingService,
             method: 'evaluateIndicatorsByContent'
@@ -41,6 +46,10 @@ export class IndicatorEvaluationService {
         [`${AreaType.Tecnico}_${CycleType.CicloI}`]: {
             service: this.cycleiTechnicalService,
             method: 'evaluateIndicatorsByContent'
+        },
+        [`${AreaType.Grafico}_${CycleType.CicloI}`]: {
+            service: this.graphicDesignService,
+            method: 'evaluateContentIndicators'
         },
         [`${AreaType.Formacion}_${CycleType.CicloII}`]: {
             service: this.cycleiiTrainingService,
@@ -50,6 +59,10 @@ export class IndicatorEvaluationService {
             service: this.cycleiiTechnicalService,
             method: 'evaluateContentIndicators'
         },
+        [`${AreaType.Grafico}_${CycleType.CicloII}`]: {
+            service: this.graphicDesignService,
+            method: 'evaluateContentIndicators'
+        },
         [`${AreaType.Formacion}_${CycleType.CicloIII}`]: {
             service: this.cycleiiiTrainingService,
             method: 'evaluateIndicatorsByResource'
@@ -57,6 +70,10 @@ export class IndicatorEvaluationService {
         [`${AreaType.Tecnico}_${CycleType.CicloIII}`]: {
             service: this.cycleiiiTechnicalService,
             method: 'evaluateIndicatorsByResource'
+        },
+        [`${AreaType.Grafico}_${CycleType.CicloIII}`]: {
+            service: this.graphicDesignService,
+            method: 'evaluateContentIndicators'
         },
     }
 
@@ -72,6 +89,7 @@ export class IndicatorEvaluationService {
         private readonly cycleiiTechnicalService: TechnicalDesignCycleIiService,
         private readonly cycleiiiTrainingService: Cycle3TrainingDesignService,
         private readonly cycleiiiTechnicalService: Cycle3TechnicalDesignService,
+        private readonly graphicDesignService: GraphicDesignService
     ) { }
 
     async evaluateIndicators(
@@ -178,15 +196,17 @@ export class IndicatorEvaluationService {
 
         const areaType = area.name.toLowerCase().includes('formación')
             ? AreaType.Formacion
-            : AreaType.Tecnico;
+            : area.name.toLowerCase().includes('técnico')
+                ? AreaType.Tecnico
+                : AreaType.Grafico;
 
         const cycleType = cycle.name.toLowerCase().includes('organizacionales')
             ? CycleType.Organizacionales
             : cycle.name.toLowerCase().includes('ciclo i')
-            ? CycleType.CicloI
-            : cycle.name.toLowerCase().includes('ciclo 2')
-            ? CycleType.CicloII
-            : CycleType.CicloIII
+                ? CycleType.CicloI
+                : cycle.name.toLowerCase().includes('ciclo 2')
+                    ? CycleType.CicloII
+                    : CycleType.CicloIII
 
         const evaluationKey = `${areaType}_${cycleType}`;
         const evaluationConfig = this.evaluationServices[evaluationKey];

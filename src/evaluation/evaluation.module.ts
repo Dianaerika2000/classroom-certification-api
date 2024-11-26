@@ -14,6 +14,7 @@ import { Cycle1TechnicalDesignService, Cycle1TrainingDesignService, Cycle3Techni
 import { IndicatorEvaluationService } from './indicator-evaluation/indicator-evaluation.service';
 import { MoodleAnalysisService } from './moodle-analysis/moodle-analysis.service';
 import { EvaluatedIndicatorModule } from 'src/evaluated-indicator/evaluated-indicator.module';
+import { GraphicDesignService } from './cycles/graphic-design/graphic-design.service';
 
 @Module({
   imports: [
@@ -39,7 +40,7 @@ import { EvaluatedIndicatorModule } from 'src/evaluated-indicator/evaluated-indi
     TechnicalDesignCycleIiService, 
     TrainingDesignCycleIiService, 
     IndicatorEvaluationService, 
-    MoodleAnalysisService,
+    MoodleAnalysisService, GraphicDesignService,
   ],
 })
 export class EvaluationModule {}

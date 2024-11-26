@@ -189,7 +189,6 @@ export class EvaluationService {
       }
     }
     
-
     await this.evaluatedIndicatorService.createBulk(evaluatedIndicatorsData, evaluation);
     const isFullyEvaluated = await this.checkIfClassroomFullyEvaluated(classroom.id);
 
@@ -255,7 +254,8 @@ export class EvaluationService {
 
     // Obtener la cantidad total de ciclos y áreas que deberían evaluarse
     const requiredCycles = await this.cycleService.findAll();
-    const requiredAreas = await this.areaService.findAll();
+    const areas = await this.areaService.findAll();
+    const requiredAreas = areas.filter(item => !item.name.toLowerCase().includes('calidad académica'))
 
     // Verificar si se han evaluado todos los ciclos y áreas requeridos
     const allCyclesEvaluated = requiredCycles.every(cycle => evaluatedCycles.has(cycle.id));

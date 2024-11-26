@@ -7,3 +7,4 @@ export { TechnicalDesignService } from "./organizational-aspects/technical-desig
 export { TrainingDesignService } from "./organizational-aspects/training-design/training-design.service";
 export { TechnicalDesignCycleIiService } from "./cycle-ii/technical-design-cycle-ii/technical-design-cycle-ii.service";
 export { TrainingDesignCycleIiService } from "./cycle-ii/training-design-cycle-ii/training-design-cycle-ii.service";
+export { GraphicDesignService } from "./graphic-design/graphic-design.service";
