@@ -177,8 +177,7 @@ export class MoodleAnalysisService {
                     contentWords.includes(word)
                 );
                 const matchPercentage = (matchingWords.length / nameWords.length) * 100;
-
-                return matchPercentage >= 50;
+                return matchPercentage >= 25;
             });
 
             if (matchedModule) {

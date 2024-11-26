@@ -698,6 +698,13 @@ export class TrainingDesignService {
                 : 'El total de las ponderaciones no suma 100%'
         });
 
+        // Indicador: Explica las Unidades a evaluar
+        results.push({
+            indicatorId: indicators.find(i => i.name.toLowerCase().includes('explica las unidades'))?.id || 0,
+            result: 0,
+            observation: 'El indicador requiere verificación manual.'
+        });
+
         return results;
     }
 
