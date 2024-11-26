@@ -643,7 +643,7 @@ export class TrainingDesignService {
         const hasNormas = normasSection && nextElement?.textContent?.includes('restricción de acceso');
 
         results.push({
-            indicatorId: indicators.find(i => i.name.includes('Normas de evaluación'))?.id || 0,
+            indicatorId: indicators.find(i => i.name.toLowerCase().includes('normas de evaluación'))?.id || 0,
             result: hasNormas ? 1 : 0,
             observation: hasNormas ? 'Se describen normas de evaluación' : 'No se describen normas de evaluación'
         });
@@ -654,7 +654,7 @@ export class TrainingDesignService {
         const hasFormas = formasSection && formasNextElement?.textContent?.includes('evaluación diagnóstica');
 
         results.push({
-            indicatorId: indicators.find(i => i.name.includes('formas de evaluación'))?.id || 0,
+            indicatorId: indicators.find(i => i.name.toLowerCase().includes('formas de evaluación'))?.id || 0,
             result: hasFormas ? 1 : 0,
             observation: hasFormas ? 'Se describen formas e instrumentos de evaluación' : 'No se describen formas e instrumentos de evaluación'
         });
@@ -673,7 +673,7 @@ export class TrainingDesignService {
         });
 
         results.push({
-            indicatorId: indicators.find(i => i.name.includes('Actividades'))?.id || 0,
+            indicatorId: indicators.find(i => i.name.toLowerCase().includes('actividades'))?.id || 0,
             result: hasValidActivities ? 1 : 0,
             observation: hasValidActivities
                 ? 'Se describen actividades y sus ponderaciones'
@@ -691,11 +691,18 @@ export class TrainingDesignService {
         const isValidTotal = totalPonderacion === '100';
 
         results.push({
-            indicatorId: indicators.find(i => i.name.includes('porcentajes'))?.id || 0,
+            indicatorId: indicators.find(i => i.name.toLowerCase().includes('porcentajes'))?.id || 0,
             result: isValidTotal ? 1 : 0,
             observation: isValidTotal
                 ? 'El total de las ponderaciones suma 100%'
                 : 'El total de las ponderaciones no suma 100%'
+        });
+
+        // Indicador: Explica las Unidades a evaluar
+        results.push({
+            indicatorId: indicators.find(i => i.name.toLowerCase().includes('explica las unidades'))?.id || 0,
+            result: 0,
+            observation: 'El indicador requiere verificación manual.'
         });
 
         return results;

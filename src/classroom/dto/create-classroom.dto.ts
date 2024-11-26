@@ -27,6 +27,14 @@ export class CreateClassroomDto {
   status: ClassroomStatus;
 
   @ApiProperty({
+    description: "ID of the moodle course associated with the classroom.",
+    example: 42,
+  })
+  @IsNumber()
+  @IsOptional()
+  moodleCourseId: number;
+
+  @ApiProperty({
     description: "ID of the team associated with the classroom.",
     example: 42,
   })

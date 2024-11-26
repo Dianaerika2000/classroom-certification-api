@@ -14,7 +14,7 @@ export class PercentageService {
     private readonly percentageRepository: Repository<Percentage>,
     private readonly areaService: AreaService,
     private readonly cycleService: CycleService,
-  ){}
+  ) { }
 
   async create(createPercentageDto: CreatePercentageDto): Promise<Percentage> {
     const { areaId, cycleId, percentage } = createPercentageDto;
@@ -33,13 +33,13 @@ export class PercentageService {
     return await this.percentageRepository.save(newPercentage);
   }
 
-  async findAll(): Promise<Percentage[]>{
+  async findAll(): Promise<Percentage[]> {
     return await this.percentageRepository.find();
   }
 
   async findOne(id: number) {
     const percentage = await this.percentageRepository.findOneBy({ id });
-    
+
     if (!percentage) {
       throw new NotFoundException(`Percentage with ID ${id} not found`);
     }
@@ -49,7 +49,7 @@ export class PercentageService {
 
   async update(id: number, updatePercentageDto: UpdatePercentageDto): Promise<Percentage> {
     const { areaId, cycleId, percentage } = updatePercentageDto;
-    
+
     const percentageEntity = await this.percentageRepository.preload({
       id: id,
       percentage
@@ -72,7 +72,7 @@ export class PercentageService {
 
   async remove(id: number) {
     const percentage = await this.findOne(id);
-    
+
     return await this.percentageRepository.remove(percentage);
   }
 
@@ -84,7 +84,7 @@ export class PercentageService {
     // Sumar los porcentajes, excluyendo el que se está actualizando (si es el caso)
     const totalPercentage = existingPercentages.reduce((total, currentPercentage) => {
       if (excludedPercentageId && currentPercentage.id === excludedPercentageId) {
-        return total; 
+        return total;
       }
       return total + currentPercentage.percentage;
     }, 0);
@@ -95,4 +95,24 @@ export class PercentageService {
       );
     }
   }
+
+  async findOneByAreaCycle(areaId: number, cycleId: number) {
+    // Realizar la consulta con múltiples condiciones
+    const percentage = await this.percentageRepository.findOne({
+      where: {
+        area: { id: areaId },
+        cycle: { id: cycleId }, 
+      },
+      relations: ['area', 'cycle'], 
+    });
+
+    if (!percentage) {
+      throw new NotFoundException(
+        `Percentage not found for area ID ${areaId} and cycle ID ${cycleId}.`
+      );
+    }
+
+    return percentage;
+  }
+
 }

@@ -177,8 +177,7 @@ export class MoodleAnalysisService {
                     contentWords.includes(word)
                 );
                 const matchPercentage = (matchingWords.length / nameWords.length) * 100;
-
-                return matchPercentage >= 50;
+                return matchPercentage >= 25;
             });
 
             if (matchedModule) {
@@ -220,12 +219,28 @@ export class MoodleAnalysisService {
     }
 
     private namesMatch(name1?: string, name2?: string): boolean {
-        if (name2.toLowerCase().includes('mapa de cierre')) {
-            return name1?.toLowerCase().includes('cierre');
-        } else if (name2.toLowerCase().includes('evaluación')) {
-            return name1?.toLowerCase().includes('cierre');
+        if (!name1 || !name2) return false;
+    
+        const normalizedContent = name1.toLowerCase().trim();
+        const normalizedName = name2.toLowerCase().trim();
+    
+        if (normalizedName.includes('mapa de cierre')) {
+            return normalizedContent.includes('cierre');
+        } else if (normalizedName.includes('evaluación')) {
+            return normalizedContent.includes('cierre');
         } else {
-            return name1?.toLowerCase().includes(name2?.toLowerCase());
+            // Split into words
+            const contentWords = normalizedContent.split(/\s+/);
+            const nameWords = normalizedName.split(/\s+/);
+
+            // Count matching words
+            const matchingWords = nameWords.filter(word =>
+                contentWords.includes(word)
+            );
+            const matchPercentage = (matchingWords.length / nameWords.length) * 100;
+    
+            // Consider it a match if more than 50% of words match
+            return matchPercentage > 50;
         }
     }
 

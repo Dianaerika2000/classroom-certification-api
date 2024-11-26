@@ -28,11 +28,7 @@ export class Cycle1TrainingDesignService {
       }));
     }
 
-    if (content.name === "Lección de conocimientos previos") {
-      return contentEvaluator(indicators, matchedContent, token);
-    }
-
-    return contentEvaluator(indicators, matchedContent);
+    return contentEvaluator(indicators, matchedContent, token);
   }
 
   /**

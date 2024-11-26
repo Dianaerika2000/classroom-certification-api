@@ -59,7 +59,7 @@ export class EvaluatedIndicatorsService {
         indicator: result.indicatorId
       })
     );
-
+  
     return this.evaluatedIndicatorsRepository.save(evaluatedIndicators);
   }
 
