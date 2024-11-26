@@ -15,6 +15,7 @@ import { IndicatorEvaluationService } from './indicator-evaluation/indicator-eva
 import { MoodleAnalysisService } from './moodle-analysis/moodle-analysis.service';
 import { EvaluatedIndicatorModule } from 'src/evaluated-indicator/evaluated-indicator.module';
 import { GraphicDesignService } from './cycles/graphic-design/graphic-design.service';
+import { PercentageModule } from 'src/percentage/percentage.module';
 
 @Module({
   imports: [
@@ -26,7 +27,8 @@ import { GraphicDesignService } from './cycles/graphic-design/graphic-design.ser
     AreaModule,
     ResourceModule,
     IndicatorModule,
-    EvaluatedIndicatorModule
+    EvaluatedIndicatorModule,
+    PercentageModule
   ],
   controllers: [EvaluationController],
   providers: [

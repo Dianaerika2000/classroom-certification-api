@@ -1,7 +1,7 @@
 import { IsArray, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
-import { CreateRequerimentDto } from "./create-requeriment.dto";
 import { Type } from "class-transformer";
+import { CreateRequerimentDto } from "./create-requeriment.dto";
 
 export class CreateAssessmentDto {
   @ApiProperty({

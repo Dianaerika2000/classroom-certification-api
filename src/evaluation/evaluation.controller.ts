@@ -143,4 +143,22 @@ export class EvaluationController {
   ): Promise<any> {
     return await this.evaluationService.analyzeClassroomCompliance(moodleCourseId, token, cycleId, areaId, evaluationId);
   }
+
+  @Get(':id/weighted-averages')
+  @ApiParam({ name: 'id', type: 'number', description: 'The ID of the classroom to calculate' })
+  async getWeightedAveragesByAreaAndCycle(@Param('id') classroomId: number) {
+    try {
+      const results = await this.evaluationService.calculateWeightedAverageByAreaAndCycle(classroomId);
+      return {
+        success: true,
+        message: 'Weighted averages calculated successfully',
+        data: results
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'An error occurred while calculating weighted averages'
+      }
+    }
+  }
 }

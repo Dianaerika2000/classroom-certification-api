@@ -12,6 +12,7 @@ import { ClassroomStatus } from 'src/classroom/enums/classroom-status.enum';
 import { AreaService } from 'src/area/area.service';
 import { CycleService } from 'src/cycle/cycle.service';
 import { IndicatorService } from 'src/indicator/indicator.service';
+import { PercentageService } from 'src/percentage/percentage.service';
 
 @Injectable()
 export class EvaluationService {
@@ -24,7 +25,8 @@ export class EvaluationService {
     private readonly evaluatedIndicatorService: EvaluatedIndicatorsService,
     private readonly areaService: AreaService,
     private readonly cycleService: CycleService,
-    private readonly indicatorService: IndicatorService
+    private readonly indicatorService: IndicatorService,
+    private readonly percentageService: PercentageService
   ) { }
 
   async create(createEvaluationDto: CreateEvaluationDto): Promise<Evaluation> {
@@ -76,6 +78,7 @@ export class EvaluationService {
       cycle: cycleMap.get(evaluation.cycleId) || null,
       area: areaMap.get(evaluation.areaId) || null,
       result: evaluation.result,
+      reviewDate: evaluation.reviewDate
     }));
   }
 
@@ -156,7 +159,7 @@ export class EvaluationService {
       }
     );
 
-    const evaluatedIndicatorsData = results.flatMap(resource => 
+    const evaluatedIndicatorsData = results.flatMap(resource =>
       resource.contents.match.flatMap(matchGroup =>
         matchGroup.map(indicator => ({
           indicatorId: indicator.indicatorId,
@@ -175,20 +178,20 @@ export class EvaluationService {
       const evaluationExists = await this.evaluationRepository.findOneBy({
         id: evaluation.id,
       });
-    
+
       if (!indicatorExists) {
         throw new Error(
           `El indicador con ID ${data.indicatorId} no existe en la base de datos.`
         );
       }
-    
+
       if (!evaluationExists) {
         throw new Error(
           `La evaluación con ID ${evaluation.id} no existe en la base de datos.`
         );
       }
     }
-    
+
     await this.evaluatedIndicatorService.createBulk(evaluatedIndicatorsData, evaluation);
     const isFullyEvaluated = await this.checkIfClassroomFullyEvaluated(classroom.id);
 
@@ -263,4 +266,87 @@ export class EvaluationService {
 
     return allCyclesEvaluated && allAreasEvaluated;
   }
+
+  public async calculateWeightedAverageByAreaAndCycle(classroomId: number) {
+    const evaluations = await this.findByClassroom(classroomId);
+    if (!evaluations || evaluations.length === 0) {
+      throw new NotFoundException(`No evaluations found for classroom with ID "${classroomId}".`);
+    }
+  
+    const results: WeightedAverageResult[] = [];
+    const organizationalAndCycleResults: WeightedAverageResult[] = [];
+
+    for (const evaluation of evaluations) {
+      const evaluatedIndicators = await this.evaluatedIndicatorService.findByEvaluation(evaluation.id);
+      if (evaluatedIndicators.length === 0) {
+        throw new NotFoundException(`No evaluated indicators found for evaluation with ID "${evaluation.id}".`);
+      }
+      const cycle = await this.cycleService.findOne(evaluation.cycle.id);
+
+      const totalIndicators = evaluatedIndicators.length;
+      const totalResult = evaluatedIndicators.reduce((sum, indicator) => sum + indicator.result, 0);
+
+      const result: WeightedAverageResult = {
+        areaId: evaluation.area.id,
+        areaName: evaluation.area.name,
+        cycleId: evaluation.cycle.id,
+        cycleName: evaluation.cycle.name,
+        totalIndicators,
+        totalResult,
+        weightedAverage: totalResult / totalIndicators
+      }
+
+      // Obtener resultado para el ciclo 'aspectos organizacionales' y 'ciclo i'
+      if (cycle.name.toLowerCase().includes('aspectos organizacionales') || cycle.name === 'CICLO I') {
+        organizationalAndCycleResults.push(result);
+      } else {
+        results.push(result);
+      }
+    }
+
+    // Combinar los resultados obtenidos de Aspectos organizacionales y ciclo I
+    if (organizationalAndCycleResults.length > 0) {
+      // Agrupar por areaId
+      const groupedByArea = organizationalAndCycleResults.reduce((acc, curr) => {
+        if (!acc[curr.areaId]) {
+          acc[curr.areaId] = [];
+        }
+        acc[curr.areaId].push(curr);
+        return acc;
+      }, {});
+    
+      // Calcular resultados combinados para cada área
+      const combinedAreaResults = Object.keys(groupedByArea).map(areaId => {
+        const areaResults = groupedByArea[areaId];
+        const combinedAreaResult = areaResults.reduce((acc, curr) => ({
+          areaId: curr.areaId,
+          areaName: curr.areaName,
+          cycleIds: curr.cycleName.toLowerCase().includes('aspectos') ? acc.cycleId : curr.cycleId,
+          cycleName: curr.cycleName.toLowerCase().includes('aspectos') ? acc.cycleName : curr.cycleName,
+          totalIndicators: acc.totalIndicators + curr.totalIndicators,
+          totalResult: acc.totalResult + curr.totalResult,
+          weightedAverage: 0
+        }), { cycleIds: [], totalIndicators: 0, totalResult: 0 });
+    
+        // Calcular el promedio ponderado
+        combinedAreaResult.weightedAverage = 
+          combinedAreaResult.totalResult / combinedAreaResult.totalIndicators;
+    
+        return combinedAreaResult;
+      });
+    
+      // Agregar los resultados combinados por área a results
+      results.push(...combinedAreaResults);
+    }
+
+    const weightedResults = await Promise.all(results.map(async result => {
+      const percentage = await this.percentageService.findOneByAreaCycle(result.areaId, result.cycleId);
+      return {
+        ...result,
+        weightedAverage: result.weightedAverage * percentage.percentage
+      }
+    }));
+
+    return weightedResults;
+  }  
 }

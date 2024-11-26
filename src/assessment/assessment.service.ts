@@ -4,12 +4,12 @@ import { Assessment } from './entities/assessment.entity';
 import { Repository } from 'typeorm';
 import { AreaService } from 'src/area/area.service';
 import { FormService } from 'src/form/form.service';
-import { CreateAssessmentDto } from './dto/create-assessment.dto';
 import { areaAssessmentItems } from './config/assessment.constants';
-import { UpdateAssessmentDto } from './dto/update-assessment.dto';
-import { RequerimentService } from './requeriment.service';
+import { CreateAssessmentDto } from './dto/create-assessment.dto';
 import { CreateRequerimentDto } from './dto/create-requeriment.dto';
+import { UpdateAssessmentDto } from './dto/update-assessment.dto';
 import { UpdateRequerimentDto } from './dto/update-requeriment.dto';
+import { RequerimentService } from './requeriment.service';
 
 @Injectable()
 export class AssessmentService {

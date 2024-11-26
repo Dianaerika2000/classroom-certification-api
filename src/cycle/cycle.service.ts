@@ -47,4 +47,14 @@ export class CycleService {
 
     return await this.cycleRepository.remove(cycle);
   }
+
+  async findByName(name: string): Promise<Cycle> {
+    const cycle = await this.cycleRepository.findOne({ where: {name} });
+
+    if (!cycle) {
+      throw new NotFoundException(`Cycle with name "${name}" not found`);
+    }
+
+    return cycle;
+  }
 }
