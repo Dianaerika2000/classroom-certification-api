@@ -8,13 +8,15 @@ import { FormModule } from 'src/form/form.module';
 import { AreaModule } from 'src/area/area.module';
 import { RequerimentService } from './requeriment.service';
 import { Requeriment } from './entities/requeriment.entity';
+import { AwsModule } from 'src/aws/aws.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Assessment, Requeriment]),
     AuthModule,
     FormModule,
-    AreaModule
+    AreaModule,
+    AwsModule,
   ],
   providers: [AssessmentService, RequerimentService],
   controllers: [AssessmentController],

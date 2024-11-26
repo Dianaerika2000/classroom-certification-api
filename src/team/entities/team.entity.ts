@@ -1,5 +1,6 @@
-import { Personal } from "src/technical-staff/entities/personal";
-import { Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Classroom } from "../../classroom/entities/classroom.entity";
+import { Personal } from "../../technical-staff/entities/personal";
+import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Team {
@@ -20,4 +21,7 @@ export class Team {
     name: 'team_personals',
   }) 
   personals: Personal[];
+
+  @OneToMany(() => Classroom, (classroom) => classroom.team)
+  classrooms: Classroom[];
 }

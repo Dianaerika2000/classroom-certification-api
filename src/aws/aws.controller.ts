@@ -13,4 +13,16 @@ export class AwsController {
     ) {
     return this.awsService.uploadImageToS3(photo.buffer);
   }
+
+  @Post('upload/file')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFile(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<{ url: string }> {
+    const { buffer, originalname, mimetype } = file;
+
+    const uploadResult = await this.awsService.uploadFileToS3(buffer, originalname, mimetype);
+
+    return { url: uploadResult };
+  }
 }
