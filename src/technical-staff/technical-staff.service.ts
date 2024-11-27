@@ -14,18 +14,18 @@ export class TechnicalStaffService {
     private readonly awsService: AwsService,
   ){}
   
-  async create(createTechnicalStaffDto: CreateTechnicalStaffDto, signature: Express.Multer.File) {
+  async create(createTechnicalStaffDto: CreateTechnicalStaffDto) {
     const { name, position } = createTechnicalStaffDto;
-    const { photoUrl } = await this.awsService.uploadImageToS3(signature.buffer, signature.originalname);
+    /* const { photoUrl } = await this.awsService.uploadImageToS3(signature.buffer, signature.originalname);
     
     if (!photoUrl) {
       throw new BadRequestException('Failed to upload signature image to S3');
-    }
+    } */
 
     const technicalStaff = this.personalRepository.create({
       name,
       position,
-      signature: photoUrl,
+      //signature: photoUrl,
     });
 
     await this.personalRepository.save(technicalStaff);
@@ -47,14 +47,14 @@ export class TechnicalStaffService {
     return technicalStaff;
   }
 
-  async update(id: number, updateTechnicalStaffDto: UpdateTechnicalStaffDto, signature?: Express.Multer.File) {
+  async update(id: number, updateTechnicalStaffDto: UpdateTechnicalStaffDto) {
     const technicalStaff = await this.findOne(id);
     
     const { name, position } = updateTechnicalStaffDto;
     technicalStaff.name = name ?? technicalStaff.name;
     technicalStaff.position = position ?? technicalStaff.position;
 
-    if (signature) {
+    /* if (signature) {
       const { photoUrl } = await this.awsService.uploadImageToS3(signature.buffer, signature.originalname);
 
       if (!photoUrl) {
@@ -62,7 +62,7 @@ export class TechnicalStaffService {
       }
 
       technicalStaff.signature = photoUrl;
-    }
+    } */
 
     return this.personalRepository.save(technicalStaff);
   }
