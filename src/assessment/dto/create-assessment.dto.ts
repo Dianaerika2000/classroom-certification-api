@@ -1,5 +1,6 @@
 import { IsNumber, IsOptional, IsString } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
+import { Transform } from "class-transformer";
 
 export class CreateAssessmentDto {
   @ApiProperty({
@@ -16,6 +17,7 @@ export class CreateAssessmentDto {
     description: 'The rating for the general indicator',
     type: Number,
   })
+  @Transform(({ value }) => Number(value))
   @IsOptional()
   @IsNumber()
   assessment?: number;
@@ -34,6 +36,7 @@ export class CreateAssessmentDto {
     description: 'The ID of the area to which this evaluation belongs.',
     type: Number,
   })
+  @Transform(({ value }) => Number(value))
   @IsOptional()
   @IsNumber()
   areaId?: number;
@@ -52,6 +55,7 @@ export class CreateAssessmentDto {
     description: 'The ID of the form to which this evaluation belongs.',
     type: Number,
   })
+  @Transform(({ value }) => Number(value))
   @IsNumber()
   formId: number;
 }
