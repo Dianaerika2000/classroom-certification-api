@@ -6,14 +6,14 @@ export const areaAssessmentItems = {
         "Contiene evaluación formativa y sumativa con criterios de evaluación claramente definidos.",
         "Presenta actividades de retroalimentación (por lo menos un tema abierto en cada Foro de Unidad)."
     ],
-    "Diseño Técnico": [
+    "Diseño técnico": [
         "Las configuraciones corresponden al manual de diseño técnico (secuencia de actividades, banco de preguntas).",
         "Las restricciones (condicionales) de la secuencia de actividades del aula funcionan correctamente.",
         "Los recursos didácticos funcionan de manera correcta (videos, audios e imágenes).",
         "Las instrucciones y los criterios de evaluación se visualiza de manera adecuada en el AV por cada actividad según el modelo DAVA.",
         "La estructura del aula virtual (formato) corresponde al manual de diseño técnico."
     ],
-    "Diseño Gráfico": [
+    "Diseño gráfico": [
         "La imagen visual del aula (portada de inicio) contiene todos los recursos gráficos correspondientes al manual del diseño gráfico.",
         "Los recursos gráficos se visualizan con buena resolución (72px/pulgada).",
         "Los recursos multimedia se visualizan en el AVA en miatura.",
