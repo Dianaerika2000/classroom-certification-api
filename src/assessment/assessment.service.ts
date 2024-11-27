@@ -193,10 +193,11 @@ export class AssessmentService {
     if (assessments.length === 0) {
       return 0;
     }
-
-    const total = assessments.reduce((sum, assessment) => sum + assessment.assessment, 0);
-    const average = total / assessments.length;
-
-    return parseFloat(average.toFixed(2));
+  
+    const total = assessments.reduce((sum, assessment) => {
+      return sum + Number(assessment.assessment);
+    }, 0);
+  
+    return Number((total / assessments.length).toFixed(2));
   }
 }

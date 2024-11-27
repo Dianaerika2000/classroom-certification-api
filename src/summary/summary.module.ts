@@ -6,10 +6,12 @@ import { SummaryController } from './summary.controller';
 import { AreaModule } from '../area/area.module';
 import { FormModule } from '../form/form.module';
 import { AssessmentModule } from '../assessment/assessment.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Summary]),
+    AuthModule,
     AreaModule,
     AssessmentModule,
     FormModule,

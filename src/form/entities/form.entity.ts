@@ -50,6 +50,6 @@ export class Form {
   )
   assessment: Assessment[];
 
-  @OneToOne(() => Summary, (summary) => summary.form, { cascade: true })
-  summary: Summary;
+  @OneToMany(() => Summary, (summary) => summary.form, { cascade: true })
+  summaries: Summary[];
 }

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Summary } from './entities/summary.entity';
 import { AreaService } from '../area/area.service';
 import { AssessmentService } from '../assessment/assessment.service';
+import { FormService } from '../form/form.service';
 
 @Injectable()
 export class SummaryService {
@@ -12,6 +13,7 @@ export class SummaryService {
     private readonly summaryRepository: Repository<Summary>,
     private readonly assessmentService: AssessmentService,
     private readonly areaService: AreaService,
+    private readonly formService: FormService,
   ) {}
 
   async calculateSummary(formId: number): Promise<{
@@ -19,6 +21,8 @@ export class SummaryService {
     totalWeight: number;
     totalWeightedAverage: number;
   }> {
+    const form = await this.formService.findOne(formId);
+
     const areas = await this.areaService.findAll(); 
     const weight = 2.0; 
     const summaryData = [];
@@ -38,7 +42,7 @@ export class SummaryService {
       totalWeightedAverage += weightedAverage;
 
       const summaryEntry = this.summaryRepository.create({
-        form: { id: formId },
+        form,
         area: area.name,
         average,
         percentage,
@@ -70,10 +74,16 @@ export class SummaryService {
       throw new NotFoundException('No se encontraron registros para este formulario.');
     }
   
-    const totalWeight = summaries.reduce((sum, entry) => sum + entry.weight, 0);
-    const totalWeightedAverage = summaries.reduce(
-      (sum, entry) => sum + entry.weightedAverage,
-      0,
+    const totalWeight = Number(
+      summaries
+        .reduce((sum, entry) => sum + Number(entry.weight), 0)
+        .toFixed(2)
+    );
+  
+    const totalWeightedAverage = Number(
+      summaries
+        .reduce((sum, entry) => sum + Number(entry.weightedAverage), 0)
+        .toFixed(2)
     );
   
     return {
