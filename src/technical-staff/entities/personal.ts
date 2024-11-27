@@ -28,13 +28,13 @@ export class Personal {
   @Column()
   position: String;
 
-  @ApiProperty({
+  /* @ApiProperty({
     example: 'http://bucket-name.s3.amazonaws.com/user_signature.png',
     description: 'URL where the technical staff signature is located',
     uniqueItems: true
   })
   @Column()
-  signature: String;
+  signature: String; */
 
   @ManyToMany(() => Team, (team) => team.personals)
   teams: Team[];

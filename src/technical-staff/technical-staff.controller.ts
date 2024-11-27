@@ -20,12 +20,12 @@ export class TechnicalStaffController {
   @ApiResponse({status: 201, description: 'Technical staff was created', type: Personal})
   @ApiResponse({status: 400, description: 'Bad Request'})
   @ApiResponse({status: 401, description: 'Unauthorized'})
-  @UseInterceptors(FileInterceptor('signature'))
+  //@UseInterceptors(FileInterceptor('signature'))
   async create(
     @Body() createTechnicalStaffDto: CreateTechnicalStaffDto,
-    @UploadedFile() signature: Express.Multer.File
+    //@UploadedFile() signature: Express.Multer.File
   ) {
-    const technicalStaff = await this.technicalStaffService.create(createTechnicalStaffDto, signature);
+    const technicalStaff = await this.technicalStaffService.create(createTechnicalStaffDto);
     
     return {
       message: "Personal técnico creado exitosamente",
@@ -72,13 +72,13 @@ export class TechnicalStaffController {
   @ApiResponse({status: 200, description: 'Technical staff member updated successfully.', type: Personal})
   @ApiResponse({status: 400, description: 'Bad Request'})
   @ApiResponse({status: 401, description: 'Unauthorized'})
-  @UseInterceptors(FileInterceptor('signature'))
+  //@UseInterceptors(FileInterceptor('signature'))
   async update(
     @Param('id') id: string, 
     @Body() updateTechnicalStaffDto: UpdateTechnicalStaffDto,
-    @UploadedFile() signature?: Express.Multer.File
+    //@UploadedFile() signature?: Express.Multer.File
   ) {
-    const technicalStaff = await this.technicalStaffService.update(+id, updateTechnicalStaffDto, signature);
+    const technicalStaff = await this.technicalStaffService.update(+id, updateTechnicalStaffDto);
 
     return {
       message: "Personal técnico actualizado exitosamente",

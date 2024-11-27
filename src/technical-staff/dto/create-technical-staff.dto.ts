@@ -18,11 +18,11 @@ export class CreateTechnicalStaffDto {
   @IsString()
   position: string
 
-  @ApiProperty({
+  /* @ApiProperty({
     format: 'binary',
     description: 'File upload for the technical staff signature. Accepts image files.'
   })
   @IsOptional()
   @IsUrl()
-  signature: string
+  signature: string */
 }
