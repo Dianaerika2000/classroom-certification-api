@@ -1,5 +1,6 @@
+import { Authority } from "src/authority/entities/authority.entity";
 import { Classroom } from "src/classroom/entities/classroom.entity";
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity({ name: 'certificates' })
 export class Certification {
@@ -30,4 +31,7 @@ export class Certification {
   @ManyToOne(() => Classroom, classroom => classroom.certifications, { nullable: false })
   @JoinColumn({ name: 'classroom_id' })
   classroom: Classroom;
+
+  @ManyToMany(() => Authority, authority => authority.certifications)
+  authorities: Authority[];
 }
