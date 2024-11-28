@@ -14,7 +14,7 @@ export class SummaryService {
     private readonly assessmentService: AssessmentService,
     private readonly areaService: AreaService,
     private readonly formService: FormService,
-  ) {}
+  ) { }
 
   async calculateSummary(formId: number): Promise<{
     data: Summary[];
@@ -23,8 +23,8 @@ export class SummaryService {
   }> {
     const form = await this.formService.findOne(formId);
 
-    const areas = await this.areaService.findAll(); 
-    const weight = 2.0; 
+    const areas = await this.areaService.findAll();
+    const weight = 2.0;
     const summaryData = [];
     let totalWeight = 0;
     let totalWeightedAverage = 0;
@@ -46,8 +46,8 @@ export class SummaryService {
         area: area.name,
         average,
         percentage,
-        weight, 
-        weightedAverage, 
+        weight,
+        weightedAverage,
       });
       const savedEntry = await this.summaryRepository.save(summaryEntry);
 
@@ -65,27 +65,42 @@ export class SummaryService {
     data: Summary[];
     totalWeight: number;
     totalWeightedAverage: number;
+    message?: string;
   }> {
+    // Verificar si el formulario existe
+    const formExists = await this.formService.findOne(formId);
+    if (!formExists) {
+      throw new NotFoundException(`El formulario con ID ${formId} no existe.`);
+    }
+
+    // Buscar los resúmenes
     const summaries = await this.summaryRepository.find({
       where: { form: { id: formId } },
     });
-  
+
     if (summaries.length === 0) {
-      throw new NotFoundException('No se encontraron registros para este formulario.');
+      // Retornar una respuesta amigable si no hay resúmenes
+      return {
+        data: [],
+        totalWeight: 0,
+        totalWeightedAverage: 0,
+        message: 'No se encontraron registros para este formulario.',
+      };
     }
-  
+
+    // Calcular los totales
     const totalWeight = Number(
       summaries
         .reduce((sum, entry) => sum + Number(entry.weight), 0)
         .toFixed(2)
     );
-  
+
     const totalWeightedAverage = Number(
       summaries
         .reduce((sum, entry) => sum + Number(entry.weightedAverage), 0)
         .toFixed(2)
     );
-  
+
     return {
       data: summaries,
       totalWeight,
