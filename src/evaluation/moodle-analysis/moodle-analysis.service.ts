@@ -42,7 +42,9 @@ export class MoodleAnalysisService {
         const matchedResources = await Promise.all(
             resources.map(async (resource) => {
                 if (resource.name.includes('Retos')) {
+                    await this.moodleService.enrolUsers(moodleCourseId, token);
                     const courseAssignments = await this.moodleService.getAssignmentsByCourse(moodleCourseId, token);
+                    await this.moodleService.unenrolUsers(moodleCourseId, token);
                     return this.matchAssignments(resource, courseAssignments);
                 }
 
@@ -67,17 +69,19 @@ export class MoodleAnalysisService {
     }
 
     private matchAssignments(resource: any, courseAssignments: any) {
-        const validAssignments = courseAssignments.courses[0].assignments.filter((assign: any) =>
-            assign.name &&
-            assign.name.toLowerCase().includes('reto') &&
-            assign.name.toLowerCase() !== 'reto'
-        );
-
-        return {
-            resource,
-            matchedSection: null,
-            matchedModule: validAssignments
-        };
+        if (courseAssignments.courses.length > 0) {
+            const validAssignments = courseAssignments.courses[0].assignments?.filter((assign: any) =>
+                assign.name &&
+                assign.name.toLowerCase().includes('reto') &&
+                assign.name.toLowerCase() !== 'reto'
+            );
+    
+            return {
+                resource,
+                matchedSection: null,
+                matchedModule: validAssignments
+            };
+        }
     }
 
     private matchForums(resource: any, courseForums: any) {

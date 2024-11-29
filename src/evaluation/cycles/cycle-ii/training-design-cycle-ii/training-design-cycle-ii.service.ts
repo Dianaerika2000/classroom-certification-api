@@ -315,7 +315,7 @@ export class TrainingDesignCycleIiService {
             result: allValid ? 1 : 0,
             observation: allValid
                 ? 'Todas las secciones tienen objetivos de la unidad válidos.'
-                : `Las siguientes secciones no cumplen: ${invalidSections.map(section => section.name).join(', ')}`,
+                : `Las siguientes secciones no cumplen: \n${invalidSections.map(section => section.name).join(', \n')}`,
         };
     }
 
@@ -369,7 +369,7 @@ export class TrainingDesignCycleIiService {
             result,
             observation: result === 1
                 ? 'Todos los retos cumplen con los criterios del indicador.'
-                : `No todos los retos cumplen con los criterios. Retos fallidos: ${failedObservations.join('; ')}`
+                : `No todos los retos cumplen con los criterios. Retos fallidos: \n${failedObservations.join('; \n')}`
         };
     }
 
@@ -400,7 +400,7 @@ export class TrainingDesignCycleIiService {
             result,
             observation: result === 1
                 ? 'Todos los retos cumplen con los criterios del indicador.'
-                : `No todos los retos cumplen con los criterios. Retos fallidos: ${failedObservations.join('; ')}`
+                : `No todos los retos cumplen con los criterios. Retos fallidos: \n${failedObservations.join('; \n')}`
         };
     }
 
@@ -446,7 +446,7 @@ export class TrainingDesignCycleIiService {
             result,
             observation: result === 1
                 ? 'Todos los foros cumplen con los criterios del indicador.'
-                : `No todos los foros cumplen con los criterios. Foros fallidos: ${failedObservations.join('; ')}`
+                : `No todos los foros cumplen con los criterios. Foros fallidos: \n${failedObservations.join('; \n')}`
         };
     }
 
@@ -477,7 +477,7 @@ export class TrainingDesignCycleIiService {
             result,
             observation: result === 1
                 ? 'Todos los foros cumplen con los criterios del indicador.'
-                : `No todos los foros cumplen con los criterios. Foros fallidos: ${failedObservations.join('; ')}`
+                : `No todos los foros cumplen con los criterios. Foros fallidos: \n${failedObservations.join('; \n')}`
         };
     }
 
@@ -502,7 +502,7 @@ export class TrainingDesignCycleIiService {
             section &&
             typeof section === 'object' &&
             section.name &&
-            section.name.toLowerCase() !== 'videoconferencias'
+            section.name.toLowerCase() !== 'videoconferencias' || section.name.toLowerCase() !== 'videoconferencia'
         );
 
         const totalSubjects = uniqueSections.length;
@@ -511,7 +511,7 @@ export class TrainingDesignCycleIiService {
         const videoconferenciaSection = matchedResources.find(section =>
             section &&
             section.name &&
-            section.name.toLowerCase() === 'videoconferencias'
+            section.name.toLowerCase() === 'videoconferencias' || section.name.toLowerCase() === 'videoconferencia'
         );
 
         if (!videoconferenciaSection || !videoconferenciaSection.modules) {
@@ -573,7 +573,7 @@ export class TrainingDesignCycleIiService {
     private hasRecordingBook(indicator: any, matchedResources: any[]): IndicatorResult {
         // Encontrar la sección "videoconferencias"
         const videoconferenciaSection = matchedResources.find(section =>
-            section && section.name.toLowerCase() === 'videoconferencias'
+            section && section.name.toLowerCase() === 'videoconferencias' || section.name.toLowerCase() === 'videoconferencia'
         );
 
         if (!videoconferenciaSection || !videoconferenciaSection.modules) {
@@ -622,7 +622,7 @@ export class TrainingDesignCycleIiService {
 
         // Obtener las secciones únicas que no sean "videoconferencias"
         const uniqueSections = matchedResources.filter(section =>
-            section && typeof section === 'object' && section.name && section.name.toLowerCase() !== 'videoconferencias');
+            section && typeof section === 'object' && section.name && section.name.toLowerCase() !== 'videoconferencias' || section.name.toLowerCase() !== 'videoconferencia');
 
         const totalSubjects = uniqueSections.length;
 
@@ -630,7 +630,7 @@ export class TrainingDesignCycleIiService {
         const videoconferenciaSection = matchedResources.find(section =>
             section &&
             section.name &&
-            section.name.toLowerCase() === 'videoconferencias'
+            section.name.toLowerCase() === 'videoconferencias' || section.name.toLowerCase() === 'videoconferencia'
         );
 
         if (!videoconferenciaSection || !videoconferenciaSection.modules) {
@@ -650,7 +650,7 @@ export class TrainingDesignCycleIiService {
             return {
                 indicatorId: indicator.id,
                 result: 0,
-                observation: 'No se encontró el módulo de tipo book o no tiene contenidos'
+                observation: 'No se encontró el módulo de tipo Libro o no tiene contenidos'
             };
         }
 
