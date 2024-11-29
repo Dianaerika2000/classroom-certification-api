@@ -26,7 +26,7 @@ export class TrainingDesignCycleIiService {
             return indicators.map(indicator => ({
                 indicatorId: indicator.id,
                 result: 0,
-                observation: `El contenido ${content.name} requiere verificación manual`
+                observation: `El indicador "${indicator.name}" requiere verificación manual`
             }));
         }
 
@@ -83,7 +83,7 @@ export class TrainingDesignCycleIiService {
                     results.push({
                         indicatorId: indicator.id,
                         result: 0,
-                        observation: 'Este indicador requiere verificación manual del formato del contenido',
+                        observation: `El indicador "${indicator.name}" requiere verificación manual`,
                     });
                 }
             }
@@ -119,7 +119,7 @@ export class TrainingDesignCycleIiService {
                     results.push({
                         indicatorId: indicator.id,
                         result: 0,
-                        observation: 'Este indicador requiere verificación manual del formato del contenido',
+                        observation: `El indicador "${indicator.name}" requiere verificación manual`,
                     });
                 }
             }
@@ -169,7 +169,7 @@ export class TrainingDesignCycleIiService {
                     results.push({
                         indicatorId: indicator.id,
                         result: 0,
-                        observation: 'Este indicador requiere verificación manual del formato del contenido',
+                        observation: `El indicador "${indicator.name}" requiere verificación manual`,
                     });
                 }
             }
@@ -208,7 +208,7 @@ export class TrainingDesignCycleIiService {
                     results.push({
                         indicatorId: indicator.id,
                         result: 0,
-                        observation: 'Este indicador requiere verificación manual',
+                        observation: `El indicador "${indicator.name}" requiere verificación manual`,
                     });
                 }
             }
@@ -253,7 +253,7 @@ export class TrainingDesignCycleIiService {
                     results.push({
                         indicatorId: indicator.id,
                         result: 0,
-                        observation: 'Este indicador requiere verificación manual',
+                        observation: `El indicador "${indicator.name}" requiere verificación manual`,
                     });
                 }
             }
@@ -716,8 +716,8 @@ export class TrainingDesignCycleIiService {
             indicatorId: indicator.id,
             result: hasQuestions ? 1 : 0,
             observation: hasQuestions
-                ? 'Al menos 4 lecciones tienen preguntas'
-                : 'Menos de 4 lecciones tienen preguntas'
+                ? 'Cumple con el indicador: Al menos 4 lecciones tienen preguntas'
+                : 'No cumple con el indicador: Menos de 4 lecciones tienen preguntas'
         };
     }
 
@@ -732,7 +732,7 @@ export class TrainingDesignCycleIiService {
         return indicators.map(indicator => ({
             indicatorId: indicator.id,
             result: 0,
-            observation: `Indicador "${indicator.name}" requiere implementación específica para ${contentName}`
+            observation: `El indicador "${indicator.name}" requiere revisión manual.`
         }));
     }
 }

@@ -276,7 +276,7 @@ export class Cycle1TrainingDesignService {
     return indicators.map(indicator => ({
       indicatorId: indicator.id,
       result: 0,
-      observation: `Indicador "${indicator.name}" requiere implementación específica para ${contentName}`
+      observation: `El indicador "${indicator.name}" requiere revisión manual.`
     }));
   }
 }

@@ -11,7 +11,7 @@ export class GraphicDesignService {
     return indicators.map(indicator => ({
       indicatorId: indicator.id,
       result: 0,
-      observation: indicator.name.toLowerCase().includes('no corresponde') ? 'No corresponde' : `El contenido ${content.name} requiere verificación manual`
+      observation: indicator.name.toLowerCase().includes('no corresponde') ? 'No corresponde' : `El indicador "${indicator.name}" requiere verificación manual`
     }));
   }
 }

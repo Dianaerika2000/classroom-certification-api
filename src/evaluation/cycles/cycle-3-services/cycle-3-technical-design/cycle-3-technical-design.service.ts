@@ -23,7 +23,7 @@ export class Cycle3TechnicalDesignService {
       return indicators.map((indicator) => ({
         indicatorId: indicator.id,
         result: 0,
-        observation: `El contenido "${resource.name}" requiere verificación manual`,
+        observation: `El indicador "${indicator.name}" requiere verificación manual`,
       }));
     }
 
@@ -69,7 +69,7 @@ export class Cycle3TechnicalDesignService {
           results.push({
             indicatorId: indicator.id,
             result: 0,
-            observation: 'Este indicador requiere verificación manual',
+            observation: `El indicador "${indicator.name}" requiere verificación manual`,
           });
         }
       }
@@ -105,7 +105,7 @@ export class Cycle3TechnicalDesignService {
           results.push({
             indicatorId: indicator.id,
             result: 0,
-            observation: 'Este indicador requiere verificación manual',
+            observation: `El indicador "${indicator.name}" requiere verificación manual`,
           });
         }
       }
@@ -151,7 +151,7 @@ export class Cycle3TechnicalDesignService {
       result: observation === '' ? 1 : 0,
       observation: observation === ''
         ? 'Cumple con las configuraciones de restricciones sobre los intentos'
-        : `Las siguientes evaluaciones tienen restricciones:${observation}`
+        : `No cumple con el indicador. Las siguientes evaluaciones tienen restricciones:${observation}`
     };
   }
 
@@ -214,7 +214,7 @@ export class Cycle3TechnicalDesignService {
       result: observation === '' ? 1 : 0,
       observation: observation === ''
         ? 'Todos los cuestionarios cumplen con las restricciones de restricciones de completación'
-        : `Los siguientes cuestionarios tienen problemas de configuración:${observation}`
+        : `No cumple con el indicador. Los siguientes cuestionarios tienen problemas de configuración:${observation}`
     };
   }
 

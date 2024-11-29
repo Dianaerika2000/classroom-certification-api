@@ -17,7 +17,7 @@ export class Cycle3TrainingDesignService {
       return indicators.map(indicator => ({
         indicatorId: indicator.id,
         result: 0,
-        observation: `El contenido "${resource.name}" requiere verificación manual`
+        observation: `El indicador "${indicator.name}" requiere verificación manual`
       }));
     }
 
@@ -63,7 +63,7 @@ export class Cycle3TrainingDesignService {
           results.push({
             indicatorId: indicator.id,
             result: 0,
-            observation: 'Este indicador requiere verificación manual',
+            observation: `El indicador "${indicator.name}" requiere verificación manual`,
           });
         }
       }
@@ -99,7 +99,7 @@ export class Cycle3TrainingDesignService {
     return indicators.map(indicator => ({
       indicatorId: indicator.id,
       result: 0,
-      observation: `Indicador "${indicator.name}" requiere implementación específica para ${contentName}`
+      observation: `El indicador "${indicator.name}" requiere revisión manual.`
     }));
   }
 }
