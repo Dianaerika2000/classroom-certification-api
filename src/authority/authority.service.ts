@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CreateAuthorityDto } from './dto/create-authority.dto';
 import { UpdateAuthorityDto } from './dto/update-authority.dto';
 import { Authority } from './entities/authority.entity';
@@ -66,5 +66,13 @@ export class AuthorityService {
     const authority = await this.findOne(id);
   
     return await this.authorityRepository.remove(authority);
+  }
+
+  async findAuthoritiesByIds(ids: number[]): Promise<Authority[]> {
+    if (!ids || ids.length === 0) {
+      throw new BadRequestException('Debe proporcionar al menos un ID de autoridad');
+    }
+  
+    return this.authorityRepository.findBy({ id: In(ids) });
   }
 }

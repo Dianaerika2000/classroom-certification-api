@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsNumber, IsOptional, IsString } from "class-validator";
+import { IsNumber, IsOptional, IsString, IsArray } from "class-validator";
 
 export class CreateCertificationDto {
   @ApiProperty({
@@ -29,7 +29,7 @@ export class CreateCertificationDto {
   })
   @IsOptional()
   @IsString()
-  evaluatorUsername: string;
+  evaluatorUsername?: string;
 
   @ApiProperty({
     description: "ID of the classroom to certify.",
@@ -37,4 +37,41 @@ export class CreateCertificationDto {
   })
   @IsNumber()
   classroomId: number;
+
+  @ApiProperty({
+    description: "Study plan.",
+    example: "semestral",
+  })
+  @IsString()
+  plan: string;
+
+  @ApiProperty({
+    description: "Course modality.",
+    example: "virtual",
+  })
+  @IsString()
+  modality: string;
+
+  @ApiProperty({
+    description: "Teacher's name.",
+    example: "María González",
+  })
+  @IsString()
+  teacher: string;
+
+  @ApiProperty({
+    description: "Teacher's unique code.",
+    example: "MG2023",
+  })
+  @IsString()
+  teacherCode: string;
+
+  @ApiPropertyOptional({
+    description: "Array of authority IDs to associate with the certification.",
+    example: [1, 2, 3],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsNumber({}, { each: true })
+  authorityIds?: number[];
 }

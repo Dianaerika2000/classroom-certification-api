@@ -8,6 +8,7 @@ import { ClassroomService } from '../classroom/classroom.service';
 import { ClassroomStatus } from '../classroom/enums/classroom-status.enum';
 import { UserService } from '../user/user.service';
 import { ValidRoles } from '../common/enums/valid-roles';
+import { AuthorityService } from '../authority/authority.service';
 
 @Injectable()
 export class CertificationService {
@@ -16,21 +17,23 @@ export class CertificationService {
     private readonly certificationRepository: Repository<Certification>,
     private readonly classroomService: ClassroomService,
     private readonly userService: UserService,
+    private readonly authorityService: AuthorityService,
   ) {}
 
   async create(createCertificationDto: CreateCertificationDto, username: string) {
-    const { classroomId, evaluatorUsername, ...otherAttributes } = createCertificationDto;
-
+    const { 
+      classroomId, 
+      evaluatorUsername, 
+      authorityIds,
+      ...otherAttributes 
+    } = createCertificationDto;
+  
     const classroom = await this.classroomService.findOne(classroomId);
-
+  
     if (classroom.status !== ClassroomStatus.EVALUADA) {
       throw new BadRequestException(
         `Classroom with ID ${classroomId} is not eligible for certification. Current status: ${classroom.status}`,
       );
-    }
-
-    if (!classroom.team) {
-      throw new BadRequestException(`Classroom with ID ${classroomId} does not have an associated team.`);
     }
 
     const evaluator = await this.determineEvaluatorName(
@@ -40,11 +43,20 @@ export class CertificationService {
 
     const certification = this.certificationRepository.create({
       classroom,
-      teamId: classroom.team.id,
       evaluatorName: evaluator,
       ...otherAttributes,
     });
 
+    if (authorityIds && authorityIds.length > 0) {
+      const authorities = await this.authorityService.findAuthoritiesByIds(authorityIds);
+      
+      if (authorities.length !== authorityIds.length) {
+        throw new BadRequestException('Some authorities could not be found');
+      }
+  
+      certification.authorities = authorities;
+    }
+  
     return this.certificationRepository.save(certification);
   }
 
@@ -53,7 +65,8 @@ export class CertificationService {
       relations: [
         'classroom',
         'classroom.team',
-        'classroom.team.personals'
+        'classroom.team.personals',
+        'authorities'
       ],
       order: {
         createdAt: 'DESC',
@@ -69,7 +82,8 @@ export class CertificationService {
       relations: [
         'classroom',
         'classroom.team',
-        'classroom.team.personals'
+        'classroom.team.personals',
+        'authorities'
       ],
     });
 
@@ -88,7 +102,8 @@ export class CertificationService {
       relations: [
         'classroom',
         'classroom.team',
-        'classroom.team.personals'
+        'classroom.team.personals',
+        'authorities'
       ],
       order: {
         createdAt: 'DESC',
@@ -107,7 +122,12 @@ export class CertificationService {
       throw new NotFoundException(`Certification with ID ${id} not found`);
     }
 
-    const { evaluatorUsername, classroomId, ...updateData } = updateCertificationDto;
+    const { 
+      evaluatorUsername, 
+      classroomId, 
+      authorityIds, 
+      ...updateData 
+    } = updateCertificationDto;
 
     if (classroomId) {
       const classroom = await this.classroomService.findOne(classroomId);
@@ -117,13 +137,7 @@ export class CertificationService {
         );
       }
 
-      if (!classroom.team) {
-        throw new BadRequestException(
-          `Classroom with ID ${classroomId} does not have an associated team.`,
-        );
-      }
       preloadedCertification.classroom = classroom;
-      preloadedCertification.teamId = classroom.team.id;
     }
 
     if (evaluatorUsername !== undefined) {
@@ -134,20 +148,50 @@ export class CertificationService {
       preloadedCertification.evaluatorName = validatedEvaluatorName;
     }
 
+    if (authorityIds !== undefined) {
+      if (authorityIds.length > 0) {
+        const authorities = await this.authorityService.findAuthoritiesByIds(authorityIds);
+        
+        if (authorities.length !== authorityIds.length) {
+          throw new BadRequestException('Some authorities could not be found');
+        }
+  
+        preloadedCertification.authorities = authorities;
+      } else {
+        preloadedCertification.authorities = [];
+      }
+    }
+  
     Object.assign(preloadedCertification, updateData);
 
     await this.certificationRepository.save(preloadedCertification);
 
     return await this.certificationRepository.findOne({
       where: { id },
-      relations: ['classroom', 'classroom.team', 'classroom.team.personals']
+      relations: ['classroom', 'authorities']
     });
   }
 
   async remove(id: number) {
-    const certification = await this.findOne(id);
+    const certification = await this.certificationRepository.findOne({
+      where: { id },
+      relations: ['authorities']
+    });
     
-    return this.certificationRepository.remove(certification);
+    if (!certification) {
+      throw new NotFoundException(`Certification with ID ${id} not found`);
+    }
+  
+    await this.certificationRepository.manager.transaction(async transactionalEntityManager => {
+      await transactionalEntityManager.query(
+        `DELETE FROM certification_authorities WHERE certification_id = ?`,
+        [id]
+      );
+  
+      await transactionalEntityManager.remove(certification);
+    });
+  
+    return certification;
   }
 
   async determineEvaluatorName(username: string, evaluatorUsername: string | undefined ): Promise<string> {

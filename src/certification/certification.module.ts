@@ -1,19 +1,20 @@
 import { Module } from '@nestjs/common';
-import { CertificationService } from './certification.service';
-import { CertificationController } from './certification.controller';
-import { ClassroomModule } from 'src/classroom/classroom.module';
-import { TeamModule } from 'src/team/team.module';
-import { UserModule } from 'src/user/user.module';
-import { AuthModule } from 'src/auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CertificationController } from './certification.controller';
+import { CertificationService } from './certification.service';
 import { Certification } from './entities/certification.entity';
+import { ClassroomModule } from '../classroom/classroom.module';
+import { AuthorityModule } from '../authority/authority.module';
+import { UserModule } from '../user/user.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Certification]),
     ClassroomModule,
     UserModule,
-    AuthModule
+    AuthModule,
+    AuthorityModule,
   ],
   controllers: [CertificationController],
   providers: [CertificationService],
