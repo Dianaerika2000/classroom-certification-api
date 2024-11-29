@@ -19,9 +19,18 @@ export class Certification {
   @Column({ name: 'evaluator_name', type: 'varchar', length: 255 })
   evaluatorName: string;
 
-  @Column({ name: 'team_id', type: 'int' })
-  teamId: number;
-  
+  @Column({ name: 'plan', type: 'varchar', length: 255 })
+  plan: string;
+
+  @Column({ name: 'modality', type: 'varchar', length: 255 })
+  modality: string;
+
+  @Column({ name: 'teacher', type: 'varchar', length: 255 })
+  teacher: string;
+
+  @Column({ name: 'teacher_code', type: 'varchar', length: 50 })
+  teacherCode: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
