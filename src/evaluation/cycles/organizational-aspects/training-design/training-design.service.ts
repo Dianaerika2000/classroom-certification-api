@@ -27,7 +27,7 @@ export class TrainingDesignService {
             return indicators.map(indicator => ({
                 indicatorId: indicator.id,
                 result: 0,
-                observation: `El contenido ${content.name} requiere verificación manual`
+                observation: `El indicador "${indicator.name}" requiere verificación manual`
             }));
         }
 
@@ -109,7 +109,7 @@ export class TrainingDesignService {
                         results.push({
                             indicatorId: indicator.id,
                             result: 0,
-                            observation: 'Este indicador requiere verificación manual del formato del contenido',
+                            observation: `El indicador "${indicator.name}" requiere verificación manual`,
                         });
                     }
                 }
@@ -150,7 +150,7 @@ export class TrainingDesignService {
                         results.push({
                             indicatorId: indicator.id,
                             result: 0,
-                            observation: 'Este indicador requiere verificación manual del formato del contenido',
+                            observation: `El indicador "${indicator.name}" requiere verificación manual`,
                         });
                     }
                 }
@@ -197,7 +197,7 @@ export class TrainingDesignService {
                         results.push({
                             indicatorId: indicator.id,
                             result: 0,
-                            observation: 'Este indicador requiere verificación manual.',
+                            observation: `El indicador "${indicator.name}" requiere verificación manual`,
                         });
                     }
                 }
@@ -235,7 +235,7 @@ export class TrainingDesignService {
         return indicators.map(indicator => ({
             indicatorId: indicator.id,
             result: 0,
-            observation: `Indicador "${indicator.name}" requiere implementación específica para guía de aprendizaje`
+            observation: `El indicador "${indicator.name}" requiere revisión manual.`
         }));
     }
 
@@ -295,7 +295,7 @@ export class TrainingDesignService {
         return indicators.map(indicator => ({
             indicatorId: indicator.id,
             result: 0,
-            observation: `Indicador "${indicator.name}" requiere implementación específica para ${contentName}`
+            observation: `El indicador "${indicator.name}" requiere revisión manual.`
         }));
     }
 

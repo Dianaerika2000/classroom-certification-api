@@ -21,7 +21,7 @@ export class TechnicalDesignService {
             return indicators.map(indicator => ({
                 indicatorId: indicator.id,
                 result: 0,
-                observation: `El contenido ${content.name} requiere verificación manual`
+                observation: `El indicador "${indicator.name}" requiere verificación manual`
             }));
         }
 
@@ -97,7 +97,7 @@ export class TechnicalDesignService {
                     results.push({
                         indicatorId: indicator.id,
                         result: 0,
-                        observation: 'Este indicador requiere verificación manual',
+                        observation: `El indicador "${indicator.name}" requiere verificación manual`,
                     });
                 }
             }
@@ -117,7 +117,7 @@ export class TechnicalDesignService {
         return indicators.map(indicator => ({
             indicatorId: indicator.id,
             result: 0,
-            observation: `Indicador "${indicator.name}" requiere implementación específica para ${contentName}`
+            observation: `El indicador "${indicator.name}" requiere revisión manual.`
         }));
     }
 
@@ -158,8 +158,8 @@ export class TechnicalDesignService {
             indicatorId: indicator.id,
             result: hasRestrictions ? 0 : 1,
             observation: hasRestrictions
-                ? 'No cumple con la configuración general.'
-                : 'Cumple con la configuración general.',
+                ? 'No cumple con la configuración de restricciones de acceso.'
+                : 'Cumple con la configuración de restricciones de acceso.',
         };
     }
 
@@ -208,7 +208,7 @@ export class TechnicalDesignService {
                     results.push({
                         indicatorId: indicator.id,
                         result: 0,
-                        observation: 'Este indicador requiere verificación manual',
+                        observation: `El indicador "${indicator.name}" requiere verificación manual`,
                     });
                 }
             }

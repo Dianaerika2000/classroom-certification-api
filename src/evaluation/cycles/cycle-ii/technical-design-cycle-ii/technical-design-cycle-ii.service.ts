@@ -28,7 +28,7 @@ export class TechnicalDesignCycleIiService {
             return indicators.map(indicator => ({
                 indicatorId: indicator.id,
                 result: 0,
-                observation: `El contenido ${content.name} requiere verificación manual`
+                observation: `El indicador "${indicator.name}" requiere verificación manual`
             }));
         }
 
@@ -87,7 +87,7 @@ export class TechnicalDesignCycleIiService {
                     results.push({
                         indicatorId: indicator.id,
                         result: 0,
-                        observation: 'Este indicador requiere verificación manual',
+                        observation: `El indicador "${indicator.name}" requiere verificación manual`,
                     });
                 }
             }
@@ -126,7 +126,7 @@ export class TechnicalDesignCycleIiService {
                     results.push({
                         indicatorId: indicator.id,
                         result: 0,
-                        observation: 'Este indicador requiere verificación manual',
+                        observation: `El indicador "${indicator.name}" requiere verificación manual`,
                     });
                 }
             }
@@ -168,7 +168,7 @@ export class TechnicalDesignCycleIiService {
                     results.push({
                         indicatorId: indicator.id,
                         result: 0,
-                        observation: 'Este indicador requiere verificación manual',
+                        observation: `El indicador "${indicator.name}" requiere verificación manual`,
                     });
                 }
             }
@@ -210,7 +210,7 @@ export class TechnicalDesignCycleIiService {
                     results.push({
                         indicatorId: indicator.id,
                         result: 0,
-                        observation: 'Este indicador requiere verificación manual',
+                        observation: `El indicador "${indicator.name}" requiere verificación manual`,
                     });
                 }
             }
@@ -252,7 +252,7 @@ export class TechnicalDesignCycleIiService {
                     results.push({
                         indicatorId: indicator.id,
                         result: 0,
-                        observation: 'Este indicador requiere verificación manual',
+                        observation: `El indicador "${indicator.name}" requiere verificación manual`,
                     });
                 }
             }
@@ -303,7 +303,7 @@ export class TechnicalDesignCycleIiService {
                     results.push({
                         indicatorId: indicator.id,
                         result: 0,
-                        observation: 'Este indicador requiere verificación manual',
+                        observation: `El indicador "${indicator.name}" requiere verificación manual`,
                     });
                 }
             }
@@ -771,7 +771,7 @@ export class TechnicalDesignCycleIiService {
 
         const observation = allValidAssigns
             ? 'Todos los retos cumplen con la configuración general.'
-            : `Retos inválidos (${invalidRetos.length}):\n${invalidRetos
+            : `No cumple con los indicadores. Retos inválidos (${invalidRetos.length}):\n${invalidRetos
                 .map(reto => `- ${reto.name}: ${reto.issues.join(', ')}`)
                 .join('\n')}`;
 
@@ -827,7 +827,7 @@ export class TechnicalDesignCycleIiService {
         // Generar observaciones detalladas con los nombres de los retos que no cumplen
         const observation = allValidAssigns
             ? 'Todos los retos cumplen con la configuración de disponibilidad.'
-            : `Retos inválidos (${invalidRetos.length}):\n${invalidRetos
+            : `No cumple con la configuración. Retos inválidos (${invalidRetos.length}):\n${invalidRetos
                 .map(reto => `- ${reto.name}: ${reto.issues.join(', ')}`)
                 .join('\n')}`;
 
@@ -991,7 +991,7 @@ export class TechnicalDesignCycleIiService {
             result: allValidAssigns ? 1 : 0,
             observation: allValidAssigns
                 ? 'Todos los foros cumplen con la configuración general.'
-                : `Foros inválidos (${invalidForos.length}):\n` +
+                : `No cumple con el indicador. Foros inválidos (${invalidForos.length}):\n` +
                 invalidForos.map(foro => `- ${foro.name}: ${foro.issues}`).join('\n'),
         };
     }
@@ -1047,7 +1047,7 @@ export class TechnicalDesignCycleIiService {
             result: allValidAssigns ? 1 : 0,
             observation: allValidAssigns
                 ? 'Todos los foros cumplen con la configuración de adjuntos, recuento de palabras, suscripción y seguimiento.'
-                : `Foros inválidos (${invalidForos.length}):\n` +
+                : `No cumple con el indicador. Foros inválidos (${invalidForos.length}):\n` +
                 invalidForos.map(foro => `- ${foro.name}: ${foro.issues}`).join('\n'),
         };
     }
@@ -1069,7 +1069,7 @@ export class TechnicalDesignCycleIiService {
             result: allValidAssigns ? 1 : 0,
             observation: allValidAssigns
                 ? 'Todos los foros cumplen con la configuración de finalización'
-                : `Foros inválidos: ${invalidForos.length}.\nNombre de foros inválidos: \n${invalidForos.map(foro => foro.name).join(', \n')}`
+                : `No cumple con el indicador. Foros inválidos: ${invalidForos.length}.\nNombre de foros inválidos: \n${invalidForos.map(foro => foro.name).join(', \n')}`
         };
     }
 
@@ -1285,7 +1285,7 @@ export class TechnicalDesignCycleIiService {
         return {
             indicatorId: indicator.id,
             result: isAutomatic && isAvailable ? 1 : 0,
-            observation: isAutomatic && isAvailable ? 'Cumple con el indicador' : 'El libro tiene restricciones de acceso'
+            observation: isAutomatic && isAvailable ? 'Cumple con el indicador' : 'No cumple con el indicador. El libro tiene restricciones de acceso.'
         };
     }
 
