@@ -319,12 +319,10 @@ export class TechnicalDesignCycleIiService {
      * @returns 
      */
     private evaluateGeneralMapaMental(indicator: any, matchedContent: any): IndicatorResult {
-        // Buscar "Carpeta pedagógica" dentro del array de recursos
         const mapaMentalConfig = technicalConfig.resources.find(resource =>
             resource.name.toLowerCase() === 'mapa mental'
         );
-
-        // Verificar si la carpeta pedagógica existe en la configuración
+    
         if (!mapaMentalConfig) {
             return {
                 indicatorId: indicator.id,
@@ -332,26 +330,48 @@ export class TechnicalDesignCycleIiService {
                 observation: 'Configuración de "Mapa Mental" no encontrada en el archivo de configuración.',
             };
         }
-
-        const config = mapaMentalConfig.general; // Acceder a la propiedad 'general'
+    
+        const config = mapaMentalConfig.general;
         const lessonSections = matchedContent.filter(section =>
             section && section.name.toLowerCase().includes('unidad')
         );
-
-        // Validar cada sección usando ambas funciones
-        const validObjectiveSections = lessonSections.filter(this.isValidUnitObjective);
-        const validNameSections = lessonSections.filter(section => this.isValidUnitName(section, config.name));
-
-        // Verificar si todas las secciones tienen objetivos válidos y nombres válidos
-        const allValidObjectives = validObjectiveSections.length === lessonSections.length;
-        const allValidNames = validNameSections.length === lessonSections.length;
-
+    
+        // Detallar las secciones que no cumplen
+        const sectionValidations = lessonSections.map(section => ({
+            section,
+            validObjective: this.isValidUnitObjective(section),
+            validName: this.isValidUnitName(section, config.name)
+        }));
+    
+        const invalidSections = sectionValidations.filter(
+            validation => !validation.validObjective || !validation.validName
+        );
+    
+        const allValidObjectives = sectionValidations.every(validation => validation.validObjective);
+        const allValidNames = sectionValidations.every(validation => validation.validName);
+    
+        // Construir observación detallada
+        let observation = '';
+        if (!allValidObjectives || !allValidNames) {
+            observation = 'Secciones inválidas:\n';
+            invalidSections.forEach(invalidSection => {
+                const sectionName = invalidSection.section.name;
+                if (!invalidSection.validObjective && !invalidSection.validName) {
+                    observation += `- ${sectionName}: Sin objetivo válido y nombre incorrecto\n`;
+                } else if (!invalidSection.validObjective) {
+                    observation += `- ${sectionName}: Sin objetivo válido\n`;
+                } else if (!invalidSection.validName) {
+                    observation += `- ${sectionName}: Nombre incorrecto\n`;
+                }
+            });
+        }
+    
         return {
             indicatorId: indicator.id,
             result: (allValidObjectives && allValidNames) ? 1 : 0,
             observation: (allValidObjectives && allValidNames)
                 ? 'Todas las secciones tienen objetivos de la unidad válidos y nombres correctos'
-                : `Secciones inválidas - Objetivos: ${lessonSections.length - validObjectiveSections.length}, Nombres: ${matchedContent.length - validNameSections.length}`
+                : observation.trim()
         };
     }
 
@@ -416,7 +436,7 @@ export class TechnicalDesignCycleIiService {
             result: allRestrictions ? 1 : 0,
             observation: allRestrictions
                 ? 'Cumple con las restricciones de acceso.'
-                : `No cumplen con las restricciones de acceso las siguientes secciones: ${nonCompliantSections.join(', ')}.`,
+                : `No cumplen con las restricciones de acceso las siguientes secciones: \n${nonCompliantSections.join(', \n')}.`,
         };
     }
 
@@ -465,7 +485,7 @@ export class TechnicalDesignCycleIiService {
             result: allRestrictions ? 1 : 0,
             observation: allRestrictions
                 ? 'Cumple con la configuración de finalización de todas las actividades.'
-                : `Las siguientes actividades no cumplen con la configuración de finalización: ${nonCompliantLessons.join(', ')}.`,
+                : `Las siguientes actividades no cumplen con la configuración de finalización: \n${nonCompliantLessons.join(', \n')}.`,
         };
     }
 
@@ -501,7 +521,7 @@ export class TechnicalDesignCycleIiService {
                 result: isRedirectionCorrect ? 1 : 0,
                 observation: isRedirectionCorrect
                     ? 'Cumple con la configuración para respuestas incorrectas.'
-                    : `No cumplen con la configuración las siguientes lecciones: ${nonCompliantLessons.join(', ')}.`,
+                    : `No cumplen con la configuración las siguientes lecciones: \n${nonCompliantLessons.join(', \n')}.`,
             };
         } catch (error) {
             console.error('Error evaluando las páginas de redirección:', error);
@@ -604,7 +624,7 @@ export class TechnicalDesignCycleIiService {
             result: allQuizzesValid ? 1 : 0,
             observation: allQuizzesValid
                 ? 'Todos los cuestionarios cumplen con la configuración de temporalización y calificación.'
-                : `Los siguientes cuestionarios no cumplen: ${nonCompliantQuizzes.join(', ')}.`,
+                : `Los siguientes cuestionarios no cumplen: \n${nonCompliantQuizzes.join(', \n')}.`,
         };
     }
 
@@ -670,7 +690,7 @@ export class TechnicalDesignCycleIiService {
             result: allRestrictionsValid ? 1 : 0,
             observation: allRestrictionsValid
                 ? 'Cumple con las restricciones de acceso.'
-                : `Los siguientes cuestionarios no cumplen con las restricciones de acceso: ${invalidQuizzes.map(quiz => quiz.name).join(', ')}`,
+                : `Los siguientes cuestionarios no cumplen con las restricciones de acceso: \n${invalidQuizzes.map(quiz => quiz.name).join(', \n')}`,
         };
     }
 
@@ -702,7 +722,7 @@ export class TechnicalDesignCycleIiService {
             result: allRestrictions ? 1 : 0,
             observation: allRestrictions
                 ? 'Todos los cuestionarios cumplen con la configuración de finalización de la actividad.'
-                : `Los siguientes cuestionarios no cumplen con la configuración de finalización: ${invalidQuizzes.map(quiz => quiz.name).join(', ')}`,
+                : `Los siguientes cuestionarios no cumplen con la configuración de finalización: \n${invalidQuizzes.map(quiz => quiz.name).join(', \n')}`,
         };
     }
 
@@ -909,7 +929,7 @@ export class TechnicalDesignCycleIiService {
             result: allRestrictions ? 1 : 0,
             observation: allRestrictions
                 ? 'Todos los retos cumplen con la configuración de finalización de la actividad.'
-                : `Los siguientes retos no cumplen con la configuración de finalización: ${invalidAssigns.map(assign => assign.name).join(', ')}`,
+                : `Los siguientes retos no cumplen con la configuración de finalización: \n${invalidAssigns.map(assign => assign.name).join(', \n')}`,
         };
     }
 
@@ -1049,7 +1069,7 @@ export class TechnicalDesignCycleIiService {
             result: allValidAssigns ? 1 : 0,
             observation: allValidAssigns
                 ? 'Todos los foros cumplen con la configuración de finalización'
-                : `Foros inválidos: ${invalidForos.length}.\nNombre de foros inválidos: ${invalidForos.map(foro => foro.name).join(', ')}`
+                : `Foros inválidos: ${invalidForos.length}.\nNombre de foros inválidos: \n${invalidForos.map(foro => foro.name).join(', \n')}`
         };
     }
 
@@ -1065,7 +1085,7 @@ export class TechnicalDesignCycleIiService {
      */
     private evaluateGeneralSectionVideo(indicator: any, matchedContent: any): IndicatorResult {
         const videoSection = matchedContent.find(section =>
-            section.name.toLowerCase() === 'videoconferencias'
+            section.name.toLowerCase() === 'videoconferencias' || section.name.toLowerCase() === 'videoconferencia'
         );
 
         const videoConfig = technicalConfig.resources.find(resource =>
@@ -1105,7 +1125,7 @@ export class TechnicalDesignCycleIiService {
 
     private evaluateGeneralBookVideo(indicator: any, matchedContent: any): IndicatorResult {
         const videoSection = matchedContent.find(section =>
-            section.name.toLowerCase() === 'videoconferencias'
+            section.name.toLowerCase() === 'videoconferencias' || section.name.toLowerCase() === 'videoconferencia'
         );
 
         const videoConfig = technicalConfig.resources.find(resource =>
@@ -1155,7 +1175,7 @@ export class TechnicalDesignCycleIiService {
             section &&
             typeof section === 'object' &&
             section.name &&
-            section.name.toLowerCase() !== 'videoconferencias'
+            section.name.toLowerCase() !== 'videoconferencias' || section.name.toLowerCase() !== 'videoconferencia'
         );
         const totalSubjects = uniqueSections.length;
 
@@ -1163,7 +1183,7 @@ export class TechnicalDesignCycleIiService {
         const videoconferenciaSection = matchedResources.find(section =>
             section &&
             section.name &&
-            section.name.toLowerCase() === 'videoconferencias'
+            section.name.toLowerCase() === 'videoconferencias' || section.name.toLowerCase() === 'videoconferencia'
         );
 
         if (!videoconferenciaSection || !videoconferenciaSection.modules) {
@@ -1194,13 +1214,13 @@ export class TechnicalDesignCycleIiService {
             result: hasUrlForeachSubject ? 1 : 0,
             observation: hasUrlForeachSubject
                 ? 'Cumple con el indicador'
-                : `No se cumple con el indicador: ${totalSubjects} unidades - Páginas: ${moduleBook.filter(item => item.filename != 'structure').length}`
+                : `No se cumple con el indicador: ${totalSubjects} unidades - \nPáginas: ${moduleBook.filter(item => item.filename != 'structure').length}`
         };
     }
 
     private evaluateRestrictionsBookVideo(indicator: any, matchedContent: any): IndicatorResult {
         const videoSection = matchedContent.find(section =>
-            section.name.toLowerCase() === 'videoconferencias'
+            section.name.toLowerCase() === 'videoconferencias' || section.name.toLowerCase() === 'videoconferencia'
         );
 
         if (!videoSection) {
@@ -1232,7 +1252,7 @@ export class TechnicalDesignCycleIiService {
 
     private evaluateCompletionBookVideo(indicator: any, matchedContent: any): IndicatorResult {
         const videoSection = matchedContent.find(section =>
-            section.name.toLowerCase() === 'videoconferencias'
+            section.name.toLowerCase() === 'videoconferencias' || section.name.toLowerCase() === 'videoconferencia'
         );
 
         const videoConfig = technicalConfig.resources.find(resource =>
@@ -1283,7 +1303,7 @@ export class TechnicalDesignCycleIiService {
         const videoconferenciaSection = matchedResources.find(section =>
             section &&
             section.name &&
-            section.name.toLowerCase() === 'videoconferencias'
+            section.name.toLowerCase() === 'videoconferencias' || section.name.toLowerCase() === 'videoconferencia'
         );
 
         if (!videoconferenciaSection || !videoconferenciaSection.modules) {
@@ -1307,7 +1327,7 @@ export class TechnicalDesignCycleIiService {
             result: invalidModules.length === 0 ? 1 : 0,
             observation: invalidModules.length === 0
                 ? 'Todos los módulos cumplen con los datos de finalización requeridos'
-                : `No cumplen con los datos de finalización: ${invalidModules.map(module => module.name).join(', ')}`
+                : `No cumplen con los datos de finalización: \n${invalidModules.map(module => module.name).join(', \n')}`
         };
     }
 

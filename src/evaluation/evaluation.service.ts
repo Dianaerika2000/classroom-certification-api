@@ -159,7 +159,29 @@ export class EvaluationService {
       }
     );
 
-    const evaluatedIndicatorsData = results.flatMap(resource =>
+    const unmatchResults = await this.indicatorEvaluationService.evaluateUnmatchedIndicators(
+      unmatchedResources,
+      {
+        areaId,
+        cycleId,
+        token,
+        courseid: moodleCourseId
+      }
+    );
+
+    const combinedResults = [
+      ...results,
+      ...unmatchResults.map(unmatchedResource => ({
+        resourceId: unmatchedResource.resourceId,
+        resourceName: unmatchedResource.resourceName,
+        contents: {
+          match: unmatchedResource.contents.match,
+          noMatch: []
+        }
+      }))
+    ];
+
+    const evaluatedIndicatorsData = combinedResults.flatMap(resource =>
       resource.contents.match.flatMap(matchGroup =>
         matchGroup.map(indicator => ({
           indicatorId: indicator.indicatorId,

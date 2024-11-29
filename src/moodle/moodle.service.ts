@@ -194,4 +194,32 @@ export class MoodleService {
       throw new HttpException('Error al obtener actividades del curso de Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  async enrolUsers(courseId: number, token: string, userId?: number) {
+    const apiUrl = this.getMoodleApiUrl();
+    const userToEnroll = userId ?? 50;
+    const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=enrol_manual_enrol_users&enrolments[0][roleid]=1&enrolments[0][userid]=${userToEnroll}&enrolments[0][courseid]=${courseId}`;
+    
+    try {
+      await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
+      //return response.data;
+    } catch (error) {
+      console.error(error);
+      throw new HttpException('Error al registrar el usuario en el curso', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async unenrolUsers(courseId: number, token: string, userId?: number) {
+    const apiUrl = this.getMoodleApiUrl();
+    const userToEnroll = userId ?? 50;
+    const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=enrol_manual_unenrol_users&enrolments[0][roleid]=1&enrolments[0][userid]=${userToEnroll}&enrolments[0][courseid]=${courseId}`;
+    
+    try {
+      await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
+      //return response.data;
+    } catch (error) {
+      console.error(error);
+      throw new HttpException('Error al registrar el usuario en el curso', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 }

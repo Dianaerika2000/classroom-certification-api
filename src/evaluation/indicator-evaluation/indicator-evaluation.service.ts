@@ -3,6 +3,7 @@ import { AreaService } from 'src/area/area.service';
 import { CycleService } from 'src/cycle/cycle.service';
 import { IndicatorService } from 'src/indicator/indicator.service';
 import { Cycle1TechnicalDesignService, Cycle1TrainingDesignService, Cycle3TechnicalDesignService, Cycle3TrainingDesignService, TechnicalDesignCycleIiService, TechnicalDesignService, TrainingDesignCycleIiService, TrainingDesignService, GraphicDesignService } from '../cycles/cycles';
+import { IndicatorResult } from '../interfaces/indicator-result.interface';
 
 enum AreaType {
     Formacion = 'formación',
@@ -233,5 +234,109 @@ export class IndicatorEvaluationService {
         };
 
         return isValidContent(matchedSection) ? matchedSection : matchedModule;
+    }
+
+    async evaluateUnmatchedIndicators(
+        matchedResources: any[],
+        context: EvaluationContext
+    ): Promise<any[]> {
+        return Promise.all(
+            matchedResources.map(async (item) => {
+                try {
+                    if (item.resource) {
+                        return await this.evaluateUnmatchedResourceIndicators(item, context);
+                    } else if (item.resource.resource) {
+                        return await this.evaluateUnmatchedContentIndicators(item, context);
+                    }
+                    throw new Error(`Estructura desconocida en el recurso: ${JSON.stringify(item)}`);
+                } catch (error) {
+                    console.error(`Error evaluando recurso ${item.resource.id}:`, error);
+                    return {
+                        resourceId: item.resource.id,
+                        error: error.message
+                    };
+                }
+            })
+        );
+    }
+
+    private async evaluateUnmatchedContentIndicators(
+        item: any,
+        context: EvaluationContext
+    ): Promise<any> {
+        const { resource } = item;
+        const result = {
+            resourceId: resource.id,
+            resourceName: resource.name,
+            contents: { match: [], noMatch: [] }
+        };
+
+        const unmatchResult = await this.evaluateContentUnmatch(
+            resource,
+            context.areaId,
+            context.cycleId,
+            'content'
+        );
+
+        if (unmatchResult) {
+            result.contents.match.push(unmatchResult);
+        }
+
+        return result;
+    }
+
+    private async evaluateUnmatchedResourceIndicators(
+        item: any,
+        context: EvaluationContext
+    ): Promise<any> {
+        const { resource } = item;
+        const result = {
+            resourceId: resource.id,
+            resourceName: resource.name,
+            contents: { match: [], noMatch: [] }
+        };
+
+        const unmatchResult = await this.evaluateContentUnmatch(
+            resource,
+            context.areaId,
+            context.cycleId,
+            'resource'
+        );
+
+        if (unmatchResult) {
+            result.contents.match.push(unmatchResult);
+        }
+
+        return result;
+    }
+
+    private async evaluateContentUnmatch(
+        content: any,
+        areaId: any,
+        cycleId: any,
+        type: 'content' | 'resource'
+    ) {
+        const [area, cycle] = await Promise.all([
+            this.areaService.findOne(areaId),
+            this.cycleService.findOne(cycleId)
+        ]);
+
+        if (!area || !cycle) {
+            throw new Error(`Área o ciclo no encontrado: areaId=${areaId}, cycleId=${cycleId}`);
+        }
+
+        const indicators = type === 'content'
+            ? await this.indicatorService.findByAreaAndContent(areaId, content.id)
+            : await this.indicatorService.findByAreaAndResource(areaId, content.id);
+
+        return await this.evaluateUnimplementedContent(indicators);
+    }
+
+    private async evaluateUnimplementedContent(indicators: any[]): Promise<IndicatorResult[]> {
+        return indicators.map(indicator => ({
+            indicatorId: indicator.id,
+            result: 0,
+            observation: `Indicador "${indicator.name}" requiere revisión manual`
+        }));
     }
 }
