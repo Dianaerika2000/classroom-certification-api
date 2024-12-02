@@ -26,6 +26,7 @@ import { EvaluatedIndicatorModule } from './evaluated-indicator/evaluated-indica
 import { CertificationModule } from './certification/certification.module';
 import { CommonModule } from './common/common.module';
 import { AuthorityModule } from './authority/authority.module';
+import { PlatformModule } from './platform/platform.module';
 
 @Module({
   imports: [
@@ -73,6 +74,7 @@ import { AuthorityModule } from './authority/authority.module';
     CertificationModule,
     CommonModule,
     AuthorityModule,
+    PlatformModule,
   ],
   controllers: [AppController],
   providers: [AppService],
