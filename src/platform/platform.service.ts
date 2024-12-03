@@ -40,18 +40,20 @@ export class PlatformService {
     return platform;
   }
 
-  async setPlatformEnvironmentVariables(id: number): Promise<void> {
+  async setPlatformEnvironmentVariables(id: number): Promise<Platform> {
     const platform = await this.findOne(id);
-
+  
     const authUrl = `${platform.url}/login/token.php`;
     const apiUrl = `${platform.url}/webservice/rest/server.php`;
     const token = platform.token;
-
+  
     this.configService.set('MOODLE_AUTH_URL', authUrl);
     this.configService.set('MOODLE_API_URL', apiUrl);
     this.configService.set('MOODLE_SERVICE', 'moodle_customized');
     this.configService.set('MOODLE_TOKEN', token);
-  }
+  
+    return platform;
+  }  
 
   async findOneByUrl(url: string): Promise<Platform | null> {
     return await this.platformRepository.findOneBy({ url });

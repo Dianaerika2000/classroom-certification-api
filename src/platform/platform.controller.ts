@@ -62,10 +62,11 @@ export class PlatformController {
   @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
   @ApiResponse({ status: 404, description: 'Platform not found' })
   async setEnvironmentVariables(@Param('id') id: string) {
-    await this.platformService.setPlatformEnvironmentVariables(+id);
+    const platform = await this.platformService.setPlatformEnvironmentVariables(+id);
 
     return {
       message: "Environment variables updated successfully",
-    };
+      data: platform
+    }; 
   }
 }
