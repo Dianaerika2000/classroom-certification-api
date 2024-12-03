@@ -31,6 +31,9 @@ export class Certification {
   @Column({ name: 'teacher_code', type: 'varchar', length: 50 })
   teacherCode: string;
 
+  @Column({ name: 'responsible_fac', nullable: true })
+  responsible: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

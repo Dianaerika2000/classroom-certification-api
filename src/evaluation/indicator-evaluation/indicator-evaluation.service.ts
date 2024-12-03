@@ -191,7 +191,11 @@ export class IndicatorEvaluationService {
         const indicators = type === 'content'
             ? await this.indicatorService.findByAreaAndContent(areaId, content.id)
             : await this.indicatorService.findByAreaAndResource(areaId, content.id);
-            
+
+        if (!indicators || indicators.length === 0) {
+            throw new Error(`No se encontraron indicadores para el área ${areaId} y el contenido ${content.id}`);
+        }
+
         // Determinar qué contenido enviar
         const contentToSend = this.getValidContent(matchedSection, matchedModule);
 
@@ -328,6 +332,10 @@ export class IndicatorEvaluationService {
         const indicators = type === 'content'
             ? await this.indicatorService.findByAreaAndContent(areaId, content.id)
             : await this.indicatorService.findByAreaAndResource(areaId, content.id);
+
+        if (!indicators || indicators.length === 0) {
+            throw new Error(`No se encontraron indicadores para el área ${areaId} y el contenido ${content.id}`);
+        }
 
         return await this.evaluateUnimplementedContent(indicators);
     }

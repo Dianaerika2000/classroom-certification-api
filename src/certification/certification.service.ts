@@ -18,18 +18,18 @@ export class CertificationService {
     private readonly classroomService: ClassroomService,
     private readonly userService: UserService,
     private readonly authorityService: AuthorityService,
-  ) {}
+  ) { }
 
   async create(createCertificationDto: CreateCertificationDto, username: string) {
-    const { 
-      classroomId, 
-      evaluatorUsername, 
+    const {
+      classroomId,
+      evaluatorUsername,
       authorityIds,
-      ...otherAttributes 
+      ...otherAttributes
     } = createCertificationDto;
-  
+
     const classroom = await this.classroomService.findOne(classroomId);
-  
+
     if (classroom.status !== ClassroomStatus.EVALUADA) {
       throw new BadRequestException(
         `Classroom with ID ${classroomId} is not eligible for certification. Current status: ${classroom.status}`,
@@ -49,14 +49,14 @@ export class CertificationService {
 
     if (authorityIds && authorityIds.length > 0) {
       const authorities = await this.authorityService.findAuthoritiesByIds(authorityIds);
-      
+
       if (authorities.length !== authorityIds.length) {
         throw new BadRequestException('Some authorities could not be found');
       }
-  
+
       certification.authorities = authorities;
     }
-  
+
     return this.certificationRepository.save(certification);
   }
 
@@ -122,11 +122,11 @@ export class CertificationService {
       throw new NotFoundException(`Certification with ID ${id} not found`);
     }
 
-    const { 
-      evaluatorUsername, 
-      classroomId, 
-      authorityIds, 
-      ...updateData 
+    const {
+      evaluatorUsername,
+      classroomId,
+      authorityIds,
+      ...updateData
     } = updateCertificationDto;
 
     if (classroomId) {
@@ -151,17 +151,17 @@ export class CertificationService {
     if (authorityIds !== undefined) {
       if (authorityIds.length > 0) {
         const authorities = await this.authorityService.findAuthoritiesByIds(authorityIds);
-        
+
         if (authorities.length !== authorityIds.length) {
           throw new BadRequestException('Some authorities could not be found');
         }
-  
+
         preloadedCertification.authorities = authorities;
       } else {
         preloadedCertification.authorities = [];
       }
     }
-  
+
     Object.assign(preloadedCertification, updateData);
 
     await this.certificationRepository.save(preloadedCertification);
@@ -177,24 +177,26 @@ export class CertificationService {
       where: { id },
       relations: ['authorities']
     });
-    
+
     if (!certification) {
       throw new NotFoundException(`Certification with ID ${id} not found`);
     }
-  
+
     await this.certificationRepository.manager.transaction(async transactionalEntityManager => {
+      // Usar `$1` como marcador de posición para PostgreSQL
       await transactionalEntityManager.query(
-        `DELETE FROM certification_authorities WHERE certification_id = ?`,
-        [id]
+        `DELETE FROM authority_certification WHERE certification_id = $1`,
+        [id] // Reemplazar `id` con el valor correcto
       );
-  
+
+      // Eliminar la certificación
       await transactionalEntityManager.remove(certification);
     });
-  
+
     return certification;
   }
 
-  async determineEvaluatorName(username: string, evaluatorUsername: string | undefined ): Promise<string> {
+  async determineEvaluatorName(username: string, evaluatorUsername: string | undefined): Promise<string> {
     const loggedUser = await this.userService.findOneByUsername(username);
 
     if (loggedUser.rol.name === ValidRoles.evaluator) {

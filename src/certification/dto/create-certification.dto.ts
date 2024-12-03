@@ -67,6 +67,14 @@ export class CreateCertificationDto {
   teacherCode: string;
 
   @ApiPropertyOptional({
+    description: "Name of the responsible DEDTE-F.",
+    example: "Carlos",
+  })
+  @IsOptional()
+  @IsString()
+  responsibleDedtef?: string;
+
+  @ApiPropertyOptional({
     description: "Array of authority IDs to associate with the certification.",
     example: [1, 2, 3],
   })
