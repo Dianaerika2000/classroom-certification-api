@@ -37,7 +37,10 @@ export class ClassroomService {
       });
     }
     
-    return await this.classroomRepository.find();
+    return await this.classroomRepository.find({ 
+      where: { status },
+      relations: ['team', 'team.personals'] 
+    });
   }
 
   async findOne(id: number): Promise<Classroom> {
