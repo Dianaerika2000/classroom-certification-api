@@ -1,3 +1,4 @@
+import { Attach } from '../../attach/entities/attach.entity';
 import { Certification } from '../../certification/entities/certification.entity';
 import { Evaluation } from '../../evaluation/entities/evaluation.entity';
 import { Form } from '../../form/entities/form.entity';
@@ -32,6 +33,9 @@ export class Classroom {
 
   @OneToMany(() => Certification, certification => certification.classroom)
   certifications: Certification[];
+
+  @OneToMany(() => Attach, (attach) => attach.classroom)
+  attaches: Attach[];
 
   @ManyToOne(() => Team, (team) => team.classrooms)
   team: Team;
