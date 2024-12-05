@@ -27,6 +27,7 @@ import { CertificationModule } from './certification/certification.module';
 import { CommonModule } from './common/common.module';
 import { AuthorityModule } from './authority/authority.module';
 import { PlatformModule } from './platform/platform.module';
+import { AttachModule } from './attach/attach.module';
 
 @Module({
   imports: [
@@ -75,6 +76,7 @@ import { PlatformModule } from './platform/platform.module';
     CommonModule,
     AuthorityModule,
     PlatformModule,
+    AttachModule,
   ],
   controllers: [AppController],
   providers: [AppService],
