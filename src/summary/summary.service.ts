@@ -54,6 +54,13 @@ export class SummaryService {
       summaryData.push(savedEntry);
     }
 
+    try {
+      await this.formService.update(form.id, { finalGrade: totalWeightedAverage });
+    } catch (error) {
+      console.error('Error al actualizar el formulario:', error);
+      throw new Error('No se pudo actualizar el formulario');
+    }    
+
     return {
       data: summaryData,
       totalWeight,
@@ -106,5 +113,17 @@ export class SummaryService {
       totalWeight,
       totalWeightedAverage,
     };
+  }
+
+  async updateSummary(formId: number): Promise<{
+    data: Summary[];
+    totalWeight: number;
+    totalWeightedAverage: number;
+  }> {
+    // Eliminar los resúmenes existentes
+    await this.summaryRepository.delete({ form: { id: formId } });
+
+    // Calcular y guardar los nuevos resúmenes
+    return this.calculateSummary(formId);
   }
 }
