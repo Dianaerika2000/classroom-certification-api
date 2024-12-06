@@ -41,25 +41,32 @@ export class SummaryService {
       totalWeight += weight;
       totalWeightedAverage += weightedAverage;
 
-      const summaryEntry = this.summaryRepository.create({
-        form,
-        area: area.name,
-        average,
-        percentage,
-        weight,
-        weightedAverage,
+      const existingSummary = await this.summaryRepository.findOne({
+        where: { form: { id: formId }, area: area.name },
       });
-      const savedEntry = await this.summaryRepository.save(summaryEntry);
 
-      summaryData.push(savedEntry);
+      if (existingSummary) {
+        existingSummary.average = average;
+        existingSummary.percentage = percentage;
+        existingSummary.weight = weight;
+        existingSummary.weightedAverage = weightedAverage;
+        
+        const updatedEntry = await this.summaryRepository.save(existingSummary);
+        summaryData.push(updatedEntry);
+      } else {
+        const summaryEntry = this.summaryRepository.create({
+          form,
+          area: area.name,
+          average,
+          percentage,
+          weight,
+          weightedAverage,
+        });
+        
+        const savedEntry = await this.summaryRepository.save(summaryEntry);
+        summaryData.push(savedEntry);
+      }
     }
-
-    try {
-      await this.formService.update(form.id, { finalGrade: totalWeightedAverage });
-    } catch (error) {
-      console.error('Error al actualizar el formulario:', error);
-      throw new Error('No se pudo actualizar el formulario');
-    }    
 
     return {
       data: summaryData,
@@ -113,17 +120,5 @@ export class SummaryService {
       totalWeight,
       totalWeightedAverage,
     };
-  }
-
-  async updateSummary(formId: number): Promise<{
-    data: Summary[];
-    totalWeight: number;
-    totalWeightedAverage: number;
-  }> {
-    // Eliminar los resúmenes existentes
-    await this.summaryRepository.delete({ form: { id: formId } });
-
-    // Calcular y guardar los nuevos resúmenes
-    return this.calculateSummary(formId);
   }
 }
