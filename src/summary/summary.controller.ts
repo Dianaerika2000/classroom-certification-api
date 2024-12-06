@@ -39,19 +39,4 @@ export class SummaryController {
       },
     };
   }
-
-  @Post('form/:formId/update')
-  @ApiResponse({ status: 200, description: 'Update summary by form' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Summary not found for the provided form' })
-  async updateSummary(@Param('formId') formId: number) {
-    const summaryData = await this.summaryService.updateSummary(formId);
-
-    return {
-      message: "Resumen actualizado exitosamente",
-      data: {
-        summary: summaryData,
-      },
-    };
-  }
 }
