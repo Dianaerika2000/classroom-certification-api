@@ -57,6 +57,11 @@ export class CertificationService {
       certification.authorities = authorities;
     }
 
+    // Actualizar estado del aula
+    await this.classroomService.update(classroom.id, {
+      status: ClassroomStatus.CERTIFICADA
+    });
+
     return this.certificationRepository.save(certification);
   }
 
@@ -129,7 +134,7 @@ export class CertificationService {
       ...updateData
     } = updateCertificationDto;
 
-    if (classroomId) {
+    /*  if (classroomId) {
       const classroom = await this.classroomService.findOne(classroomId);
       if (classroom.status !== ClassroomStatus.EVALUADA) {
         throw new BadRequestException(
@@ -138,7 +143,7 @@ export class CertificationService {
       }
 
       preloadedCertification.classroom = classroom;
-    }
+    } */
 
     if (evaluatorUsername !== undefined) {
       const validatedEvaluatorName = await this.determineEvaluatorName(

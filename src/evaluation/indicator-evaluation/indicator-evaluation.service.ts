@@ -193,7 +193,11 @@ export class IndicatorEvaluationService {
             : await this.indicatorService.findByAreaAndResource(areaId, content.id);
 
         if (!indicators || indicators.length === 0) {
-            throw new Error(`No se encontraron indicadores para el área ${areaId} y el contenido ${content.id}`);
+            if (area.name.toLowerCase().includes('gráfico')) {
+                return null; // Salta este recurso/contenido sin hacer nada más
+            } else {
+                throw new Error(`No se encontraron indicadores para el área ${areaId} y el contenido ${content.name}`);
+            }
         }
 
         // Determinar qué contenido enviar
@@ -334,7 +338,11 @@ export class IndicatorEvaluationService {
             : await this.indicatorService.findByAreaAndResource(areaId, content.id);
 
         if (!indicators || indicators.length === 0) {
-            throw new Error(`No se encontraron indicadores para el área ${areaId} y el contenido ${content.id}`);
+            if (area.name.toLowerCase().includes('gráfico')) {
+                return null; // Salta este recurso/contenido sin hacer nada más
+            } else {
+                throw new Error(`No se encontraron indicadores para el área ${areaId} y el contenido ${content.name}`);
+            }
         }
 
         return await this.evaluateUnimplementedContent(indicators);
