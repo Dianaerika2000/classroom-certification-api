@@ -9,6 +9,7 @@ import { ClassroomStatus } from '../classroom/enums/classroom-status.enum';
 import { UserService } from '../user/user.service';
 import { ValidRoles } from '../common/enums/valid-roles';
 import { AuthorityService } from '../authority/authority.service';
+import { AwsService } from '../aws/aws.service';
 
 @Injectable()
 export class CertificationService {
@@ -18,9 +19,10 @@ export class CertificationService {
     private readonly classroomService: ClassroomService,
     private readonly userService: UserService,
     private readonly authorityService: AuthorityService,
+    private readonly awsService: AwsService,
   ) { }
 
-  async create(createCertificationDto: CreateCertificationDto, username: string) {
+  async create(createCertificationDto: CreateCertificationDto, username: string, qrFile: Express.Multer.File,) {
     const {
       classroomId,
       evaluatorUsername,
@@ -36,14 +38,22 @@ export class CertificationService {
       );
     }
 
-    const evaluator = await this.determineEvaluatorName(
-      username,
-      evaluatorUsername,
-    );
+    const { photoUrl: qrUrl } = await this.awsService.uploadImageToS3(qrFile.buffer, qrFile.originalname);
+    if (!qrUrl) {
+      throw new BadRequestException('Failed to upload QR image to S3');
+    }
+
+    const form = await this.classroomService.getFormByClassroom(classroomId);
+
+    const evaluator = await this.determineEvaluatorName(username, evaluatorUsername);
 
     const certification = this.certificationRepository.create({
       classroom,
       evaluatorName: evaluator,
+      career: form.career,
+      contentAuthor: form.author,
+      responsible: form.responsible,
+      qrUrl,
       ...otherAttributes,
     });
 
@@ -129,27 +139,12 @@ export class CertificationService {
 
     const {
       evaluatorUsername,
-      classroomId,
       authorityIds,
       ...updateData
     } = updateCertificationDto;
 
-    /*  if (classroomId) {
-      const classroom = await this.classroomService.findOne(classroomId);
-      if (classroom.status !== ClassroomStatus.EVALUADA) {
-        throw new BadRequestException(
-          `Classroom with ID ${classroomId} is not eligible for certification. Current status: ${classroom.status}`,
-        );
-      }
-
-      preloadedCertification.classroom = classroom;
-    } */
-
     if (evaluatorUsername !== undefined) {
-      const validatedEvaluatorName = await this.determineEvaluatorName(
-        username,
-        evaluatorUsername,
-      );
+      const validatedEvaluatorName = await this.determineEvaluatorName(username, evaluatorUsername);
       preloadedCertification.evaluatorName = validatedEvaluatorName;
     }
 
@@ -173,7 +168,12 @@ export class CertificationService {
 
     return await this.certificationRepository.findOne({
       where: { id },
-      relations: ['classroom', 'authorities']
+      relations: [
+        'classroom', 
+        'authorities', 
+        'classroom.team',
+        'classroom.team.personals'
+      ]
     });
   }
 

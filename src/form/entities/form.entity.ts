@@ -1,7 +1,7 @@
+import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Assessment } from "../../assessment/entities/assessment.entity";
 import { Classroom } from "../../classroom/entities/classroom.entity";
 import { Summary } from "../../summary/entities/summary.entity";
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: 'forms' })
 export class Form {
@@ -35,11 +35,10 @@ export class Form {
   @Column({ name: 'content_author' })
   author: string;
 
-  @ManyToOne(
-    () => Classroom,
-    classroom => classroom.forms,
-    { eager: true, onDelete: 'CASCADE' }
-  )
+  @OneToOne(
+    () => Classroom, 
+    (classroom) => classroom.form, 
+    { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'classroom_id' })
   classroom: Classroom;
 

@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Transform } from "class-transformer";
 import { IsNumber, IsOptional, IsString, IsArray } from "class-validator";
 
 export class CreateCertificationDto {
@@ -6,15 +7,17 @@ export class CreateCertificationDto {
     description: "Career associated with the certification.",
     example: "Ingeniería en Sistemas",
   })
+  @IsOptional()
   @IsString()
-  career: string;
+  career?: string;
 
   @ApiProperty({
     description: "Author of the content.",
     example: "Juan Perez",
   })
+  @IsOptional()
   @IsString()
-  contentAuthor: string;
+  contentAuthor?: string;
 
   @ApiProperty({
     description: "Faculty associated with the certification.",

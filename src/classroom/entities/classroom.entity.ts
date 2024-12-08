@@ -1,9 +1,9 @@
+import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Attach } from '../../attach/entities/attach.entity';
 import { Certification } from '../../certification/entities/certification.entity';
 import { Evaluation } from '../../evaluation/entities/evaluation.entity';
 import { Form } from '../../form/entities/form.entity';
 import { Team } from '../../team/entities/team.entity';
-import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'classrooms'})
 export class Classroom {
@@ -28,8 +28,8 @@ export class Classroom {
   @OneToMany(() => Evaluation, evaluation => evaluation.classroom)
   evaluations: Evaluation[];
 
-  @OneToMany(() => Form, form => form.classroom)
-  forms: Form[];
+  @OneToOne(() => Form, (form) => form.classroom, { cascade: true })
+  form: Form;
 
   @OneToMany(() => Certification, certification => certification.classroom)
   certifications: Certification[];

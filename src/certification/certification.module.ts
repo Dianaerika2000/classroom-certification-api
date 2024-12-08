@@ -7,6 +7,7 @@ import { ClassroomModule } from '../classroom/classroom.module';
 import { AuthorityModule } from '../authority/authority.module';
 import { UserModule } from '../user/user.module';
 import { AuthModule } from '../auth/auth.module';
+import { AwsModule } from '../aws/aws.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AuthModule } from '../auth/auth.module';
     UserModule,
     AuthModule,
     AuthorityModule,
+    AwsModule,
   ],
   controllers: [CertificationController],
   providers: [CertificationService],
