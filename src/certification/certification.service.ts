@@ -109,23 +109,18 @@ export class CertificationService {
     return certification;
   }
 
-  async findByClassroom(classroomId: number) {
-    const certifications = await this.certificationRepository.find({
-      where: {
-        classroom: { id: classroomId },
-      },
+  async findByClassroom(classroomId: number): Promise<Certification | null> {
+    const certification = await this.certificationRepository.findOne({
+      where: { classroom: { id: classroomId } },
       relations: [
         'classroom',
         'classroom.team',
         'classroom.team.personals',
         'authorities'
       ],
-      order: {
-        createdAt: 'DESC',
-      },
     });
-
-    return certifications;
+  
+    return certification || null;
   }
 
   async update(id: number, updateCertificationDto: UpdateCertificationDto, username: string) {
@@ -200,7 +195,7 @@ export class CertificationService {
 
     return certification;
   }
-
+  
   async determineEvaluatorName(username: string, evaluatorUsername: string | undefined): Promise<string> {
     const loggedUser = await this.userService.findOneByUsername(username);
 
