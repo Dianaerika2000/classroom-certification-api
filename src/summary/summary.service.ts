@@ -68,6 +68,8 @@ export class SummaryService {
       }
     }
 
+    await this.formService.update(form.id, { finalGrade: totalWeightedAverage });
+    
     return {
       data: summaryData,
       totalWeight,
