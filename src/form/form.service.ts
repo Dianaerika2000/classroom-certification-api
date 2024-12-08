@@ -1,10 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Form } from './entities/form.entity';
 import { Repository } from 'typeorm';
-import { ClassroomService } from 'src/classroom/classroom.service';
+import { Form } from './entities/form.entity';
 import { CreateFormDto } from './dto/create-form.dto';
 import { UpdateFormDto } from './dto/update-form.dto';
+import { ClassroomService } from '../classroom/classroom.service';
+import { CertificationService } from '../certification/certification.service';
+import { ClassroomStatus } from '../classroom/enums/classroom-status.enum';
 
 @Injectable()
 export class FormService {
@@ -12,6 +14,7 @@ export class FormService {
         @InjectRepository(Form)
         private formRepository: Repository<Form>,
         private readonly classroomService: ClassroomService,
+        private readonly certificationService: CertificationService,
     ) { }
 
     async create(createFormDto: CreateFormDto): Promise<Form> {
@@ -72,7 +75,25 @@ export class FormService {
     }
 
     async remove(id: number) {
-        const form = await this.findOne(id);
+        const form = await this.formRepository.findOne({
+            where: { id },
+            relations: ['classroom', 'classroom.certification'],
+        });
+        
+        if (!form) {
+            throw new NotFoundException(`Form with ID "${id}" not found`);
+        }
+
+        const classroom = form.classroom;
+        if (!classroom) {
+            throw new NotFoundException(`Classroom asociado al formulario no encontrado`); 
+        }
+
+        if (classroom.certification) {
+            await this.certificationService.remove(classroom.certification.id);
+        }
+
+        await this.classroomService.update(classroom.id, { status: ClassroomStatus.EVALUADA }); 
 
         return await this.formRepository.remove(form);
     }

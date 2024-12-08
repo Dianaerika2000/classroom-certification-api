@@ -31,8 +31,12 @@ export class Classroom {
   @OneToOne(() => Form, (form) => form.classroom, { cascade: true })
   form: Form;
 
-  @OneToMany(() => Certification, certification => certification.classroom)
-  certifications: Certification[];
+  @OneToOne(
+    () => Certification, 
+    (certification) => certification.classroom, 
+    { nullable: true, cascade: ['remove'] }
+  )
+  certification: Certification | null;
 
   @OneToMany(() => Attach, (attach) => attach.classroom)
   attaches: Attach[];

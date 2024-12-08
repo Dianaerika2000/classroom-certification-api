@@ -1,6 +1,6 @@
-import { Authority } from "src/authority/entities/authority.entity";
-import { Classroom } from "src/classroom/entities/classroom.entity";
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Authority } from "../../authority/entities/authority.entity";
+import { Classroom } from "../../classroom/entities/classroom.entity";
 
 @Entity({ name: 'certificates' })
 export class Certification {
@@ -43,7 +43,7 @@ export class Certification {
   @UpdateDateColumn({ name: 'updated_at', nullable: true })
   updatedAt: Date;
 
-  @ManyToOne(() => Classroom, classroom => classroom.certifications, { nullable: false })
+  @OneToOne(() => Classroom, (classroom) => classroom.certification, { nullable: false })
   @JoinColumn({ name: 'classroom_id' })
   classroom: Classroom;
 
