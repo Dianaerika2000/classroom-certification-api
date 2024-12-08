@@ -20,5 +20,6 @@ import { AwsModule } from '../aws/aws.module';
   ],
   controllers: [CertificationController],
   providers: [CertificationService],
+  exports: [CertificationService]
 })
 export class CertificationModule {}
