@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Certification } from './entities/certification.entity';
 import { CertificationService } from './certification.service';
 import { CreateCertificationDto } from './dto/create-certification.dto';
@@ -15,17 +16,21 @@ export class CertificationController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new certification' })
+  @ApiConsumes('multipart/form-data')
   @ApiResponse({ status: 201, description: 'Certification was created successfully', type: Certification })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
+  @UseInterceptors(FileInterceptor('qrFile'))
   async create(
-    @Body() createCertificationDto: CreateCertificationDto, 
+    @UploadedFile() qrFile: Express.Multer.File,
+    @Body() createCertificationDto: CreateCertificationDto,
     @Request() req
   ) {
     const certification = await this.certificationService.create(
-      createCertificationDto, 
-      req.user.username
+      createCertificationDto,
+      req.user.username,
+      qrFile, 
     );
     
     return {

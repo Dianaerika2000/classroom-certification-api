@@ -91,4 +91,23 @@ export class ClassroomService {
       throw new NotFoundException(`No se encontró el aula en Moodle con ${field} = ${value}`);
     }
   }
+
+  async getFormByClassroom(classroomId: number) {
+    const classroom = await this.classroomRepository.findOne({
+      where: { id: classroomId },
+      relations: ['form'],
+    });
+  
+    if (!classroom) {
+      throw new NotFoundException(`Classroom with ID ${classroomId} not found.`);
+    }
+  
+    if (!classroom.form) {
+      throw new NotFoundException(
+        `No form associated with classroom ID ${classroomId}.`,
+      );
+    }
+  
+    return classroom.form;
+  }  
 }

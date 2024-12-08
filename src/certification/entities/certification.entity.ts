@@ -34,6 +34,9 @@ export class Certification {
   @Column({ name: 'responsible_fac', nullable: true })
   responsible: string;
 
+  @Column()
+  qrUrl: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
