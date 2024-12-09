@@ -175,21 +175,29 @@ export class CertificationService {
   async remove(id: number) {
     const certification = await this.certificationRepository.findOne({
       where: { id },
-      relations: ['authorities']
+      relations: ['authorities', 'classroom']
     });
 
     if (!certification) {
       throw new NotFoundException(`Certification with ID ${id} not found`);
     }
 
-    await this.certificationRepository.manager.transaction(async transactionalEntityManager => {
-      // Usar `$1` como marcador de posición para PostgreSQL
+    const classroom = certification.classroom;
+
+    await this.certificationRepository.manager.transaction(async (transactionalEntityManager) => {
       await transactionalEntityManager.query(
         `DELETE FROM authority_certification WHERE certification_id = $1`,
-        [id] // Reemplazar `id` con el valor correcto
+        [id]
       );
 
-      // Eliminar la certificación
+      if (classroom) {
+        await transactionalEntityManager.update(
+          'classrooms',
+          { id: classroom.id },
+          { status: ClassroomStatus.EVALUADA }
+        );
+      }
+
       await transactionalEntityManager.remove(certification);
     });
 

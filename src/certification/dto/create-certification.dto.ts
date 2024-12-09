@@ -38,6 +38,7 @@ export class CreateCertificationDto {
     description: "ID of the classroom to certify.",
     example: 123,
   })
+  @Transform(({ value }) => Number(value))
   @IsNumber()
   classroomId: number;
 
@@ -82,6 +83,16 @@ export class CreateCertificationDto {
     example: [1, 2, 3],
   })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return [];
+      }
+    }
+    return value;
+  })
   @IsArray()
   @IsNumber({}, { each: true })
   authorityIds?: number[];
