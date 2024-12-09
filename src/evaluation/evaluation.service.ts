@@ -371,4 +371,31 @@ export class EvaluationService {
 
     return weightedResults;
   }  
+
+  public async calculateGlobalAverage(classroomId: number) {
+    const weightedAverages = await this.calculateWeightedAverageByAreaAndCycle(classroomId);
+  
+    if (!weightedAverages || weightedAverages.length === 0) {
+      throw new NotFoundException(`No evaluations found for classroom with ID "${classroomId}".`);
+    }
+  
+    const areaTotals: Record<number, number> = {};
+  
+    for (const average of weightedAverages) {
+      const { areaId, weightedAverage } = average;
+  
+      if (!areaTotals[areaId]) {
+        areaTotals[areaId] = 0;
+      }
+      areaTotals[areaId] += weightedAverage;
+    }
+  
+    const totalSum = Object.values(areaTotals).reduce((sum, total) => sum + total, 0);
+    const globalAverage = totalSum / 3;
+  
+    return {
+      globalAverage,
+      details: weightedAverages,
+    };
+  }
 }

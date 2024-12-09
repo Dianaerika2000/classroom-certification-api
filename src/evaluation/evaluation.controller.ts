@@ -161,4 +161,23 @@ export class EvaluationController {
       }
     }
   }
+
+  @Get(':id/global-average')
+  @ApiParam({ name: 'id', type: 'number', description: 'The ID of the classroom to calculate' })
+  async calculateGlobalAverage(@Param('id') classroomId: number) {
+    try {
+      const results = await this.evaluationService.calculateGlobalAverage(classroomId);
+
+      return {
+        success: true,
+        message: 'Global average calculated successfully',
+        data: results
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'An error occurred while calculating global average'
+      }
+    }
+  }
 }
