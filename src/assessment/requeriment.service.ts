@@ -47,6 +47,7 @@ export class RequerimentService {
     const requeriments = await this.requerimentRepository.find({
       where: { assessment: { id: assessmentId } },
       relations: ['assessment'],
+      order: { id: 'ASC' },
     });
 
     return requeriments;

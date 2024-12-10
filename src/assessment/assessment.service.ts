@@ -88,6 +88,7 @@ export class AssessmentService {
   async findAll(): Promise<Assessment[]> {
     return await this.assessmentRepository.find({
       relations: ['requeriments'],
+      order: { id: 'ASC' },
     });
   }
 
@@ -101,6 +102,7 @@ export class AssessmentService {
     const assessments = await this.assessmentRepository.find({
       where: { form: { id: formId } },
       relations: ['form', 'requeriments'],
+      order: { id: 'ASC' },
     });
 
     return assessments;
