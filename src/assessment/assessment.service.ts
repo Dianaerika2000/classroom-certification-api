@@ -131,6 +131,12 @@ export class AssessmentService {
       throw new NotFoundException(`Assessment with ID "${id}" not found`);
     }
 
+    if (updateAssessment.deletedRequirements) {
+      for (const reqId of updateAssessment.deletedRequirements) {
+        await this.requerimentService.remove(reqId); // Lógica de eliminación
+      }
+    }
+
     if (files && files.length > 0) {
       const existingRequeriments =
         await this.requerimentService.findByAssessment(id);
