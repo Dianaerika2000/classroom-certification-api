@@ -1,13 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { RoleService } from '../role/role.service';
 import { User } from './entities/user.entity';
-import { MoodleService } from 'src/moodle/moodle.service';
-import { InjectRepository } from '@nestjs/typeorm';
-import { ConfigService } from '@nestjs/config';
+import { MoodleService } from '../moodle/moodle.service';
 
 @Injectable()
 export class UserService {
@@ -20,14 +20,16 @@ export class UserService {
   ){}
 
   async create(createUserDto: CreateUserDto) {
-    const { username, roleId, name, password } = createUserDto;
+    const { username, roleId, name } = createUserDto;
     const rol = await this.roleService.findOne(roleId);
 
     const userExists = await this.userRepository.findOneBy({ username });
     if(userExists) throw new BadRequestException(`User with username ${username} already exists`);
 
+    const genericPassword = `${username}.dedte.2024`;
+
     const saltRounds = Number(this.configService.get('BCRYPT_SALT_ROUNDS', 10));
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(genericPassword, saltRounds);
 
     const user = this.userRepository.create({
       name,

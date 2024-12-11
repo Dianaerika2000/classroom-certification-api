@@ -43,7 +43,7 @@ export class UserController {
   }
 
   @Get(':id')
-  @Auth(ValidRoles.admin)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator)
   @ApiParam({ name: 'id', type: 'number', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'The found user', type: User })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -59,7 +59,7 @@ export class UserController {
   }
 
   @Patch(':id')
-  @Auth(ValidRoles.admin)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator)
   @ApiParam({ name: 'id', type: 'number', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'The updated user', type: User })
   @ApiResponse({ status: 400, description: 'Bad Request' })
