@@ -1,7 +1,6 @@
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { MoodleService } from 'src/moodle/moodle.service';
 import { UserService } from 'src/user/user.service';
 import { JwtPayload } from './interfaces/jwt-payload.interfaces';
 import { LoginDto } from './dto/login.dto';
@@ -10,7 +9,6 @@ import { LoginDto } from './dto/login.dto';
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly moodleService: MoodleService,
     private readonly userService: UserService,
   ){}
 
@@ -19,13 +17,20 @@ export class AuthService {
     
     try {
       const user = await this.userService.findOneByUsername(username);
-      const moodleToken = await this.moodleService.authenticate(username, password);
+      if (!user) {
+        throw new UnauthorizedException('Invalid username or password');
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Invalid username or password');
+      }
+
       const accessToken = this.getJwtToken({ username });
-      
+
       return {
         user: {
           ...user,
-          moodleToken,
           accessToken,
         }
       }
@@ -33,7 +38,7 @@ export class AuthService {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new HttpException('Error en la autenticación con Moodle', HttpStatus.UNAUTHORIZED);
+      throw new HttpException('Error en la autenticación', HttpStatus.UNAUTHORIZED);
     }
   }
 

@@ -33,6 +33,7 @@ export class SeedService {
     const adminUser:CreateUserDto = {
       name: this.configService.get('ADMIN_NAME'),
       username: this.configService.get('ADMIN_USERNAME'),
+      password: this.configService.get('ADMIN_USERNAME'),
       roleId: adminRole.id  
     }
     await this.userService.create(adminUser);
