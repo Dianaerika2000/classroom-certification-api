@@ -27,7 +27,7 @@ export class TrainingDesignService {
             return indicators.map(indicator => ({
                 indicatorId: indicator.id,
                 result: 0,
-                observation: `El indicador "${indicator.name}" requiere verificación manual`
+                observation: `El recurso/contenido "${content.name}" no pudo ser encontrado. Por favor, revise manualmente.`
             }));
         }
 
@@ -84,6 +84,9 @@ export class TrainingDesignService {
 
             if (content) {
                 const indicatorHandlers = {
+                    'datos están organizados': async (indicator: any) => {
+                        return await this.fetchContentFromMoodle(content.fileurl, token, indicator);
+                    },
                     'prerequisitos': async (indicator: any) => {
                         return await this.fetchContentFromMoodle(content.fileurl, token, indicator);
                     },
@@ -171,7 +174,7 @@ export class TrainingDesignService {
         const results: IndicatorResult[] = []; // Array para almacenar resultados
 
         if (matchedContent != null) {
-            const content = this.findContentByName(matchedContent.contents, 'Contenido de la Asignatura');
+            const content = this.findContentByName(matchedContent.contents, 'Carta Descriptiva');
 
             if (content) {
                 const indicatorHandlers = {
@@ -235,7 +238,7 @@ export class TrainingDesignService {
         return indicators.map(indicator => ({
             indicatorId: indicator.id,
             result: 0,
-            observation: `El indicador "${indicator.name}" requiere revisión manual.`
+            observation: `No cumple. El recurso/contenido "Guía de aprendizaje" no pudo ser encontrado.`
         }));
     }
 
@@ -248,7 +251,7 @@ export class TrainingDesignService {
      */
     private async evaluateEvaluationSystem(indicators: any[], matchedContent: any, token: string): Promise<IndicatorResult[]> {
         if (matchedContent) {
-            const content = this.findContentByName(matchedContent.contents, 'Evaluaciones');
+            const content = this.findContentByName(matchedContent.contents, 'Sistema de Evaluación');
             if (content) {
                 const htmlContent = await this.moodleService.getBookChapterContent(token, content.fileurl);
                 if (htmlContent) {
@@ -259,7 +262,7 @@ export class TrainingDesignService {
         return indicators.map(indicator => ({
             indicatorId: indicator.id,
             result: 0,
-            observation: 'No se encontró contenido evaluable para "Evaluaciones"'
+            observation: 'No cumple. No se encontró contenido "Sistema de Evaluación".'
         }));
     }
 
@@ -354,6 +357,8 @@ export class TrainingDesignService {
                 return this.validateEvaluacionSumativa(document);
             case 'indica enlaces de videoconferencia para reemplazar':
                 return this.validateVideoconferencia(document);
+            case 'los datos están organizados de acuerdo al formato mostrado en el manual':
+                    return this.validatePrerequisites(document);
             default:
                 console.info('Indicador no reconocido:', indicatorName);
                 return false;
@@ -449,7 +454,7 @@ export class TrainingDesignService {
     }
 
     private validateRetos(document: Document): boolean {
-        const revisionRow = this.findRowByHeader(document, ['Reto', 'reto']);
+        const revisionRow = this.findRowByHeader(document, ['Reto', 'reto', 'práctico', 'Práctico']);
         if (!revisionRow) {
             console.info('No se encontraron los retos');
             return false;
@@ -465,7 +470,7 @@ export class TrainingDesignService {
     }
 
     private validateEvaluacionSumativa(document: Document): boolean {
-        const revisionRow = this.findRowByHeader(document, ['parcial', 'examen final']);
+        const revisionRow = this.findRowByHeader(document, ['parcial', 'examen final', 'examen parcial']);
         if (!revisionRow) {
             console.info('No se encontraron las evaluaciones');
             return false;
@@ -498,19 +503,19 @@ export class TrainingDesignService {
 
     private findRowByHeader(document: Document, headerTexts: string[]): Element | null {
         const rows = document.querySelectorAll('tr');
-
+    
         for (const row of Array.from(rows)) {
-            const header = row.querySelector('th');
-            if (!header) continue;
-
-            const headerText = header.textContent?.toLowerCase().trim() || '';
-            if (headerTexts.some(text => headerText.includes(text.toLowerCase()))) {
-                return row;
+            const cells = row.querySelectorAll('th, td'); // Buscar tanto en <th> como en <td>
+            for (const cell of Array.from(cells)) {
+                const cellText = cell.textContent?.toLowerCase().trim() || '';
+                if (headerTexts.some(text => cellText.includes(text.toLowerCase()))) {
+                    return row; // Retornar la fila si encuentra coincidencia
+                }
             }
         }
-
-        return null;
-    }
+    
+        return null; // No encontró coincidencia
+    }    
 
     private evaluateLearningGuideHtml(indicators: Indicator[], htmlContent: string): IndicatorResult[] {
         if (!htmlContent) {
@@ -630,48 +635,51 @@ export class TrainingDesignService {
         const dom = new JSDOM(htmlContent);
         const doc = dom.window.document;
         const results: IndicatorResult[] = [];
-
-        // Función auxiliar para buscar texto en elementos
+    
+        // Función auxiliar para buscar elementos por texto
         const findElementByText = (selector: string, text: string): HTMLElement | null => {
             const elements = Array.from(doc.querySelectorAll(selector)) as HTMLElement[];
-            return elements.find(el => el.textContent?.toLowerCase().includes(text.toLowerCase())) || null;
+            return elements.find(el => el.textContent?.toLowerCase().trim() === text.toLowerCase().trim()) || null;
         };
-
+    
         // Indicador: Normas de evaluación
         const normasSection = findElementByText("th", "Normas de evaluación");
-        const nextElement = normasSection?.nextElementSibling as HTMLElement | null;
-        const hasNormas = normasSection && nextElement?.textContent?.includes('restricción de acceso');
+        const normasContent = normasSection?.closest('tr')?.nextElementSibling as HTMLElement | null;
+        const hasNormas = normasContent && normasContent.textContent?.trim() !== '';
 
         results.push({
             indicatorId: indicators.find(i => i.name.toLowerCase().includes('normas de evaluación'))?.id || 0,
             result: hasNormas ? 1 : 0,
-            observation: hasNormas ? 'Se describen normas de evaluación' : 'No se describen normas de evaluación'
+            observation: hasNormas
+                ? 'Se describen normas de evaluación'
+                : 'No se describen normas de evaluación'
         });
-
+    
         // Indicador: Formas e instrumentos de evaluación
         const formasSection = findElementByText("th", "Formas e instrumentos de evaluación");
-        const formasNextElement = formasSection?.nextElementSibling as HTMLElement | null;
-        const hasFormas = formasSection && formasNextElement?.textContent?.includes('evaluación diagnóstica');
-
+        const formasContent = formasSection?.closest('tr')?.nextElementSibling as HTMLElement | null;
+        const hasFormas = formasContent && formasContent.textContent?.trim() !== '';
+    
         results.push({
             indicatorId: indicators.find(i => i.name.toLowerCase().includes('formas de evaluación'))?.id || 0,
             result: hasFormas ? 1 : 0,
-            observation: hasFormas ? 'Se describen formas e instrumentos de evaluación' : 'No se describen formas e instrumentos de evaluación'
+            observation: hasFormas
+                ? 'Se describen formas e instrumentos de evaluación'
+                : 'No se describen formas e instrumentos de evaluación'
         });
-
+    
         // Indicador: Actividades y ponderaciones
         const tables = Array.from(doc.querySelectorAll("table")) as HTMLTableElement[];
         const activitiesTable = tables[1]; // Segunda tabla con actividades y ponderaciones
-
+    
         const rows = activitiesTable
             ? Array.from(activitiesTable.querySelectorAll("tr")) as HTMLTableRowElement[]
             : [];
-
         const hasValidActivities = rows.some(row => {
             const cells = Array.from(row.querySelectorAll("td")) as HTMLTableCellElement[];
             return cells.length === 3 && cells[2]?.textContent?.trim().endsWith('%');
         });
-
+    
         results.push({
             indicatorId: indicators.find(i => i.name.toLowerCase().includes('actividades'))?.id || 0,
             result: hasValidActivities ? 1 : 0,
@@ -679,9 +687,9 @@ export class TrainingDesignService {
                 ? 'Se describen actividades y sus ponderaciones'
                 : 'No se describen actividades o sus ponderaciones'
         });
-
+    
         // Indicador: Total de ponderaciones es 100%
-        const totalRow = rows.find(row => row.textContent?.includes('Total'));
+        const totalRow = rows.find(row => row.textContent?.toLowerCase().includes('total'));
         const lastCell = totalRow
             ? (Array.from(totalRow.querySelectorAll("td")).pop() as HTMLTableCellElement)
             : null;
@@ -689,7 +697,7 @@ export class TrainingDesignService {
             ? lastCell.textContent?.replace('%', '').trim()
             : null;
         const isValidTotal = totalPonderacion === '100';
-
+    
         results.push({
             indicatorId: indicators.find(i => i.name.toLowerCase().includes('porcentajes'))?.id || 0,
             result: isValidTotal ? 1 : 0,
@@ -697,16 +705,23 @@ export class TrainingDesignService {
                 ? 'El total de las ponderaciones suma 100%'
                 : 'El total de las ponderaciones no suma 100%'
         });
-
+    
         // Indicador: Explica las Unidades a evaluar
+        const unitsExplained = rows.some(row => {
+            const cells = Array.from(row.querySelectorAll("td")) as HTMLTableCellElement[];
+            return cells.length > 1 && cells[1]?.textContent?.trim().match(/^(i|ii|iii|iv|v)/i);
+        });
+    
         results.push({
             indicatorId: indicators.find(i => i.name.toLowerCase().includes('explica las unidades'))?.id || 0,
-            result: 0,
-            observation: 'El indicador requiere verificación manual.'
+            result: unitsExplained ? 1 : 0,
+            observation: unitsExplained
+                ? 'Se explican las unidades a evaluar'
+                : 'No se explican las unidades a evaluar'
         });
-
+    
         return results;
-    }
+    }    
 
     private findContentByName(contents: any[], name: string) {
         const validContents = contents.filter(item => item.filename == 'index.html');
