@@ -1,24 +1,24 @@
 export const areaAssessmentItems = {
     "Diseño de Formación": [
-        "El aspecto organizacional de la materia está completo (etiqueta, carpeta pedagógica, Foro de avisos, video de presentación, chat).",
-        "Contiene todos los elementos de la sección de inicio.",
-        "La carta descriptiva está organizada en relación al programa analítico y contiene las actividades de aprendizaje.",
-        "Contiene evaluación formativa y sumativa con criterios de evaluación claramente definidos.",
-        "Presenta actividades de retroalimentación (por lo menos un tema abierto en cada Foro de Unidad)."
+        "El aspecto organizacional de la materia está completo (etiqueta, carpeta pedagógica, Foro de avisos, video de presentación, chat), asì como la secciòn de Inicio (lectura de conocimientos previos y cuestionario diagnòstico) cumpliendo con el 15% del aula virtual construida , ciclo 1.",
+        "Contiene todos los elementos de la sección del Ciclo 2 en cada Unidad, alcanzando el 60% del aula virtual construìda.",
+        "Cumple con todos los indicadores para la construcciòn de retos del aula virtual.",
+        "Contiene todos los elementos del ciclo 3, alcanzando el 25% del aula virtual construìda.",
+        "Cumple con todos los indicadores para la construcciòn de Foros (por lo menos un tema abierto en cada Foro de Unidad)."
     ],
     "Diseño técnico": [
-        "Las configuraciones corresponden al manual de diseño técnico (secuencia de actividades, banco de preguntas).",
-        "Las restricciones (condicionales) de la secuencia de actividades del aula funcionan correctamente.",
-        "Los recursos didácticos funcionan de manera correcta (videos, audios e imágenes).",
-        "Las instrucciones y los criterios de evaluación se visualiza de manera adecuada en el AV por cada actividad según el modelo DAVA.",
-        "La estructura del aula virtual (formato) corresponde al manual de diseño técnico."
+        "Las configuraciones de los componentes del ciclo 1 corresponden al 15% del aula virtual construida.",
+        "Cumple con las configuraciones general y las restricciones (condicionales) de la secuencia de actividades (ciclo 2) con el 60% del aula virtual construìda.",
+        "Cumple con la configuraciòn de las lecciones, incluyendo preguntas guìas como restricciòn de avance en el contenido de la lecciòn.",
+        "Cumple con las configuraciones generales y especìficas de las actividades del ciclo 3 en un 25% de la construcciòn del aula virtual construìda. ",
+        "El banco de preguntas està ordenado por categorías correspondientes a: Cuestionario diagnòstico, Autoevaluaciòn por Unidad, exàmenes parciales numerados y examen final."
     ],
     "Diseño gráfico": [
-        "La imagen visual del aula (portada de inicio) contiene todos los recursos gráficos correspondientes al manual del diseño gráfico.",
-        "Los recursos gráficos se visualizan con buena resolución (72px/pulgada).",
-        "Los recursos multimedia se visualizan en el AVA en miatura.",
-        "El AVA contiene todos los recursos multimedias contemplados en el plan AVA para cada Unidad según el manual del diseño de fromación y gráfico.",
-        "El aula virtual contiene todos los recursos gráficos contemplados en el plan del AVA para cada Unidad según el manual del diseño de formación y gráfico."
+        "La imagen visual del aula (portada y secciòn de inicio) cumple con todos los recursos gráficos correspondientes al ciclo 1 en un 15% del aula virtual construìda.",
+        "Cumple con todos los recursos gráficos de la sección de unidades temáticas correspondientes al 60% del ciclo 2 del aula virtual construída.",
+        "Las lecciones de contenido cumplen con todos los componentes requeridos visualizàndose en miniatura los recursos multimedia.",
+        "La sección de videoconferencia cumple con todos los indicadores  de revisión.",
+        "Cumple con todoslos recursos gràficos correspondientes al ciclo 3 en un 25% el aula virtual construìda."
     ],
     "Calidad Académica": [
         "Presenta actividades a realizar por los estudiantes posteriormente a cada Unidad.",
