@@ -44,7 +44,8 @@ export class TrainingDesignCycleIiService {
             'Cuestionario de autoevaluación': this.evaluateCuestionariosAutoevaluacion.bind(this),
             'Retos': this.evaluateRetos.bind(this),
             'Foro de debate': this.evaluateForos.bind(this),
-            'Sección de Videoconferencia/Mapa de videoconferencia': this.evaluateVideoconferencias.bind(this),
+            'Mapa de videoconferencia': this.evaluateMapaVideoconferencias.bind(this),
+            'Sección de Videoconferencia': this.evaluateVideoconferencias.bind(this),
         };
 
         // Busca coincidencia exacta o parcial
@@ -226,7 +227,7 @@ export class TrainingDesignCycleIiService {
      * @param token 
      * @returns 
      */
-    private async evaluateVideoconferencias(indicators: any[], matchedContent: any, token: string): Promise<IndicatorResult[]> {
+    private async evaluateMapaVideoconferencias(indicators: any[], matchedContent: any, token: string): Promise<IndicatorResult[]> {
         const results: IndicatorResult[] = [];
 
         if (matchedContent) {
@@ -237,12 +238,6 @@ export class TrainingDesignCycleIiService {
                 'cantidad de enlaces': async (indicator: any) => {
                     return this.hasUrlForeachSubject(indicator, matchedContent);
                 },
-                'libro': async (indicator: any) => {
-                    return this.hasRecordingBook(indicator, matchedContent);
-                },
-                'grabación': async (indicator: any) => {
-                    return this.hasRecordingPerPage(indicator, matchedContent);
-                }
             };
 
             for (const indicator of indicators) {
@@ -263,6 +258,38 @@ export class TrainingDesignCycleIiService {
         }
         return results; // Devuelve un array de resultados
     }
+
+    private async evaluateVideoconferencias(indicators: any[], matchedContent: any, token: string): Promise<IndicatorResult[]> {
+      const results: IndicatorResult[] = [];
+
+      if (matchedContent) {
+          const indicatorHandlers = {
+              'libro': async (indicator: any) => {
+                  return this.hasRecordingBook(indicator, matchedContent);
+              },
+              'grabación': async (indicator: any) => {
+                  return this.hasRecordingPerPage(indicator, matchedContent);
+              }
+          };
+
+          for (const indicator of indicators) {
+              const handlerKey = Object.keys(indicatorHandlers).find(key => indicator.name.includes(key));
+
+              if (handlerKey) {
+                  const result = await indicatorHandlers[handlerKey](indicator);
+                  results.push(result);
+              } else {
+                  // Agregar un resultado para revisión manual si no hay handler
+                  results.push({
+                      indicatorId: indicator.id,
+                      result: 0,
+                      observation: `El indicador "${indicator.name}" requiere verificación manual`,
+                  });
+              }
+          }
+      }
+      return results; // Devuelve un array de resultados
+  }
 
     /**
      * Funciones auxiliares para Mapa mental
@@ -563,9 +590,8 @@ export class TrainingDesignCycleIiService {
             section &&
             typeof section === 'object' &&
             section.name &&
-            section.name.toLowerCase() !== 'videoconferencias' || section.name.toLowerCase() !== 'videoconferencia'
+            section.name.toLowerCase().includes('unidad')
         );
-
         const totalSubjects = uniqueSections.length;
 
         // Encontrar la sección "videoconferencias"

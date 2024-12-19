@@ -46,7 +46,8 @@ export class TechnicalDesignCycleIiService {
             'Cuestionario de autoevaluación': this.evaluateCuestionarios.bind(this),
             'Retos': this.evaluateRetos.bind(this),
             'Foro de debate': this.evaluateForos.bind(this),
-            'Sección de Videoconferencia/Mapa de videoconferencia': this.evaluateVideoconferencias.bind(this),
+            'Mapa de videoconferencia': this.evaluateMapaVideoconferencias.bind(this),
+            'Sección de Videoconferencia': this.evaluateVideoconferencias.bind(this),
         };
 
         // Busca coincidencia exacta o parcial
@@ -153,7 +154,7 @@ export class TechnicalDesignCycleIiService {
                     return this.evaluateAccessRestrictionsQuizzes(indicator, matchedContent);
                 },
                 'finalización': async (indicator: any) => {
-                    return this.evaluateCompletionActivityQuizzes(indicator, matchedContent);
+                    return this.evaluateCompletionActivityQuizzes(indicator, matchedContent, token, courseid);
                 }
             };
 
@@ -267,7 +268,7 @@ export class TechnicalDesignCycleIiService {
      * @param matchedContent 
      * @returns 
      */
-    private async evaluateVideoconferencias(indicators: any[], matchedContent: any): Promise<IndicatorResult[]> {
+    private async evaluateMapaVideoconferencias(indicators: any[], matchedContent: any): Promise<IndicatorResult[]> {
         const results: IndicatorResult[] = []; // Array para almacenar resultados
 
         if (matchedContent != null) {
@@ -278,7 +279,34 @@ export class TechnicalDesignCycleIiService {
                 'cumple con la finalización': async (indicator: any) => {
                     return this.evaluateCompletionUrls(indicator, matchedContent)
                 },
-                'contiene la configuración general': async (indicator: any) => {
+            };
+
+            for (const indicator of indicators) {
+                const handlerKey = Object.keys(indicatorHandlers).find(key => indicator.name.toLowerCase().includes(key));
+
+                if (handlerKey) {
+                    const result = await indicatorHandlers[handlerKey](indicator);
+                    results.push(result);
+                } else {
+                    // Agregar un resultado para revisión manual si no hay handler
+                    results.push({
+                        indicatorId: indicator.id,
+                        result: 0,
+                        observation: `El indicador "${indicator.name}" requiere verificación manual`,
+                    });
+                }
+            }
+        }
+
+        return results; // Devuelve un array de resultados
+    }
+
+    private async evaluateVideoconferencias(indicators: any[], matchedContent: any): Promise<IndicatorResult[]> {
+        const results: IndicatorResult[] = []; // Array para almacenar resultados
+
+        if (matchedContent != null) {
+            const indicatorHandlers = {
+                'configuración general': async (indicator: any) => {
                     return this.evaluateGeneralBookVideo(indicator, matchedContent)
                 },
                 'páginas': async (indicator: any) => {
@@ -389,7 +417,11 @@ export class TechnicalDesignCycleIiService {
 
         // Buscar el título "Objetivo de la Unidad:"
         const element = Array.from(document.querySelectorAll('b, strong')) as HTMLElement[];
-        const titleElement = element.find(el => el.textContent?.toLowerCase().includes('objetivo de la unidad'));
+        const titleElement = element.find(el => {
+            const normalizedText = el.textContent?.toLowerCase().trim().replace(/\s+/g, ' '); // Normaliza espacios múltiples
+            return normalizedText?.includes('objetivo');
+        });
+
 
         // Validar si hay contenido significativo después del título
         let hasContent = false;
@@ -701,7 +733,7 @@ export class TechnicalDesignCycleIiService {
         return module.availabilityinfo != null || module.availability != null;
     }
 
-    private evaluateCompletionActivityQuizzes(indicator: any, matchedContent: any): IndicatorResult {
+    private evaluateCompletionActivityQuizzes(indicator: any, matchedContent: any, token: string, courseid: number): IndicatorResult {
         const sections = matchedContent.filter(section =>
             section && section.name.toLowerCase().includes('unidad')
         );
@@ -712,7 +744,7 @@ export class TechnicalDesignCycleIiService {
         );
 
         // Validar cada cuestionario para verificar si cumple con los datos de finalización
-        const invalidQuizzes = quizzes.filter(quiz => !this.hasCompletionDataQuiz(quiz));
+        const invalidQuizzes = quizzes.filter(quiz => !this.hasGradeMethodQuiz(quiz, courseid, token));
 
         // Verificar si todos los cuestionarios cumplen con la configuración
         const allRestrictions = invalidQuizzes.length === 0;
@@ -726,12 +758,34 @@ export class TechnicalDesignCycleIiService {
         };
     }
 
+    private async hasGradeMethodQuiz(quiz: any, courseid: number, token: string): Promise<{ isValid: boolean, name: string }> {
+        try {
+            // Verificar si el cuestionario tiene fechas configuradas
+            const hasCompletionData = this.hasCompletionDataQuiz(quiz);
+
+            // Obtener los datos de los cuestionarios desde Moodle
+            const quizzesFromMoodle = await this.moodleService.getQuizzesByCourse(courseid, token);
+            const quizData = quizzesFromMoodle?.quizzes?.find((item) => item.coursemodule == quiz.id);
+
+            if (quizData) {
+                // Verificar configuración específica del cuestionario
+                const hasGradeMethod = quizData.grademethod === 1;
+                const isValid = hasCompletionData && hasGradeMethod;
+                return { isValid, name: quiz.name };
+            }
+        } catch (error) {
+            console.error(`Error verificando el cuestionario ${quiz.id}:`, error);
+        }
+
+        return { isValid: false, name: quiz.name };
+    }
+
     private hasCompletionDataQuiz(module: any): boolean {
         if (!module.completiondata) return false;
 
         const isAutomatic = module.completiondata.isautomatic;
         const isEndReached = module.completiondata.details?.some(
-            detail => detail.rulename === 'completionpassgrade'
+            detail => detail.rulename === 'completionview'
         );
 
         return isAutomatic && isEndReached;
