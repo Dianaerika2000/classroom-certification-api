@@ -153,6 +153,9 @@ export class TrainingDesignCycleIiService {
                 'instrucciones': async (indicator: any) => {
                     return this.evaluateInstructionsForRetos(indicator, matchedContent);
                 },
+                'formato de entrega': async (indicator: any) => {
+                    return this.evaluateSubmissionFormat(indicator, matchedContent);
+                },
                 'archivo adjunto': async (indicator: any) => {
                     return this.evaluateSupportFilesForRetos(indicator, matchedContent);
                 },
@@ -277,7 +280,11 @@ export class TrainingDesignCycleIiService {
 
         // Buscar el título "Objetivo de la Unidad:"
         const element = Array.from(document.querySelectorAll('b, strong')) as HTMLElement[];
-        const titleElement = element.find(el => el.textContent?.toLowerCase().includes('objetivo de la unidad'));
+        const titleElement = element.find(el => {
+            const normalizedText = el.textContent?.toLowerCase().trim().replace(/\s+/g, ' '); // Normaliza espacios múltiples
+            return normalizedText?.includes('objetivo');
+        });
+
 
         // Validar si hay contenido significativo después del título
         let hasContent = false;
@@ -329,7 +336,7 @@ export class TrainingDesignCycleIiService {
         const hasActivity = reto.activity && typeof reto.activity === 'string';
 
         // Busca palabras clave que indican instrucciones
-        const keywords = ['realizar', 'elaborar', 'desarrollar', 'crear', 'hacer', 'completar', 'leer', 'subir', 'instrucciones', 'realice'];
+        const keywords = ['realizar', 'elaborar', 'desarrollar', 'crear', 'hacer', 'completar', 'leer', 'subir', 'instrucciones', 'realice', 'seguir', 'pautas'];
         const hasInstructionKeywords = (text: string) =>
             keywords.some(keyword => text.toLowerCase().includes(keyword));
 
@@ -401,6 +408,60 @@ export class TrainingDesignCycleIiService {
             observation: result === 1
                 ? 'Todos los retos cumplen con los criterios del indicador.'
                 : `No todos los retos cumplen con los criterios. Retos fallidos: \n${failedObservations.join('; \n')}`
+        };
+    }
+
+    private evaluateSubmissionFormat(indicator: any, assignments: any[]): IndicatorResult {
+        // Separar los assignments en válidos e inválidos
+        const validAssignments = assignments.filter((assignment) => {
+            const fileSubmissionEnabled = assignment.configs.some(
+                (config: any) =>
+                    config.plugin === "file" &&
+                    config.subtype === "assignsubmission" &&
+                    config.name === "enabled" &&
+                    config.value === "1"
+            );
+
+            const maxFileSize = assignment.configs.find(
+                (config: any) =>
+                    config.plugin === "file" &&
+                    config.subtype === "assignsubmission" &&
+                    config.name === "maxsubmissionsizebytes"
+            )?.value;
+
+            const maxFileSubmissions = assignment.configs.find(
+                (config: any) =>
+                    config.plugin === "file" &&
+                    config.subtype === "assignsubmission" &&
+                    config.name === "maxfilesubmissions"
+            )?.value;
+
+            return fileSubmissionEnabled && maxFileSize && maxFileSubmissions;
+        });
+
+        const invalidAssignments = assignments.filter(
+            (assignment) => !validAssignments.includes(assignment)
+        );
+
+        // Evaluar si al menos 3 cumplen
+        const result = validAssignments.length >= 3;
+
+        // Construir la observación
+        let observation = result
+            ? `Se encontraron ${validAssignments.length} asignaciones que cumplen con el formato de entrega.`
+            : `Solo ${validAssignments.length} asignaciones cumplen con el formato de entrega. Se requiere un mínimo de 3.`;
+
+        if (!result && invalidAssignments.length > 0) {
+            // Listar las asignaciones que no cumplen
+            const invalidNames = invalidAssignments.map((assignment) => assignment.name || "Sin nombre");
+            observation += ` Las siguientes asignaciones no cumplen: ${invalidNames.join(", ")}.`;
+        }
+
+        // Retornar el resultado del indicador
+        return {
+            indicatorId: indicator.id,
+            result: result ? 1 : 0,
+            observation,
         };
     }
 

@@ -72,10 +72,12 @@ export class MoodleAnalysisService {
         if (courseAssignments.courses.length > 0) {
             const validAssignments = courseAssignments.courses[0].assignments?.filter((assign: any) =>
                 assign.name &&
-                assign.name.toLowerCase().includes('reto') &&
-                assign.name.toLowerCase() !== 'reto'
+                (assign.name.toLowerCase().includes('reto') &&
+                assign.name.toLowerCase() !== 'reto') ||
+                (assign.name.toLowerCase().includes('práctico') &&
+                assign.name.toLowerCase() !== 'práctico')
             );
-    
+
             return {
                 resource,
                 matchedSection: null,
