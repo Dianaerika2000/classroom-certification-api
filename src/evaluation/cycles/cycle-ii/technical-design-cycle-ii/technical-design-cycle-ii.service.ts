@@ -150,6 +150,9 @@ export class TechnicalDesignCycleIiService {
                 'temporalización y calificación': async (indicator: any) => {
                     return this.evaluateTimingQualificationQuizzes(indicator, matchedContent, token, courseid)
                 },
+                'configuración del esquema': async (indicator: any) => {
+                    return this.evaluateEsquemaQuiz(indicator, matchedContent, token, courseid)
+                },
                 'restricciones': async (indicator: any) => {
                     return this.evaluateAccessRestrictionsQuizzes(indicator, matchedContent);
                 },
@@ -194,6 +197,12 @@ export class TechnicalDesignCycleIiService {
                 },
                 'disponibilidad': async (indicator: any) => {
                     return this.evaluateAvailabilityRetos(indicator, matchedContent);
+                },
+                'entrega': async (indicator: any) => {
+                    return this.evaluateSubmissionRetos(indicator, matchedContent);
+                },
+                'calificación': async (indicator: any) => {
+                    return this.evaluateGradingRetos(indicator, matchedContent);
                 },
                 'finalización': async (indicator: any) => {
                     return this.evaluateCompletionDataRetos(indicator, matchedContent, courseid, token);
@@ -350,7 +359,7 @@ export class TechnicalDesignCycleIiService {
         const mapaMentalConfig = technicalConfig.resources.find(resource =>
             resource.name.toLowerCase() === 'mapa mental'
         );
-    
+
         if (!mapaMentalConfig) {
             return {
                 indicatorId: indicator.id,
@@ -358,26 +367,26 @@ export class TechnicalDesignCycleIiService {
                 observation: 'Configuración de "Mapa Mental" no encontrada en el archivo de configuración.',
             };
         }
-    
+
         const config = mapaMentalConfig.general;
         const lessonSections = matchedContent.filter(section =>
             section && section.name.toLowerCase().includes('unidad')
         );
-    
+
         // Detallar las secciones que no cumplen
         const sectionValidations = lessonSections.map(section => ({
             section,
             validObjective: this.isValidUnitObjective(section),
             validName: this.isValidUnitName(section, config.name)
         }));
-    
+
         const invalidSections = sectionValidations.filter(
             validation => !validation.validObjective || !validation.validName
         );
-    
+
         const allValidObjectives = sectionValidations.every(validation => validation.validObjective);
         const allValidNames = sectionValidations.every(validation => validation.validName);
-    
+
         // Construir observación detallada
         let observation = '';
         if (!allValidObjectives || !allValidNames) {
@@ -393,7 +402,7 @@ export class TechnicalDesignCycleIiService {
                 }
             });
         }
-    
+
         return {
             indicatorId: indicator.id,
             result: (allValidObjectives && allValidNames) ? 1 : 0,
@@ -791,6 +800,70 @@ export class TechnicalDesignCycleIiService {
         return isAutomatic && isEndReached;
     }
 
+    private async evaluateEsquemaQuiz(indicator: any, matchedContent: any, token: string, courseid: number): Promise<IndicatorResult> {
+        const unitsSection = matchedContent.filter(section =>
+            section && section.name.toLowerCase().includes('unidad')
+        );
+
+        // Procesar los cuestionarios en las secciones y validar configuración
+        const quizResults = await this.checkEsquemaQuizzesInSections(unitsSection, courseid, token);
+
+        // Filtrar los cuestionarios que no cumplen
+        const nonCompliantQuizzes = quizResults.filter(result => !result.isValid).map(result => result.name);
+
+        // Evaluar si todos los cuestionarios cumplen con la configuración
+        const allQuizzesValid = nonCompliantQuizzes.length === 0;
+
+        return {
+            indicatorId: indicator.id,
+            result: allQuizzesValid ? 1 : 0,
+            observation: allQuizzesValid
+                ? 'Todos los cuestionarios cumplen con la configuración del esquema, comportamiento de las preguntas y  opciones de revisión.'
+                : `Los siguientes cuestionarios no cumplen: \n${nonCompliantQuizzes.join(', \n')}.`,
+        };
+    }
+
+    private async checkEsquemaQuizzesInSections(sections: any[], courseid: number, token: string): Promise<{ isValid: boolean, name: string }[]> {
+        // Filtrar los módulos de tipo "quiz" de todas las secciones
+        const quizzes = sections.flatMap(section =>
+            section.modules.filter(module => module.modname === 'quiz')
+        );
+
+        // Verificar cada cuestionario usando la función checkQuiz
+        const quizValidationResults = await Promise.all(
+            quizzes.map(async (quiz) => this.checkEsquemaQuiz(quiz, courseid, token))
+        );
+
+        return quizValidationResults;
+    }
+
+    private async checkEsquemaQuiz(quiz: any, courseid: number, token: string): Promise<{ isValid: boolean, name: string }> {
+        try {
+            // Verificar si el cuestionario tiene fechas configuradas
+            const hasDates = quiz.dates != null;
+
+            // Obtener los datos de los cuestionarios desde Moodle
+            const quizzesFromMoodle = await this.moodleService.getQuizzesByCourse(courseid, token);
+            const quizData = quizzesFromMoodle?.quizzes?.find((item) => item.coursemodule == quiz.id);
+
+            if (quizData) {
+                // Verificar configuración específica del cuestionario
+                const isOnePage = quizData.questionsperpage === 0;
+                const isNavMethod = quizData.navmethod === 'free';
+                const isShuffleAnswers = quizData.shuffleanswers === 1;
+                const isPreferredBehaviour = quizData.preferredbehaviour === 'deferredfeedback';
+                const isAttemptonLast = quizData.attemptonlast === 0;
+
+                const isValid = isOnePage && isNavMethod && isShuffleAnswers && isPreferredBehaviour && isAttemptonLast;
+                return { isValid, name: quiz.name };
+            }
+        } catch (error) {
+            console.error(`Error verificando el cuestionario ${quiz.id}:`, error);
+        }
+
+        return { isValid: false, name: quiz.name };
+    }
+
     /**
      * Funciones auxiliares para evaluar Retos
      * @param indicator 
@@ -872,7 +945,7 @@ export class TechnicalDesignCycleIiService {
             .filter(content => !this.checkAvailabilityConfigs(content, config))
             .map(reto => ({
                 name: reto.name || 'Sin nombre',
-                issues: this.getAvailabilityConfigIssues(reto),
+                issues: this.getAvailabilityConfigIssues(reto, config),
             }));
 
         // Determinar si todos los retos cumplen
@@ -895,72 +968,118 @@ export class TechnicalDesignCycleIiService {
     private checkAvailabilityConfigs(reto: any, config: any): boolean {
         const configs = reto.configs;
 
-        // Validar que la configuración exista y sea un arreglo
         if (!Array.isArray(configs)) return false;
 
         const findConfig = (plugin: string, subtype: string, name: string) =>
             configs.find(config => config.plugin === plugin && config.subtype === subtype && config.name === name);
 
         try {
-            // Validaciones de configuración
+            let validConditions = 0;
+
+            // Validación: Tipos de entrega habilitados
             const fileSubmission = findConfig('file', 'assignsubmission', 'enabled');
-            if (!fileSubmission || fileSubmission.value !== '1') return false;
+            if (fileSubmission && fileSubmission.value === '1') {
+                validConditions++;
+            } else {
+                console.warn('Tipos de entrega no habilitados.');
+            }
 
+            // Validación: Número máximo de archivos
             const maxFileSubmissions = findConfig('file', 'assignsubmission', 'maxfilesubmissions');
-            if (!maxFileSubmissions || parseInt(maxFileSubmissions.value, 10) < 1) return false;
+            if (maxFileSubmissions && parseInt(maxFileSubmissions.value, 10) >= 1) {
+                validConditions++;
+            } else {
+                console.warn('Número máximo de archivos incorrecto.');
+            }
 
+            // Validación: Tamaño máximo de entrega
             const maxSubmissionSize = findConfig('file', 'assignsubmission', 'maxsubmissionsizebytes');
-            const maxSubmissionLimit = config.maxsubmissionsizebytes * 1024 * 1024; // 500 MB en bytes
-            if (!maxSubmissionSize || parseInt(maxSubmissionSize.value, 10) <= maxSubmissionLimit) return false;
+            const maxSubmissionLimit = config.maxsubmissionsizebytes; // Límite máximo permitido
+            if (maxSubmissionSize && Number(maxSubmissionSize.value) / 1024 / 1024 > maxSubmissionLimit) {
+                validConditions++;
+            } else {
+                console.warn('Tamaño máximo de entrega no es válido o excede el límite.');
+            }
 
-            /*  const fileTypesList = findConfig('file', 'assignsubmission', 'filetypeslist');
-            if (!fileTypesList || fileTypesList.value !== '') return false; */
-
+            // Validación: Retroalimentación habilitada
             const feedbackComments = findConfig('comments', 'assignfeedback', 'enabled');
-            if (!feedbackComments || feedbackComments.value !== '1') return false;
+            if (feedbackComments && feedbackComments.value === '1') {
+                validConditions++;
+            } else {
+                console.warn('Retroalimentación no habilitada.');
+            }
 
+            // Validación: Comentarios en línea
             const inlineComments = findConfig('comments', 'assignfeedback', 'commentinline');
-            if (!inlineComments || inlineComments.value !== config.commentinline) return false;
+            if (inlineComments && inlineComments.value === config.commentinline) {
+                validConditions++;
+            } else {
+                console.warn('Configuración de comentarios en línea incorrecta.');
+            }
 
-            return true;
+            return validConditions >= 2;
         } catch (error) {
             console.error(`Error al verificar el reto "${reto.name || 'Sin nombre'}":`, error);
             return false;
         }
     }
 
-    private getAvailabilityConfigIssues(reto: any): string[] {
+    private getAvailabilityConfigIssues(reto: any, config: any): string[] {
         const issues = [];
         const configs = reto.configs;
 
         if (!configs || !Array.isArray(configs)) {
-            issues.push('Configuración ausente');
+            issues.push('Configuración ausente.');
             return issues;
         }
 
         const findConfig = (plugin: string, subtype: string, name: string) =>
             configs.find(config => config.plugin === plugin && config.subtype === subtype && config.name === name);
 
+        let validConditions = 0;
+
+        // Verificación: Tipos de entrega habilitados
         const fileSubmission = findConfig('file', 'assignsubmission', 'enabled');
-        if (!fileSubmission || fileSubmission.value !== '1') issues.push('Tipos de entrega no configurados correctamente');
+        if (fileSubmission && fileSubmission.value === '1') {
+            validConditions++;
+        } else {
+            issues.push('Tipos de entrega no habilitados.');
+        }
 
+        // Verificación: Número máximo de archivos
         const maxFileSubmissions = findConfig('file', 'assignsubmission', 'maxfilesubmissions');
-        if (!maxFileSubmissions || parseInt(maxFileSubmissions.value, 10) < 1)
-            issues.push('Número máximo de archivos incorrecto');
+        if (maxFileSubmissions && parseInt(maxFileSubmissions.value, 10) >= 1) {
+            validConditions++;
+        } else {
+            issues.push('Número máximo de archivos incorrecto.');
+        }
 
+        // Verificación: Tamaño máximo de entrega
         const maxSubmissionSize = findConfig('file', 'assignsubmission', 'maxsubmissionsizebytes');
-        const maxSubmissionLimit = 500 * 1024 * 1024; // 500 MB
-        if (!maxSubmissionSize || parseInt(maxSubmissionSize.value, 10) !== maxSubmissionLimit)
-            issues.push('Tamaño máximo de entrega incorrecto');
+        const maxSubmissionLimit = config.maxsubmissionsizebytes; // Límite máximo permitido
+        if (maxSubmissionSize && Number(maxSubmissionSize.value) / 1024 / 1024 > maxSubmissionLimit) {
+            validConditions++;
+        } else {
+            issues.push(`Tamaño máximo de entrega no válido. Tamaño actual: ${maxSubmissionSize ? Number(maxSubmissionSize.value) / 1024 / 1024 : 'no configurado'} MB`);
+        }
 
-        /* const fileTypesList = findConfig('file', 'assignsubmission', 'filetypeslist');
-        if (!fileTypesList || fileTypesList.value !== '') issues.push('Tipos de archivos aceptados configurados incorrectamente'); */
-
+        // Verificación: Retroalimentación habilitada
         const feedbackComments = findConfig('comments', 'assignfeedback', 'enabled');
-        if (!feedbackComments || feedbackComments.value !== '1') issues.push('Retroalimentación no configurada correctamente');
+        if (feedbackComments && feedbackComments.value === '1') {
+            validConditions++;
+        } else {
+            issues.push('Retroalimentación no habilitada.');
+        }
 
+        // Verificación: Comentarios en línea
         const inlineComments = findConfig('comments', 'assignfeedback', 'commentinline');
-        if (!inlineComments || inlineComments.value !== '0') issues.push('Configuración de comentarios en línea incorrecta');
+        if (inlineComments && inlineComments.value === config.commentinline) {
+            validConditions++;
+        } else {
+            issues.push('Configuración de comentarios en línea incorrecta.');
+        }
+
+        issues.unshift(`Condiciones válidas: ${validConditions}/5. Deben cumplirse al menos 2 condiciones para que el reto sea válido.`);
 
         return issues;
     }
@@ -973,7 +1092,7 @@ export class TechnicalDesignCycleIiService {
         );
 
         const assigns = sections.flatMap(section =>
-            section.modules?.filter(module => module.modname === 'assign') || []
+            section.modules?.filter(module => module.modname === 'assign' && !module.name.toLowerCase().includes('tarea')) || []
         );
         const invalidAssigns = assigns.filter(assign => !this.hasCompletionDataRetos(assign));
         const allRestrictions = invalidAssigns.length === 0;
@@ -990,12 +1109,186 @@ export class TechnicalDesignCycleIiService {
     private hasCompletionDataRetos(module: any): boolean {
         if (!module.completiondata) return false;
 
-        const isAutomatic = module.completiondata.isautomatic;
+        //const isAutomatic = module.completiondata.isautomatic;
         const isEndReached = module.completiondata.details?.some(
             detail => detail.rulename === 'completionsubmit'
         );
 
-        return isAutomatic && isEndReached;
+        //return isAutomatic && isEndReached;
+        return isEndReached;
+    }
+
+    private evaluateSubmissionRetos(indicator: any, matchedContent: any): IndicatorResult {
+        // Filtrar retos inválidos según la configuración
+        const invalidRetos = matchedContent
+            .filter(content => !this.checkSubmissionConfigs(content))
+            .map(reto => ({
+                name: reto.name || 'Sin nombre',
+                issues: this.getSubmissionConfigIssues(reto),
+            }));
+
+        // Determinar si todos los retos cumplen
+        const allValidAssigns = invalidRetos.length === 0;
+
+        // Generar observaciones detalladas con los nombres de los retos que no cumplen
+        const observation = allValidAssigns
+            ? 'Todos los retos cumplen con la configuración de entrega.'
+            : `No cumple con la configuración. Retos inválidos (${invalidRetos.length}):\n${invalidRetos
+                .map(reto => `- ${reto.name}: ${reto.issues.join(', ')}`)
+                .join('\n')}`;
+
+        return {
+            indicatorId: indicator.id,
+            result: allValidAssigns ? 1 : 0,
+            observation,
+        };
+    }
+
+    private checkSubmissionConfigs(reto: any): boolean {
+        try {
+            let validConditions = 0;
+
+            // Validación:Requiere que los alumnos pulsen el botón de envío
+            const requireBotonEnvio = reto.nosubmissions;
+            if (requireBotonEnvio === 0) {
+                validConditions++;
+            } else {
+                console.warn('Los alumnos pueden pulsar el botón de envío.');
+            }
+
+            // Validación: Es necesario que los estudiantes acepten las condiciones de entrega
+            const aceptarCondicionesEntrega = reto.requiresubmissionstatement;
+            if (aceptarCondicionesEntrega === 0) {
+                validConditions++;
+            } else {
+                console.warn('Los estudiantes deben aceptar las condiciones de entrega.');
+            }
+
+            // Validación: Intentos adicionales 
+            const intentosAdicionales = reto.attemptreopenmethod;
+            if (intentosAdicionales === 'none') {
+                validConditions++;
+            } else {
+                console.warn('Se pueden hacer intentos adicionales.');
+            }
+
+            return validConditions >= 2;
+        } catch (error) {
+            console.error(`Error al verificar el reto "${reto.name || 'Sin nombre'}":`, error);
+            return false;
+        }
+    }
+
+    private getSubmissionConfigIssues(reto: any): string[] {
+        const issues = [];
+
+        let validConditions = 0;
+
+        const requireBotonEnvio = reto.nosubmissions;
+        if (requireBotonEnvio === 0) {
+            validConditions++;
+        } else {
+            issues.push('Requiere que los alumnos pulsen el botón de envío.');
+        }
+
+        // Validación: Es necesario que los estudiantes acepten las condiciones de entrega
+        const aceptarCondicionesEntrega = reto.requiresubmissionstatement;
+        if (aceptarCondicionesEntrega === 0) {
+            validConditions++;
+        } else {
+            issues.push('Requiere que los estudiantes acepten las condiciones de entrega.');
+        }
+
+        // Validación: Intentos adicionales 
+        const intentosAdicionales = reto.attemptreopenmethod;
+        if (intentosAdicionales === 'none') {
+            validConditions++;
+        } else {
+            issues.push('Permite a los estudiantes realizar intentos adicionales.');
+        }
+
+        issues.unshift(`Condiciones válidas: ${validConditions}/5. Deben cumplirse al menos 2 condiciones para que el reto sea válido.`);
+
+        return issues;
+    }
+
+    private evaluateGradingRetos(indicator: any, matchedContent: any): IndicatorResult {
+        // Filtrar retos inválidos según la configuración
+        const invalidRetos = matchedContent
+            .filter(content => !this.checkGradingConfigs(content))
+            .map(reto => ({
+                name: reto.name || 'Sin nombre',
+                issues: this.getGradingConfigIssues(reto),
+            }));
+
+        // Determinar si todos los retos cumplen
+        const allValidAssigns = invalidRetos.length === 0;
+
+        // Generar observaciones detalladas con los nombres de los retos que no cumplen
+        const observation = allValidAssigns
+            ? 'Todos los retos cumplen con la configuración de la calificación.'
+            : `No cumple con la configuración. Retos inválidos (${invalidRetos.length}):\n${invalidRetos
+                .map(reto => `- ${reto.name}: ${reto.issues.join(', ')}`)
+                .join('\n')}`;
+
+        return {
+            indicatorId: indicator.id,
+            result: allValidAssigns ? 1 : 0,
+            observation,
+        };
+    }
+
+    private checkGradingConfigs(reto: any): boolean {
+        try {
+            let validConditions = 0;
+
+            // Validación:Envíos anónimos
+            const enviosAnonimos = reto.blindmarking;
+            if (enviosAnonimos === 0) {
+                validConditions++;
+            } else {
+                console.warn('Los envíos anónimos estan permitidos.');
+            }
+
+            // Validación: Workflow de calificaciones
+            const usarWorkflowCalificaciones = reto.markingworkflow;
+            if (usarWorkflowCalificaciones === 0) {
+                validConditions++;
+            } else {
+                console.warn('Se está utilizando el Workflow de calificaciones.');
+            }
+
+            return validConditions >= 2;
+        } catch (error) {
+            console.error(`Error al verificar el reto "${reto.name || 'Sin nombre'}":`, error);
+            return false;
+        }
+    }
+
+    private getGradingConfigIssues(reto: any): string[] {
+        const issues = [];
+
+        let validConditions = 0;
+
+        // Validación:Envíos anónimos
+        const enviosAnonimos = reto.blindmarking;
+        if (enviosAnonimos === 0) {
+            validConditions++;
+        } else {
+            issues.push('Están permitidos los envíos anónimos.');
+        }
+
+        // Validación: Workflow de calificaciones
+        const usarWorkflowCalificaciones = reto.markingworkflow;
+        if (usarWorkflowCalificaciones === 0) {
+            validConditions++;
+        } else {
+            issues.push('Se está utilizando el Workflow de calificaciones.');
+        }
+
+        issues.unshift(`Condiciones válidas: ${validConditions}/5. Deben cumplirse al menos 2 condiciones para que el reto sea válido.`);
+
+        return issues;
     }
 
     /**
@@ -1026,13 +1319,13 @@ export class TechnicalDesignCycleIiService {
             .map(content => {
                 const issues = [];
                 if (!content.name.toLowerCase().includes(config.name)) {
-                    issues.push('nombre inválido');
+                    issues.push('nombre inválido (no empieza con "Debate de la Unidad...")');
                 }
                 if (!content.intro) {
-                    issues.push('falta de instrucciones');
+                    issues.push('falta de descripción');
                 }
-                if (content.type !== config.type) {
-                    issues.push(`tipo incorrecto (esperado: ${config.type})`);
+                if ((content.type !== config.type)) {
+                    issues.push(`tipo incorrecto (esperado: ${config.tipo})`);
                 }
                 return { name: content.name || 'Sin nombre', issues: issues.join(', ') };
             });
@@ -1087,9 +1380,9 @@ export class TechnicalDesignCycleIiService {
                 if (content.forcesubscribe !== 0) {
                     issues.push('la suscripción no está desactivada');
                 }
-                if (content.blockafter !== 0) {
+                /* if (content.blockafter !== 0) {
                     issues.push('bloqueo después de publicaciones no está desactivado');
-                }
+                } */
                 return { name: content.name || 'Sin nombre', issues: issues.join(', ') };
             });
 
@@ -1110,8 +1403,8 @@ export class TechnicalDesignCycleIiService {
         const isValidAttachment = section.maxattachments === config.maxfiles;
         const hasMaxbytes = section.maxbytes >= 0;
         const isForceSubscribe = section.forcesubscribe === 0;
-        const isBlockAfter = section.blockafter === 0;
-        return isValidAttachment && hasMaxbytes && isForceSubscribe && isBlockAfter;
+        //const isBlockAfter = section.blockafter === 0;
+        return isValidAttachment && hasMaxbytes && isForceSubscribe;
     }
 
     private evaluateCompletionConfigForo(indicator: any, matchedContent: any): IndicatorResult {
@@ -1204,7 +1497,7 @@ export class TechnicalDesignCycleIiService {
                 observation: 'No se encontraron módulos tipo libro en la sección de videoconferencias'
             };
         }
-        
+
         const isValidName = moduleBook.name.toLowerCase().includes(config.name);
 
         return {
