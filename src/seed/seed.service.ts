@@ -20,6 +20,7 @@ export class SeedService {
     const roles = [
       { name: ValidRoles.admin },
       { name: ValidRoles.evaluator },
+      { name: ValidRoles.dedteF },
     ];
 
     for (const role of roles) {

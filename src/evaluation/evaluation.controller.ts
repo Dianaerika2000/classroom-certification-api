@@ -13,7 +13,7 @@ export class EvaluationController {
   constructor(private readonly evaluationService: EvaluationService) {}
 
   @Post()
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiResponse({ status: 201, description: 'Evaluation was created successfully', type: Evaluation })
   @ApiResponse({ status: 400, description: 'Bad Request - Invalid input data' })
   @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
@@ -29,7 +29,7 @@ export class EvaluationController {
   }
 
   @Get()
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiResponse({ status: 200, description: 'Evaluations retrieved successfully', type: [Evaluation] })
   @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
   async findAll() {
@@ -43,7 +43,7 @@ export class EvaluationController {
   }
 
   @Get('classroom/:classroomId')
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiParam({ name: 'classroomId', type: 'number', description: 'The ID of the classroom to retrieve evaluations for' })
   @ApiResponse({ status: 200, description: 'Evaluations retrieved successfully', type: [Evaluation] })
   @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
@@ -69,7 +69,7 @@ export class EvaluationController {
   }
 
   @Get(':id')
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiParam({ name: 'id', type: 'number', description: 'The ID of the evaluation' })
   @ApiResponse({ status: 200, description: 'Evaluation retrieved successfully', type: Evaluation })
   @ApiResponse({ status: 400, description: 'Bad Request - Invalid evaluation ID' })
@@ -86,7 +86,7 @@ export class EvaluationController {
   }
 
   @Patch(':id')
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiParam({ name: 'id', type: 'number', description: 'The ID of the evaluation to update' })
   @ApiResponse({ status: 200, description: 'Evaluation updated successfully', type: Evaluation })
   @ApiResponse({ status: 400, description: 'Bad Request - Invalid input data' })
@@ -103,7 +103,7 @@ export class EvaluationController {
   }
 
   @Delete(':id')
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiParam({ name: 'id', type: 'number', description: 'The ID of the evaluation to delete' })
   @ApiResponse({ status: 200, description: 'Evaluation deleted successfully', type: Evaluation })
   @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
