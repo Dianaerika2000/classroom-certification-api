@@ -16,16 +16,10 @@ export class TechnicalStaffService {
   
   async create(createTechnicalStaffDto: CreateTechnicalStaffDto) {
     const { name, position } = createTechnicalStaffDto;
-    /* const { photoUrl } = await this.awsService.uploadImageToS3(signature.buffer, signature.originalname);
-    
-    if (!photoUrl) {
-      throw new BadRequestException('Failed to upload signature image to S3');
-    } */
 
     const technicalStaff = this.personalRepository.create({
       name,
       position,
-      //signature: photoUrl,
     });
 
     await this.personalRepository.save(technicalStaff);
@@ -53,16 +47,6 @@ export class TechnicalStaffService {
     const { name, position } = updateTechnicalStaffDto;
     technicalStaff.name = name ?? technicalStaff.name;
     technicalStaff.position = position ?? technicalStaff.position;
-
-    /* if (signature) {
-      const { photoUrl } = await this.awsService.uploadImageToS3(signature.buffer, signature.originalname);
-
-      if (!photoUrl) {
-        throw new BadRequestException('Failed to upload signature image to S3');
-      }
-
-      technicalStaff.signature = photoUrl;
-    } */
 
     return this.personalRepository.save(technicalStaff);
   }
