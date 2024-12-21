@@ -10,12 +10,12 @@ import { Auth } from '../auth/decorators/auth.decorator';
 import { ValidRoles } from '../auth/enums/valid-roles';
 
 @ApiTags('Team')
+@Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
 @Controller('team')
 export class TeamController {
   constructor(private readonly teamService: TeamService) {}
 
   @Post()
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
   @ApiResponse({ status: 201, description: 'Team was created successfully', type: Team })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -30,7 +30,6 @@ export class TeamController {
   }
 
   @Get()
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
   @ApiResponse({ status: 200, description: 'List of all teams', type: [Team] })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll() {
@@ -44,7 +43,6 @@ export class TeamController {
   }
 
   @Get(':id')
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
   @ApiParam({ name: 'id', type: 'number', description: 'Team ID' })
   @ApiResponse({ status: 200, description: 'The found team', type: Team })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -60,7 +58,6 @@ export class TeamController {
   }
 
   @Patch(':id')
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
   @ApiParam({ name: 'id', type: 'number', description: 'Team ID' })
   @ApiResponse({ status: 200, description: 'The updated team', type: Team })
   @ApiResponse({ status: 400, description: 'Bad Request' })
@@ -77,7 +74,6 @@ export class TeamController {
   }
 
   @Delete(':id')
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
   @ApiParam({ name: 'id', type: 'number', description: 'Team ID' })
   @ApiResponse({ status: 200, description: 'The deleted team', type: Team })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

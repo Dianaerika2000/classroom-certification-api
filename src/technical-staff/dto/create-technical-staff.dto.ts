@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger"
-import { IsOptional, IsString, IsUrl } from "class-validator"
+import { IsString } from "class-validator"
 
 export class CreateTechnicalStaffDto {
   @ApiProperty({
@@ -17,12 +17,4 @@ export class CreateTechnicalStaffDto {
   })
   @IsString()
   position: string
-
-  /* @ApiProperty({
-    format: 'binary',
-    description: 'File upload for the technical staff signature. Accepts image files.'
-  })
-  @IsOptional()
-  @IsUrl()
-  signature: string */
 }
