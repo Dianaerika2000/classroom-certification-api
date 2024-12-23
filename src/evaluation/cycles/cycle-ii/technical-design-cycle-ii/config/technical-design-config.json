@@ -36,9 +36,10 @@
         {
             "name": "Foro de debate",
             "general": {
-                "name": "debate",
+                "name": "debate de la unidad",
                 "description": true,
-                "type": "eachuser"
+                "type": "single",
+                "tipo": "Debate sencillo"
             },
             "attachment": {
                 "maxfilebytes": 512000,

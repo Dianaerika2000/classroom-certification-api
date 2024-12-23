@@ -78,6 +78,9 @@ export class TechnicalDesignService {
                 'general': async (indicator: any) => {
                     return this.evaluateGeneralIndicatorFolder(indicator, matchedContent)
                 },
+                'contenido': async (indicator: any) => {
+                    return this.evaluateContentIndicatorFolder(indicator, matchedContent)
+                },
                 'sin restricciones': async (indicator: any) => {
                     return this.evaluateAccessRestrictions(indicator, matchedContent);
                 },
@@ -136,11 +139,12 @@ export class TechnicalDesignService {
             };
         }
 
-        const config = pedagogicalFolderConfig.general; // Acceder a la propiedad 'general'
-        const isNameValid = matchedContent.name === config.name;
-        const isDescriptionValid = matchedContent.summary ? false : true; // Cambié la condición para comparar la descripción
+        const config = pedagogicalFolderConfig.general; 
+        const isNameValid = matchedContent.name.toLowerCase() == config.name;
+        //const isDescriptionValid = matchedContent.summary ? false : true; 
 
-        const result = isNameValid && isDescriptionValid ? 1 : 0;
+        //const result = isNameValid && isDescriptionValid ? 1 : 0;
+        const result = isNameValid ? 1 : 0;
 
         return {
             indicatorId: indicator.id,
@@ -174,6 +178,47 @@ export class TechnicalDesignService {
                 : 'No cumple con la configuración de finalización "Solo ver".',
         };
     }
+
+    private evaluateContentIndicatorFolder(indicator: any, matchedContent: any): IndicatorResult {
+        const requiredContents = [
+            'datos generales', 
+            'carta descriptiva',
+            'evaluación',
+            'guía de aprendizaje',
+            'contenido', 
+            'currículum vitae',
+        ];
+    
+        const contents = matchedContent?.contents && Array.isArray(matchedContent.contents)
+            ? matchedContent.contents
+            : [];
+        
+        const filteredContents = contents.filter(content => content.filename && content.filename.toLowerCase() === 'index.html');
+        const presentContents: string[] = [];
+        const missingContents: string[] = [];
+    
+        requiredContents.forEach(requiredContent => {
+            const isPresent = filteredContents.some(content => 
+                content.content?.toLowerCase().includes(requiredContent.toLowerCase())
+            );
+            if (isPresent) {
+                presentContents.push(requiredContent);
+            } else {
+                missingContents.push(requiredContent);
+            }
+        });
+    
+        const hasRequiredContents = missingContents.length === 0;
+        const observation = hasRequiredContents
+            ? `Se encontraron todos los contenidos requeridos: ${presentContents.join(', ')}.`
+            : `Faltan los siguientes contenidos requeridos: ${missingContents.join(', ')}.`;
+    
+        return {
+            indicatorId: indicator.id,
+            result: hasRequiredContents ? 1 : 0,
+            observation,
+        };
+    }              
 
     /**
      * Función para evaluar los indicadores del recurso: Video de Presentación
