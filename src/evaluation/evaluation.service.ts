@@ -424,5 +424,48 @@ export class EvaluationService {
         evaluatedIndicatorsByResource,
       },
     };
-  }   
+  }
+  
+  public async fetchEvaluatedIndicatorsByArea(areaId: number, classroomId: number): Promise<any> {
+    // Obtener todas las evaluaciones para el aula y el área específica
+    const evaluations = await this.findByClassroomArea(classroomId, areaId);
+  
+    if (!evaluations || evaluations.length === 0) {
+      throw new NotFoundException(`No evaluations found for classroom ID "${classroomId}" and area ID "${areaId}".`);
+    }
+  
+    // Arreglo para almacenar todos los indicadores evaluados
+    let evaluatedIndicatorsByArea = [];
+  
+    for (const evaluation of evaluations) {
+      // Obtener los indicadores evaluados para cada evaluación
+      const evaluatedIndicators = await this.evaluatedIndicatorService.findByEvaluation(evaluation.id);
+  
+      if (!evaluatedIndicators || evaluatedIndicators.length === 0) {
+        throw new NotFoundException(`No evaluated indicators found for evaluation ID "${evaluation.id}".`);
+      }
+  
+      // Agregar los indicadores evaluados a la lista general
+      evaluatedIndicatorsByArea.push(...evaluatedIndicators);
+    }
+  
+    if (evaluatedIndicatorsByArea.length === 0) {
+      throw new NotFoundException(`No evaluated indicators found for classroom ID "${classroomId}" and area ID "${areaId}".`);
+    }
+  
+    // Calcular estadísticas
+    const totalIndicators = evaluatedIndicatorsByArea.length;
+    const indicatorsWithValueOne = evaluatedIndicatorsByArea.filter(
+      (indicator) => indicator.result === 1
+    ).length;
+  
+    return {
+      message: `Evaluated indicators retrieved successfully for classroom ID "${classroomId}" and area ID "${areaId}".`,
+      data: {
+        totalIndicators,
+        indicatorsWithValueOne,
+        evaluatedIndicatorsByArea,
+      },
+    };
+  }  
 }

@@ -209,4 +209,26 @@ export class EvaluationController {
       evaluations
     };
   }
+  
+  @Post('indicators-by-area')
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
+  async fetchEvaluatedIndicatorsByArea(
+    @Query('areaId') areaId: number,
+    @Query('classroomId') classroomId: number,
+  ) {
+    const result = await this.evaluationService.fetchEvaluatedIndicatorsByArea(areaId, classroomId);
+
+    if (result.data.evaluatedIndicatorsByArea.length === 0) {
+      return {
+        message: `No se encontraron indicadores evaluados para el aula con ID ${classroomId} y el área con ID ${areaId}`,
+        data: result.data,
+      };
+    }
+
+    return {
+      message: result.message,
+      data: result.data,
+    };
+  }
+
 }
