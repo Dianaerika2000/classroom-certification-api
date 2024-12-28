@@ -9,6 +9,7 @@ import { AreaModule } from 'src/area/area.module';
 import { RequerimentService } from './requeriment.service';
 import { Requeriment } from './entities/requeriment.entity';
 import { AwsModule } from 'src/aws/aws.module';
+//import { TechnicalAreaService } from './areas/technical-area/technical-area.service';
 
 @Module({
   imports: [
