@@ -161,4 +161,52 @@ export class EvaluationController {
       }
     }
   }
+
+  @Get('classroom-area/:classroomId/:areaId')
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
+  @ApiParam({ name: 'classroomId', type: 'number', description: 'The ID of the classroom to retrieve evaluations for' })
+  @ApiResponse({ status: 200, description: 'Evaluations retrieved successfully', type: [Evaluation] })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
+  @ApiResponse({ status: 404, description: 'The classroom with the provided ID does not exist' })
+  async findByClassroomArea(@Param('classroomId') classroomId: number, @Param('areaId') areaId: number) {
+    const evaluations = await this.evaluationService.findByClassroomArea(classroomId, areaId);
+
+    if (evaluations.length === 0) {
+      return {
+        message: `No se encontraron evaluaciones para el aula con ID ${classroomId}`,
+        data: {
+          evaluations
+        }
+      };
+    }
+
+    return {
+      message: `Evaluaciones obtenidas exitosamente para el aula con ID ${classroomId}`,
+      data: {
+        evaluations
+      }
+    };
+  }
+
+  @Post('indicators-resources')
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
+  async fetchEvaluatedIndicatorsByResource(
+  @Query('resourceName') resourceName: string,
+  @Query('areaId') areaId: number,
+  @Query('classroomId') classroomId: number,) {
+    const evaluations = await this.evaluationService.fetchEvaluatedIndicatorsByResourceName(resourceName, areaId, classroomId);
+
+    if (evaluations.data.evaluatedIndicatorsByResource.length === 0) {
+      return {
+        message: `No se encontraron evaluaciones para el aula con ID ${classroomId}`,
+        data: {
+          evaluations
+        }
+      };
+    }
+
+    return {
+      evaluations
+    };
+  }
 }

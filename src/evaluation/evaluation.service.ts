@@ -82,6 +82,14 @@ export class EvaluationService {
     }));
   }
 
+  async findByClassroomArea(classroomId: number, areaId: number): Promise<Evaluation[]> {
+    const evaluation = await this.evaluationRepository.find({
+      where: { classroom: { id: classroomId }, areaId: areaId },
+    });
+
+    return evaluation;
+  }
+
   async findOne(id: number): Promise<any> {
     // Obtener la evaluación
     const evaluation = await this.evaluationRepository.findOneBy({ id });
@@ -371,4 +379,50 @@ export class EvaluationService {
 
     return weightedResults;
   }  
+
+  public async fetchEvaluatedIndicatorsByResourceName(resourceName: string, areaId: number, classroomId: number) {
+    const evaluations = await this.findByClassroomArea(classroomId, areaId);
+  
+    if (!evaluations || evaluations.length === 0) {
+      throw new NotFoundException(`No evaluations found for classroom with ID "${classroomId}".`);
+    }
+  
+    let evaluatedIndicatorsByResource = [];
+  
+    for (const evaluation of evaluations) {
+      const evaluatedIndicators = await this.evaluatedIndicatorService.findByEvaluation(evaluation.id);
+  
+      if (evaluatedIndicators.length === 0) {
+        throw new NotFoundException(`No evaluated indicators found for evaluation with ID "${evaluation.id}".`);
+      }
+  
+      // Filtrar indicadores evaluados por el nombre del recurso o contenido
+      const filteredIndicators = evaluatedIndicators.filter((indicator) => {
+        const resource = indicator.indicator.resource;
+        const content = indicator.indicator.content;
+  
+        return resource?.name === resourceName || content?.name === resourceName;
+      });
+  
+      evaluatedIndicatorsByResource.push(...filteredIndicators);
+    }
+  
+    if (evaluatedIndicatorsByResource.length === 0) {
+      throw new NotFoundException(`No evaluated indicators found for resource or content with name "${resourceName}".`);
+    }
+
+    const totalIndicators = evaluatedIndicatorsByResource.length;
+    const indicatorsWithValueOne = evaluatedIndicatorsByResource.filter(
+      (indicator) => indicator.result === 1
+    ).length;
+  
+    return {
+      message: `Evaluated indicators retrieved successfully for resource or content with name "${resourceName}".`,
+      data: {
+        totalIndicators,
+        indicatorsWithValueOne,
+        evaluatedIndicatorsByResource,
+      },
+    };
+  }   
 }
