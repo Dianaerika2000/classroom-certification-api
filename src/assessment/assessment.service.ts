@@ -9,6 +9,7 @@ import { RequerimentService } from './requeriment.service';
 import { AreaService } from '../area/area.service';
 import { FormService } from '../form/form.service';
 import { TechnicalAreaService } from './areas/technical-area/technical-area.service';
+import { GraphicAreaService } from './areas/graphic-area/graphic-area.service';
 
 @Injectable()
 export class AssessmentService {
@@ -18,7 +19,8 @@ export class AssessmentService {
     private readonly areaService: AreaService,
     private readonly formService: FormService,
     private readonly requerimentService: RequerimentService,
-    private readonly technicalAreaService: TechnicalAreaService
+    private readonly technicalAreaService: TechnicalAreaService,
+    private readonly graphicAreaService: GraphicAreaService
   ) { }
 
   async create(createAssessmentDto: CreateAssessmentDto, files?: Express.Multer.File[]): Promise<Assessment> {
@@ -74,6 +76,12 @@ export class AssessmentService {
 
         if (area.name.toLowerCase().includes('técnico')) {
           assesmentValue = await this.technicalAreaService.calculateAverageItem(
+            description,
+            area.id,
+            form.classroom.id
+          );
+        } else if (area.name.toLowerCase().includes('gráfico')) {
+          assesmentValue = await this.graphicAreaService.calculateAverageItem(
             description,
             area.id,
             form.classroom.id

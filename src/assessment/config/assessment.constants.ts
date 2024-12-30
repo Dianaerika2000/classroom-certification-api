@@ -16,7 +16,7 @@ export const areaAssessmentItems = {
     "Diseño gráfico": [
         "La imagen visual del aula (portada y secciòn de inicio) cumple con todos los recursos gráficos correspondientes al ciclo 1 en un 15% del aula virtual construìda.",
         "Cumple con todos los recursos gráficos de la sección de unidades temáticas correspondientes al 60% del ciclo 2 del aula virtual construída.",
-        "Las lecciones de contenido cumplen con todos los componentes requeridos visualizàndose en miniatura los recursos multimedia.",
+        "Las lecciones de contenido cumplen con todos los componentes requeridos visualizándose en miniatura los recursos multimedia.",
         "La sección de videoconferencia cumple con todos los indicadores  de revisión.",
         "Cumple con todoslos recursos gràficos correspondientes al ciclo 3 en un 25% el aula virtual construìda."
     ],
