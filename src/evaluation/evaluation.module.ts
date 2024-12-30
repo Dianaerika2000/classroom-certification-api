@@ -44,5 +44,6 @@ import { PercentageModule } from 'src/percentage/percentage.module';
     IndicatorEvaluationService, 
     MoodleAnalysisService, GraphicDesignService,
   ],
+  exports: [EvaluationService]
 })
 export class EvaluationModule {}

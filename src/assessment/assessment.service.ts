@@ -8,6 +8,7 @@ import { areaAssessmentItems } from './config/assessment.constants';
 import { RequerimentService } from './requeriment.service';
 import { AreaService } from '../area/area.service';
 import { FormService } from '../form/form.service';
+import { TechnicalAreaService } from './areas/technical-area/technical-area.service';
 
 @Injectable()
 export class AssessmentService {
@@ -17,7 +18,8 @@ export class AssessmentService {
     private readonly areaService: AreaService,
     private readonly formService: FormService,
     private readonly requerimentService: RequerimentService,
-  ) {}
+    private readonly technicalAreaService: TechnicalAreaService
+  ) { }
 
   async create(createAssessmentDto: CreateAssessmentDto, files?: Express.Multer.File[]): Promise<Assessment> {
     const { formId, areaId, ...assessmentData } = createAssessmentDto;
@@ -68,16 +70,24 @@ export class AssessmentService {
       }
 
       for (const description of items) {
+        let assesmentValue = 0;
+
+        if (area.name.toLowerCase().includes('técnico')) {
+          assesmentValue = await this.technicalAreaService.calculateAverageItem(
+            description,
+            area.id,
+            form.classroom.id
+          );
+        }
+        
         const assessment = this.assessmentRepository.create({
           description,
-          assessment: 0,
+          assessment: assesmentValue,
           conclusions: '',
           area,
           form,
         });
-
-        const savedAssessment =
-          await this.assessmentRepository.save(assessment);
+        const savedAssessment = await this.assessmentRepository.save(assessment);
         createdAssessments.push(savedAssessment);
       }
     }
@@ -193,19 +203,19 @@ export class AssessmentService {
   async getAverageByAreaAndForm(areaId: number, formId: number): Promise<number> {
     const assessments = await this.assessmentRepository.find({
       where: {
-        area: { id: areaId }, 
-        form: { id: formId }, 
+        area: { id: areaId },
+        form: { id: formId },
       },
     });
 
     if (assessments.length === 0) {
       return 0;
     }
-  
+
     const total = assessments.reduce((sum, assessment) => {
       return sum + Number(assessment.assessment);
     }, 0);
-  
+
     return Number((total / assessments.length).toFixed(2));
   }
 }

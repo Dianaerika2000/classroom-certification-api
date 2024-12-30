@@ -9,7 +9,8 @@ import { AreaModule } from 'src/area/area.module';
 import { RequerimentService } from './requeriment.service';
 import { Requeriment } from './entities/requeriment.entity';
 import { AwsModule } from 'src/aws/aws.module';
-//import { TechnicalAreaService } from './areas/technical-area/technical-area.service';
+import { TechnicalAreaService } from './areas/technical-area/technical-area.service';
+import { EvaluationModule } from 'src/evaluation/evaluation.module';
 
 @Module({
   imports: [
@@ -18,8 +19,9 @@ import { AwsModule } from 'src/aws/aws.module';
     FormModule,
     AreaModule,
     AwsModule,
+    EvaluationModule
   ],
-  providers: [AssessmentService, RequerimentService],
+  providers: [AssessmentService, RequerimentService, TechnicalAreaService],
   controllers: [AssessmentController],
   exports: [AssessmentService]
 })
