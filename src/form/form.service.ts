@@ -53,7 +53,11 @@ export class FormService {
     }
 
     async findOne(id: number): Promise<Form> {
-        const form = await this.formRepository.findOneBy({ id });
+        const form = await this.formRepository.findOne({
+            where: { id },
+            relations: ['classroom'], 
+        });
+
         if (!form) {
             throw new NotFoundException(`Form with ID "${id}" not found`);
         }
@@ -79,21 +83,21 @@ export class FormService {
             where: { id },
             relations: ['classroom', 'classroom.certification'],
         });
-        
+
         if (!form) {
             throw new NotFoundException(`Form with ID "${id}" not found`);
         }
 
         const classroom = form.classroom;
         if (!classroom) {
-            throw new NotFoundException(`Classroom asociado al formulario no encontrado`); 
+            throw new NotFoundException(`Classroom asociado al formulario no encontrado`);
         }
 
         if (classroom.certification) {
             await this.certificationService.remove(classroom.certification.id);
         }
 
-        await this.classroomService.update(classroom.id, { status: ClassroomStatus.EVALUADA }); 
+        await this.classroomService.update(classroom.id, { status: ClassroomStatus.EVALUADA });
 
         return await this.formRepository.remove(form);
     }

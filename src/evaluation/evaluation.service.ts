@@ -401,7 +401,7 @@ export class EvaluationService {
         const resource = indicator.indicator.resource;
         const content = indicator.indicator.content;
   
-        return resource?.name === resourceName || content?.name === resourceName;
+        return resource?.name.toLowerCase() === resourceName.toLowerCase() || content?.name.toLowerCase() === resourceName.toLowerCase();
       });
   
       evaluatedIndicatorsByResource.push(...filteredIndicators);
