@@ -11,6 +11,7 @@ import { Requeriment } from './entities/requeriment.entity';
 import { AwsModule } from 'src/aws/aws.module';
 import { TechnicalAreaService } from './areas/technical-area/technical-area.service';
 import { EvaluationModule } from 'src/evaluation/evaluation.module';
+import { GraphicAreaService } from './areas/graphic-area/graphic-area.service';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { EvaluationModule } from 'src/evaluation/evaluation.module';
     AwsModule,
     EvaluationModule
   ],
-  providers: [AssessmentService, RequerimentService, TechnicalAreaService],
+  providers: [AssessmentService, RequerimentService, TechnicalAreaService, GraphicAreaService],
   controllers: [AssessmentController],
   exports: [AssessmentService]
 })
