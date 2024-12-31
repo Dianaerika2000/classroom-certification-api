@@ -10,6 +10,7 @@ import { AreaService } from '../area/area.service';
 import { FormService } from '../form/form.service';
 import { TechnicalAreaService } from './areas/technical-area/technical-area.service';
 import { GraphicAreaService } from './areas/graphic-area/graphic-area.service';
+import { FormationAreaService } from './areas/formation-area/formation-area.service';
 
 @Injectable()
 export class AssessmentService {
@@ -19,6 +20,7 @@ export class AssessmentService {
     private readonly areaService: AreaService,
     private readonly formService: FormService,
     private readonly requerimentService: RequerimentService,
+    private readonly formationAreaService: FormationAreaService,
     private readonly technicalAreaService: TechnicalAreaService,
     private readonly graphicAreaService: GraphicAreaService
   ) { }
@@ -72,25 +74,31 @@ export class AssessmentService {
       }
 
       for (const description of items) {
-        let assesmentValue = 0;
-
+        let assessmentValue = 0;
+  
         if (area.name.toLowerCase().includes('técnico')) {
-          assesmentValue = await this.technicalAreaService.calculateAverageItem(
+          assessmentValue = await this.technicalAreaService.calculateAverageItem(
             description,
             area.id,
             form.classroom.id
           );
         } else if (area.name.toLowerCase().includes('gráfico')) {
-          assesmentValue = await this.graphicAreaService.calculateAverageItem(
+          assessmentValue = await this.graphicAreaService.calculateAverageItem(
+            description,
+            area.id,
+            form.classroom.id
+          );
+        } else if (area.name.toLowerCase().includes('formación')) {
+          assessmentValue = await this.formationAreaService.calculateAverageItem(
             description,
             area.id,
             form.classroom.id
           );
         }
-        
+
         const assessment = this.assessmentRepository.create({
           description,
-          assessment: assesmentValue,
+          assessment: assessmentValue,
           conclusions: '',
           area,
           form,

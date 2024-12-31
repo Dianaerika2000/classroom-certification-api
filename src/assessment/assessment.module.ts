@@ -1,17 +1,18 @@
 import { Module } from '@nestjs/common';
-import { AssessmentService } from './assessment.service';
-import { AssessmentController } from './assessment.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Assessment } from './entities/assessment.entity';
-import { AuthModule } from 'src/auth/auth.module';
-import { FormModule } from 'src/form/form.module';
-import { AreaModule } from 'src/area/area.module';
+import { AssessmentService } from './assessment.service';
 import { RequerimentService } from './requeriment.service';
+import { AssessmentController } from './assessment.controller';
+import { Assessment } from './entities/assessment.entity';
 import { Requeriment } from './entities/requeriment.entity';
-import { AwsModule } from 'src/aws/aws.module';
 import { TechnicalAreaService } from './areas/technical-area/technical-area.service';
-import { EvaluationModule } from 'src/evaluation/evaluation.module';
 import { GraphicAreaService } from './areas/graphic-area/graphic-area.service';
+import { FormationAreaService } from './areas/formation-area/formation-area.service';
+import { AuthModule } from '../auth/auth.module';
+import { FormModule } from '../form/form.module';
+import { AreaModule } from '../area/area.module';
+import { AwsModule } from '../aws/aws.module';
+import { EvaluationModule } from '../evaluation/evaluation.module';
 
 @Module({
   imports: [
@@ -22,7 +23,13 @@ import { GraphicAreaService } from './areas/graphic-area/graphic-area.service';
     AwsModule,
     EvaluationModule
   ],
-  providers: [AssessmentService, RequerimentService, TechnicalAreaService, GraphicAreaService],
+  providers: [
+    AssessmentService, 
+    RequerimentService, 
+    TechnicalAreaService, 
+    GraphicAreaService, 
+    FormationAreaService
+  ],
   controllers: [AssessmentController],
   exports: [AssessmentService]
 })
