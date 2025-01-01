@@ -12,7 +12,7 @@ export class ResourceService {
     @InjectRepository(Resource)
     private readonly resourceRepository: Repository<Resource>,
     private readonly cycleService: CycleService,
-  ){}
+  ) { }
 
   async create(createResourceDto: CreateResourceDto) {
     const { name, cycleId } = createResourceDto;
@@ -75,7 +75,7 @@ export class ResourceService {
 
     return await this.resourceRepository.remove(resource);
   }
-  
+
   async findContents(resourceId: number) {
     const resource = await this.resourceRepository.findOne({
       where: { id: resourceId },
@@ -87,5 +87,9 @@ export class ResourceService {
     }
 
     return resource.contents;
+  }
+
+  async findByName(name: string): Promise<Resource> {
+    return await this.resourceRepository.findOne({ where: { name } });
   }
 }

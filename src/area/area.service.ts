@@ -50,15 +50,9 @@ export class AreaService {
   }
 
   async findByName(name: string): Promise<Area> {
-    const area = await this.areaRepository
+    return await this.areaRepository
       .createQueryBuilder('area')
       .where('LOWER(area.name) = :name', { name: name.toLowerCase() })
       .getOne();
-  
-    if (!area) {
-      throw new NotFoundException(`Area with name "${name}" not found`);
-    }
-  
-    return area;
   }  
 }

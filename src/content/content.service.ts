@@ -12,7 +12,7 @@ export class ContentService {
     @InjectRepository(Content)
     private readonly contentRepository: Repository<Content>,
     private readonly resourceService: ResourceService
-  ){}
+  ) { }
 
   async create(createContentDto: CreateContentDto) {
     const { name, resourceId } = createContentDto;
@@ -22,7 +22,7 @@ export class ContentService {
       name,
       resource
     });
-    
+
     return await this.contentRepository.save(content);
   }
 
@@ -74,5 +74,9 @@ export class ContentService {
     const content = await this.findOne(id);
 
     return await this.contentRepository.remove(content);
+  }
+
+  async findByName(name: string): Promise<Content> {
+    return await this.contentRepository.findOne({ where: { name } });
   }
 }
