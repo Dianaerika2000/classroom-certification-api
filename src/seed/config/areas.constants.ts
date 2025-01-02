@@ -489,4 +489,5 @@ export const areasItems = {
       ],
     }
   ],
+  "Calidad Académica": []
 };
