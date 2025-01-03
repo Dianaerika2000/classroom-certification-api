@@ -1,7 +1,7 @@
 export const cyclesItems = {
   "Aspectos Organizacionales": [
     {
-      name: "Etiqueta",
+      name: "Etiqueta"
     },
     {
       name: "Carpeta pedagógica",

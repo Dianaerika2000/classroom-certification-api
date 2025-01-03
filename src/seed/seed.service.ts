@@ -146,6 +146,10 @@ export class SeedService {
             await this.indicatorService.create(createIndicatorDto);
           }
         } else if (item.content) {
+          const resource = await this.resourceService.findByName(item.resourceParent);
+          if (!resource) {
+            throw new Error(`Resource "${item.resource}" not found for area "${areaName}".`);
+          }
           const content = await this.contentService.findByName(item.content);
           if (!content) {
             throw new Error(`Content "${item.content}" not found for area "${areaName}".`);
@@ -155,7 +159,7 @@ export class SeedService {
             const createIndicatorDto: CreateIndicatorDto = {
               name: indicatorName,
               areaId: area.id,
-              resourceId: null,
+              resourceId: resource.id,
               contentId: content.id
             };
             await this.indicatorService.create(createIndicatorDto);

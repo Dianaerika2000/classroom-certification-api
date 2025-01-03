@@ -11,6 +11,7 @@ export const areasItems = {
       ]
     },
     {
+      resourceParent: "Carpeta pedagógica",
       content: "Datos de la asignatura",
       indicators: [
         "Coincide con el programa analítico de la materia",
@@ -22,6 +23,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Carpeta pedagógica",
       content: "Contenido de la asignatura y referencias bibliográficas",
       indicators: [
         "Corresponde al contenido del programa analítico de la materia",
@@ -32,6 +34,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Carpeta pedagógica",
       content: "Carta descriptiva",
       indicators: [
         "Correspondiente a la organización del plan del aula",
@@ -43,6 +46,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Carpeta pedagógica",
       content: "Guía de aprendizaje",
       indicators: [
         "Describe sección de Inicio correspondiente a los requerimientos o prerequisitos de la materia",
@@ -53,6 +57,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Carpeta pedagógica",
       content: "Sistema de evaluación",
       indicators: [
         "Normas de evaluación editadas según la carta descriptiva",
@@ -63,6 +68,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Carpeta pedagógica",
       content: "Currículum vitae del autor del contenido del aula",
       indicators: [
         "Se modificaron los datos de la plantilla",
@@ -82,12 +88,14 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Sección inicio",
       content: "Mapa de inicio",
       indicators: [
         "Contiene infografía actualizada, versión 2023, del procedimiento de estudio"
       ],
     },
     {
+      resourceParent: "Sección inicio",
       content: "Lección de conocmientos previos",
       indicators: [
         "Contiene lectura guía de conocimientos previos",
@@ -97,6 +105,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Sección inicio",
       content: "Cuestionario diagnóstico",
       indicators: [
         "Contiene banco de preguntas mínimo 10 preguntas",
@@ -104,6 +113,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Sección inicio",
       content: "Bibliografía",
       indicators: [
         "Contiene documentos digitales ordenados por unidad"
@@ -202,6 +212,7 @@ export const areasItems = {
       ]
     },
     {
+      resourceParent: "Carpeta pedagógica",
       content: "Datos de la asignatura",
       indicators: [
         "Cumple la configuración general",
@@ -212,6 +223,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Carpeta pedagógica",
       content: "Contenido de la asignatura y referencias bibliográficas",
       indicators: [
         "Cumple la configuración general",
@@ -222,6 +234,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Carpeta pedagógica",
       content: "Carta descriptiva",
       indicators: [
         "Cumple la configuración general",
@@ -232,6 +245,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Carpeta pedagógica",
       content: "Guía de aprendizaje",
       indicators: [
         "Cumple la configuración general",
@@ -242,6 +256,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Carpeta pedagógica",
       content: "Sistema de evaluación",
       indicators: [
         "Cumple la configuración general",
@@ -252,6 +267,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Carpeta pedagógica",
       content: "Currículum vitae del autor del contenido del aula",
       indicators: [
         "Cumple la configuración general",
@@ -272,6 +288,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Sección inicio",
       content: "Mapa de inicio",
       indicators: [
         "Cumple la configuración general",
@@ -279,6 +296,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Sección inicio",
       content: "Lección de conocmientos previos",
       indicators: [
         "Tiene botón: Pág. Anterior, Pág. Siguiente",
@@ -289,6 +307,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Sección inicio",
       content: "Cuestionario diagnóstico",
       indicators: [
         "Cumple con la configuración de la temporalización y calificación",
@@ -299,6 +318,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Sección inicio",
       content: "Bibliografía",
       indicators: [
         "Cumple con la configuración",
@@ -401,6 +421,7 @@ export const areasItems = {
       ]
     },
     {
+      resourceParent: "Carpeta pedagógica",
       content: "Currículum vitae del autor del contenido del aula",
       indicators: [
         "Cumple con la tipografía requerido en formato del diseño gráfico",
@@ -423,6 +444,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Sección inicio",
       content: "Mapa de inicio",
       indicators: [
         "Contiene el nombre y el ícono correspondiente a la sección",
@@ -432,6 +454,7 @@ export const areasItems = {
       ],
     },
     {
+      resourceParent: "Sección inicio",
       content: "Lección de conocmientos previos",
       indicators: [
         "Las imágenes del contenido se editaron para una mejor visualización",
