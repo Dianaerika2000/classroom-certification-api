@@ -425,10 +425,7 @@ export const areasItems = {
       content: "Currículum vitae del autor del contenido del aula",
       indicators: [
         "Cumple con la tipografía requerido en formato del diseño gráfico",
-        "Cumple con el estilo de presentación considerado en el diseño gráfico",
-        "Cumple la configuración de apariencia",
-        'Cumple con la configuración "sin restricciones de acceso"',
-        'Cumple con la configuración de finalización de actividad "Solo ver"'
+        "Cumple con el estilo de presentación considerado en el diseño gráfico"
       ],
     },
     {
@@ -449,7 +446,7 @@ export const areasItems = {
       indicators: [
         "Contiene el nombre y el ícono correspondiente a la sección",
         "Contiene el tamaño correcto",
-        "Contiene los colores correctos.+X30",
+        "Contiene los colores correctos",
         "Contiene la tipografia correcta"
       ],
     },
@@ -458,10 +455,7 @@ export const areasItems = {
       content: "Lección de conocmientos previos",
       indicators: [
         "Las imágenes del contenido se editaron para una mejor visualización",
-        "Los videos de lección estan editados en el foramato del DEDTE",
-        "Las configuración de las respuestas incorrectas redireccioanan a la página donde se encontrarìa la respuesta",
-        'Esta lección esta añadida en la categoría "Sin calificación"',
-        "Cumple con la configuración de la finalización de actividad por calificación de aprobado"
+        "Los videos de lección estan editados en el foramato del DEDTE"
       ],
     },
     {
