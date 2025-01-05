@@ -10,95 +10,107 @@ import { ClassroomStatus } from '../classroom/enums/classroom-status.enum';
 
 @Injectable()
 export class FormService {
-    constructor(
-        @InjectRepository(Form)
-        private formRepository: Repository<Form>,
-        private readonly classroomService: ClassroomService,
-        private readonly certificationService: CertificationService,
-    ) { }
+  constructor(
+    @InjectRepository(Form)
+    private formRepository: Repository<Form>,
+    private readonly classroomService: ClassroomService,
+    private readonly certificationService: CertificationService,
+  ) {}
 
-    async create(createFormDto: CreateFormDto): Promise<Form> {
-        const { classroomId, ...formData } = createFormDto;
+  async create(createFormDto: CreateFormDto): Promise<Form> {
+    const { classroomId, ...formData } = createFormDto;
 
-        const classroom = await this.classroomService.findOne(classroomId);
+    const classroom = await this.classroomService.findOne(classroomId);
 
-        const form = this.formRepository.create({
-            ...formData,
-            finalGrade: formData.finalGrade ?? 0,
-            classroom,
-            completionDate: new Date(),
-            lastRevisionDate: new Date(),
-        });
+    const form = this.formRepository.create({
+      ...formData,
+      finalGrade: formData.finalGrade ?? 0,
+      classroom,
+      completionDate: new Date(),
+      lastRevisionDate: new Date(),
+    });
 
-        return await this.formRepository.save(form);
+    return await this.formRepository.save(form);
+  }
+
+  async findAll(): Promise<Form[]> {
+    return await this.formRepository.find();
+  }
+
+  async findByClassroom(classroomId: number): Promise<Form[]> {
+    const classroom = await this.classroomService.findOne(classroomId);
+
+    if (!classroom) {
+      throw new NotFoundException(`Aula con ID ${classroomId} no encontrada`);
     }
 
-    async findAll(): Promise<Form[]> {
-        return await this.formRepository.find();
+    const forms = await this.formRepository.find({
+      where: { classroom: { id: classroomId } },
+      relations: ['classroom'],
+    });
+
+    return forms;
+  }
+
+  async findOne(id: number): Promise<Form> {
+    const form = await this.formRepository.findOne({
+      where: { id },
+      relations: ['classroom'],
+    });
+
+    if (!form) {
+      throw new NotFoundException(`Form with ID "${id}" not found`);
     }
 
-    async findByClassroom(classroomId: number): Promise<Form[]> {
-        const classroom = await this.classroomService.findOne(classroomId);
+    return form;
+  }
 
-        if (!classroom) {
-            throw new NotFoundException(`Aula con ID ${classroomId} no encontrada`);
-        }
+  async update(id: number, updateFormDto: UpdateFormDto): Promise<Form> {
+    const form = await this.formRepository.preload({
+      id: id,
+      ...updateFormDto,
+    });
 
-        const forms = await this.formRepository.find({
-            where: { classroom: { id: classroomId } },
-            relations: ['classroom'],
-        });
-
-        return forms;
+    if (!form) {
+      throw new NotFoundException(`Form with ID "${id}" not found`);
     }
 
-    async findOne(id: number): Promise<Form> {
-        const form = await this.formRepository.findOne({
-            where: { id },
-            relations: ['classroom'], 
-        });
+    return await this.formRepository.save(form);
+  }
 
-        if (!form) {
-            throw new NotFoundException(`Form with ID "${id}" not found`);
-        }
+  async remove(id: number) {
+    const form = await this.formRepository.findOne({
+      where: { id },
+      relations: ['classroom', 'classroom.certification'],
+    });
 
-        return form;
+    if (!form) {
+      throw new NotFoundException(`Form with ID "${id}" not found`);
     }
 
-    async update(id: number, updateFormDto: UpdateFormDto): Promise<Form> {
-        const form = await this.formRepository.preload({
-            id: id,
-            ...updateFormDto,
-        });
-
-        if (!form) {
-            throw new NotFoundException(`Form with ID "${id}" not found`);
-        }
-
-        return await this.formRepository.save(form);
+    const classroom = form.classroom;
+    if (!classroom) {
+      throw new NotFoundException(
+        `Classroom asociado al formulario no encontrado`,
+      );
     }
 
-    async remove(id: number) {
-        const form = await this.formRepository.findOne({
-            where: { id },
-            relations: ['classroom', 'classroom.certification'],
-        });
-
-        if (!form) {
-            throw new NotFoundException(`Form with ID "${id}" not found`);
-        }
-
-        const classroom = form.classroom;
-        if (!classroom) {
-            throw new NotFoundException(`Classroom asociado al formulario no encontrado`);
-        }
-
-        if (classroom.certification) {
-            await this.certificationService.remove(classroom.certification.id);
-        }
-
-        await this.classroomService.update(classroom.id, { status: ClassroomStatus.EVALUADA });
-
-        return await this.formRepository.remove(form);
+    if (classroom.certification) {
+      await this.certificationService.remove(classroom.certification.id);
     }
+
+    await this.classroomService.update(classroom.id, {
+      status: ClassroomStatus.EVALUADA,
+    });
+
+    return await this.formRepository.remove(form);
+  }
+
+  async updateObservation(id: number, observation: string): Promise<Form> {
+    const form = await this.findOne(id);
+
+    form.observation = observation;
+
+    return await this.formRepository.save(form);
+  }
 }
