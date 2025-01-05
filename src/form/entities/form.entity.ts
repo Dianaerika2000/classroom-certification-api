@@ -35,6 +35,9 @@ export class Form {
   @Column({ name: 'content_author' })
   author: string;
 
+  @Column({ type: 'text', nullable: true })
+  observation?: string;
+
   @OneToOne(
     () => Classroom, 
     (classroom) => classroom.form, 

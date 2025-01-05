@@ -61,6 +61,16 @@ export class CreateFormDto {
   finalGrade?: number;
 
   @ApiProperty({
+    example: 'Revisión pendiente de contenido adicional.',
+    description: 'Observation or comments about the form.',
+    type: String,
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  observation?: string;
+
+  @ApiProperty({
     example: '1', 
     description: 'The ID of the classroom to which this evaluation belongs.',
     type: Number,
