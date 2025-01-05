@@ -1,11 +1,11 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AreaService } from './area.service';
+import { Area } from './entities/area.entity';
 import { CreateAreaDto } from './dto/create-area.dto';
 import { UpdateAreaDto } from './dto/update-area.dto';
-import { Auth } from 'src/auth/decorators/auth.decorator';
-import { ValidRoles } from 'src/auth/enums/valid-roles';
-import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Area } from './entities/area.entity';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { ValidRoles } from '../auth/enums/valid-roles';
 
 @ApiTags('Area')
 @Controller('area')
@@ -29,7 +29,7 @@ export class AreaController {
   }
 
   @Get()
-  @Auth(ValidRoles.admin)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiResponse({ status: 200, description: 'List of all areas.', type: [Area] })
   @ApiResponse({ status: 401, description: 'Unauthorized. Authentication is required.' })
   async findAll() {

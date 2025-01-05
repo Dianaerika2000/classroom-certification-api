@@ -1,11 +1,11 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IndicatorService } from './indicator.service';
+import { Indicator } from './entities/indicator.entity';
 import { CreateIndicatorDto } from './dto/create-indicator.dto';
 import { UpdateIndicatorDto } from './dto/update-indicator.dto';
-import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Auth } from 'src/auth/decorators/auth.decorator';
-import { ValidRoles } from 'src/auth/enums/valid-roles';
-import { Indicator } from './entities/indicator.entity';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { ValidRoles } from '../auth/enums/valid-roles';
 
 @ApiTags('Indicator')
 @Controller('indicator')
@@ -29,7 +29,7 @@ export class IndicatorController {
   }
 
   @Get()
-  @Auth(ValidRoles.admin)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiResponse({ status: 200, description: 'List of all indicators', type: [Indicator] })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll() {
@@ -96,7 +96,7 @@ export class IndicatorController {
   }
 
   @Get('area/:areaId')
-  @Auth(ValidRoles.admin)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiResponse({ status: 200, description: 'List of all indicators for a specific area', type: [Indicator] })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAllByArea(@Param('areaId', ParseIntPipe) areaId: number) {
@@ -111,7 +111,7 @@ export class IndicatorController {
   }
 
   @Get('area/:areaId/resource/:resourceId')
-  @Auth(ValidRoles.admin)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiParam({ name: 'areaId', type: 'number', description: 'Area ID' })
   @ApiParam({ name: 'resourceId', type: 'number', description: 'Resource ID' })
   @ApiResponse({ status: 200, description: 'List of indicators for a specific area and resource', type: [Indicator] })
@@ -132,7 +132,7 @@ export class IndicatorController {
   }
 
   @Get('area/:areaId/content/:contentId')
-  @Auth(ValidRoles.admin)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiParam({ name: 'areaId', type: 'number', description: 'Area ID' })
   @ApiParam({ name: 'contentId', type: 'number', description: 'Content ID' })
   @ApiResponse({ status: 200, description: 'List of indicators for a specific area and content', type: [Indicator] })

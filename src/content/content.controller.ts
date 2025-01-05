@@ -6,8 +6,8 @@ import { CreateContentDto } from './dto/create-content.dto';
 import { UpdateContentDto } from './dto/update-content.dto';
 import { Content } from './entities/content.entity';
 
-import { Auth } from 'src/auth/decorators/auth.decorator';
-import { ValidRoles } from 'src/auth/enums/valid-roles';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { ValidRoles } from '../auth/enums/valid-roles';
 
 @ApiTags('Content')
 @Controller('content')
@@ -31,7 +31,7 @@ export class ContentController {
   }
 
   @Get()
-  @Auth(ValidRoles.admin)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiResponse({ status: 200, description: 'List of all contents', type: [Content] })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll() {
@@ -46,7 +46,7 @@ export class ContentController {
   }
 
   @Get('resource/:resourceId')
-  @Auth(ValidRoles.admin)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiResponse({ status: 200, description: 'List of all contents for a specific resource', type: [Content] })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAllByCycle(@Param('resourceId', ParseIntPipe) resourceId: number) {

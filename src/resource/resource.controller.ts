@@ -1,12 +1,11 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-
 import { ResourceService } from './resource.service';
+import { Resource } from './entities/resource.entity';
 import { CreateResourceDto } from './dto/create-resource.dto';
 import { UpdateResourceDto } from './dto/update-resource.dto';
-import { Auth } from 'src/auth/decorators/auth.decorator';
-import { ValidRoles } from 'src/auth/enums/valid-roles';
-import { Resource } from './entities/resource.entity';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { ValidRoles } from '../auth/enums/valid-roles';
 
 @ApiTags('Resource')
 @Controller('resource')
@@ -30,7 +29,7 @@ export class ResourceController {
   }
 
   @Get()
-  @Auth(ValidRoles.admin)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiResponse({ status: 200, description: 'List of all resources', type: [Resource] })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll() { 
@@ -45,7 +44,7 @@ export class ResourceController {
   }
 
   @Get('cycle/:cycleId')
-  @Auth(ValidRoles.admin)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiResponse({ status: 200, description: 'List of all resources for a specific cycle', type: [Resource] })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAllByCycle(@Param('cycleId', ParseIntPipe) cycleId: number) {
@@ -112,7 +111,7 @@ export class ResourceController {
   }
 
   @Get(':id/contents')
-  @Auth(ValidRoles.admin)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiParam({ name: 'id', type: 'number', description: 'Resource ID' })
   @ApiResponse({ status: 200, description: 'List of contents for a specific resource' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

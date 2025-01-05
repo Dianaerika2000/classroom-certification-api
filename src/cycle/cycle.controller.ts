@@ -2,11 +2,11 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { CycleService } from './cycle.service';
+import { Cycle } from './entities/cycle.entity';
 import { CreateCycleDto } from './dto/create-cycle.dto';
 import { UpdateCycleDto } from './dto/update-cycle.dto';
-import { Auth } from 'src/auth/decorators/auth.decorator';
-import { ValidRoles } from 'src/auth/enums/valid-roles';
-import { Cycle } from './entities/cycle.entity';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { ValidRoles } from '../auth/enums/valid-roles';
 
 @ApiTags('Cycle')
 @Controller('cycle')
@@ -30,7 +30,7 @@ export class CycleController {
   }
 
   @Get()
-  @Auth(ValidRoles.admin)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiResponse({ status: 200, description: 'List of all cycles', type: [Cycle] })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll() {
