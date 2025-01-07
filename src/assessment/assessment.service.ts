@@ -164,8 +164,7 @@ export class AssessmentService {
     }
 
     if (files && files.length > 0) {
-      const existingRequeriments =
-        await this.requerimentService.findByAssessment(id);
+      const existingRequeriments = await this.requerimentService.findByAssessment(id);
       const existingRequerimentsMap = new Map(
         existingRequeriments.map((req) => [req.name, req]),
       );
@@ -195,8 +194,10 @@ export class AssessmentService {
         }
       }
 
-      for (const remainingRequeriment of existingRequerimentsMap.values()) {
-        await this.requerimentService.remove(remainingRequeriment.id);
+      if (updateAssessment.deletedRequirements) {
+        for (const reqId of updateAssessment.deletedRequirements) {
+          await this.requerimentService.remove(reqId);
+        }
       }
     }
 
