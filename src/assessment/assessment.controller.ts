@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AssessmentService } from './assessment.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
@@ -198,5 +198,13 @@ export class AssessmentController {
         assessment,
       },
     };
+  }
+
+  @Get('calculations/:areaName')
+  async getCalculationsByArea(
+    @Param('areaName') areaName: string,
+    @Query('formId', ParseIntPipe) formId: number,
+  ) {
+    return await this.assessmentService.getCalculationsByArea(areaName, formId);
   }
 }
