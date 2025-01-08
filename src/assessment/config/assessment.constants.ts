@@ -1,10 +1,10 @@
 export const areaAssessmentItems = {
     "Diseño de formación": [
         "El aspecto organizacional de la materia está completo (etiqueta, carpeta pedagógica, Foro de avisos, video de presentación, chat), asì como la secciòn de Inicio (lectura de conocimientos previos y cuestionario diagnòstico) cumpliendo con el 15% del aula virtual construida , ciclo 1.",
-        "Contiene todos los elementos de la sección del Ciclo 2 en cada Unidad, alcanzando el 60% del aula virtual construìda.",
-        "Cumple con todos los indicadores para la construcciòn de retos del aula virtual.",
-        "Contiene todos los elementos del ciclo 3, alcanzando el 25% del aula virtual construìda.",
-        "Cumple con todos los indicadores para la construcciòn de Foros (por lo menos un tema abierto en cada Foro de Unidad)."
+        "Contiene todos los elementos de la sección del Ciclo 2 en cada Unidad, alcanzando el 60% del aula virtual construida.",
+        "Cumple con todos los indicadores para la construcción de retos del aula virtual.",
+        "Contiene todos los elementos del ciclo 3, alcanzando el 25% del aula virtual construida.",
+        "Cumple con todos los indicadores para la construcción de Foros (por lo menos un tema abierto en cada Foro de Unidad)."
     ],
     "Diseño técnico": [
         "Las configuraciones de los componentes del ciclo 1 corresponden al 15% del aula virtual construida.",

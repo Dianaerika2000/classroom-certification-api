@@ -235,4 +235,51 @@ export class AssessmentService {
 
     return Number((total / assessments.length).toFixed(2));
   }
+
+  async getCalculationsByArea(areaName: string, formId: number): Promise<{ description: string; assessment: number }[]> {
+    const form = await this.formService.findOne(formId);
+    if (!form) {
+      throw new NotFoundException(`Form with ID ${formId} not found.`);
+    }
+  
+    const area = await this.areaService.findByName(areaName);
+    if (!area) {
+      throw new NotFoundException(`Area with name ${areaName} not found.`);
+    }
+  
+    const items = areaAssessmentItems[areaName];
+    if (!items) {
+      throw new NotFoundException(`No items configured for area ${areaName}.`);
+    }
+  
+    const results: { description: string; assessment: number }[] = [];
+  
+    for (const description of items) {
+      let assessmentValue = 0;
+  
+      if (area.name.toLowerCase().includes('técnico')) {
+        assessmentValue = await this.technicalAreaService.calculateAverageItem(
+          description,
+          area.id,
+          form.classroom.id,
+        );
+      } else if (area.name.toLowerCase().includes('gráfico')) {
+        assessmentValue = await this.graphicAreaService.calculateAverageItem(
+          description,
+          area.id,
+          form.classroom.id,
+        );
+      } else if (area.name.toLowerCase().includes('formación')) {
+        assessmentValue = await this.formationAreaService.calculateAverageItem(
+          description,
+          area.id,
+          form.classroom.id,
+        );
+      }
+  
+      results.push({ description, assessment: assessmentValue });
+    }
+  
+    return results;
+  }  
 }
