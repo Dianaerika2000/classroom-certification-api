@@ -23,11 +23,11 @@ export class FormationAreaService {
 
   private getContentEvaluator(contentName: string): ((areaId: number, classroomId: number) => number) | null {
     const contentEvaluators = {
-      'El aspecto organizacional de la materia está completo': this.calculateAssessmentCycleOne.bind(this),
-      'Contiene todos los elementos de la sección de inicio': this.calculateAssessmentCycleTwo.bind(this),
-      'La carta descriptiva está organizada en relación al programa analítico y contiene las actividades de aprendizaje': this.calculateAssessmentRetos.bind(this),
-      'Contiene evaluación formativa y sumativa con criterios de evaluación': this.calculateAssessmentCycleThree.bind(this),
-      'Presenta actividades de retroalimentación (por lo menos un tema abierto en cada Foro de Unidad)': this.calculateAssessmentForo.bind(this),
+      'El aspecto organizacional de la materia está completo (etiqueta, carpeta pedagógica, Foro de avisos, video de presentación, chat)': this.calculateAssessmentCycleOne.bind(this),
+      'Contiene todos los elementos de la sección del Ciclo 2 en cada Unidad, alcanzando el 60% del aula virtual construida': this.calculateAssessmentCycleTwo.bind(this),
+      'Cumple con todos los indicadores para la construcción de retos del aula virtual': this.calculateAssessmentRetos.bind(this),
+      'Contiene todos los elementos del ciclo 3, alcanzando el 25% del aula virtual construida': this.calculateAssessmentCycleThree.bind(this),
+      'Cumple con todos los indicadores para la construcción de Foros': this.calculateAssessmentForo.bind(this),
     };
 
     const evaluator = Object.entries(contentEvaluators).find(([key]) =>
