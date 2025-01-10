@@ -1,8 +1,7 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, HttpCode, HttpStatus } from '@nestjs/common';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PlatformService } from './platform.service';
 import { CreatePlatformDto } from './dto/create-platform.dto';
-import { UpdatePlatformDto } from './dto/update-platform.dto';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { ValidRoles } from '../auth/enums/valid-roles';
 
@@ -24,7 +23,7 @@ export class PlatformController {
   }
 
   @Get()
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiResponse({ status: 200, description: 'Platforms retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
   async findAll() {
@@ -39,7 +38,7 @@ export class PlatformController {
   }
 
   @Get(':id')
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiResponse({ status: 200, description: 'Platform retrieved successfully' })
   @ApiResponse({ status: 400, description: 'Bad Request - Invalid platform ID' })
   @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
@@ -56,7 +55,7 @@ export class PlatformController {
   }
 
   @Post(':id/set-environment')
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @HttpCode(HttpStatus.OK)
   @ApiResponse({ status: 200, description: 'Environment variables updated successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized - Access denied' })
