@@ -140,6 +140,9 @@ export class Cycle1TechnicalDesignService {
         'Intentos ilimitados': async (indicator: any) => {
           return this.checkUnlimitedAttemptsConfiguration(indicator, matchedContent, token, moodleCourseId)
         },
+        'configuración del esquema': async (indicator: any) => {
+          return this.evaluateEsquemaQuiz(indicator, matchedContent, token, moodleCourseId)
+        },
         'restricciones': async (indicator: any) => {
           return this.evaluateAccessRestrictionsQuizzes(indicator, matchedContent);
         },
@@ -412,14 +415,7 @@ export class Cycle1TechnicalDesignService {
     moodleCourseId: number,
   ): Promise<any> {
     try {
-      // Obtener los cuestionarios del curso desde Moodle
-      const quizzes = await this.moodleService.getQuizzesByCourse(
-        moodleCourseId,
-        token,
-      );
-
-      // Buscar el cuestionario correspondiente al contenido coincidente
-      const quiz = quizzes.quizzes.find((q) => q.id === matchedContent.instance);
+      const quiz = await this.getQuizById(moodleCourseId, token, matchedContent.instance);
 
       if (!quiz) {
         console.warn(
@@ -507,6 +503,69 @@ export class Cycle1TechnicalDesignService {
   }
 
   /**
+    * Verifica si el cuestionario tiene la configuración del esquema
+    */
+  private async evaluateEsquemaQuiz(
+    indicator: any,
+    matchedContent: any,
+    token: string,
+    moodleCourseId: number,
+  ): Promise<IndicatorResult> {
+    try {
+      const quiz = await this.getQuizById(
+        moodleCourseId,
+        token,
+        matchedContent.instance,
+      );
+  
+      if (!quiz) {
+        console.warn(
+          `Cuestionario con ID ${matchedContent.instance} no encontrado en el curso ${moodleCourseId}`,
+        );
+        return {
+          indicatorId: indicator.id,
+          result: 0,
+          observation: `No se encontró el cuestionario con ID ${matchedContent.instance} en el curso ${moodleCourseId}.`,
+        };
+      }
+  
+      // Validar las configuraciones específicas del cuestionario
+      const hasDates = quiz.dates != null;
+      const isOnePage = quiz.questionsperpage === 0;
+      const isNavMethod = quiz.navmethod === 'free';
+      const isShuffleAnswers = quiz.shuffleanswers === 1;
+      const isPreferredBehaviour = quiz.preferredbehaviour === 'deferredfeedback';
+      const isAttemptonLast = quiz.attemptonlast === 0;
+  
+      const isValid =
+        hasDates &&
+        isOnePage &&
+        isNavMethod &&
+        isShuffleAnswers &&
+        isPreferredBehaviour &&
+        isAttemptonLast;
+  
+      return {
+        indicatorId: indicator.id,
+        result: isValid ? 1 : 0,
+        observation: isValid
+          ? 'El cuestionario cumple con la configuración del esquema, comportamiento de las preguntas y opciones de revisión.'
+          : 'El cuestionario no cumple con la configuración requerida.',
+      };
+    } catch (error) {
+      console.error(
+        `Error al verificar la configuración del cuestionario ${matchedContent.instance}:`,
+        error,
+      );
+      return {
+        indicatorId: indicator.id,
+        result: 0,
+        observation: 'Ocurrió un error al verificar la configuración del cuestionario.',
+      };
+    }
+  }
+
+  /**
    * Funciones auxiliares para evaluar Bibliografía
    * @param indicator 
    * @param matchedContent 
@@ -569,6 +628,30 @@ export class Cycle1TechnicalDesignService {
         result: 0,
         observation: 'Ocurrió un error al verificar la configuración de la bibliografía.',
       };
+    }
+  }
+
+  /**
+   * Obtiene un cuestionario específico de un curso en Moodle.
+   *
+   * @param moodleCourseId - ID del curso en Moodle.
+   * @param token - Token de autenticación para la API de Moodle.
+   * @param quizId - ID del cuestionario que se desea obtener.
+   * @returns Una promesa que resuelve al cuestionario encontrado o `null` si no se encuentra.
+   */
+  private async getQuizById(moodleCourseId: number, token: string, quizId: number): Promise<any | null> {
+    try {
+      const quizzes = await this.moodleService.getQuizzesByCourse(moodleCourseId, token);
+      
+      const quiz = quizzes.quizzes.find((q) => q.id === quizId);
+
+      return quiz || null;
+    } catch (error) {
+      console.error(
+        `Error al obtener el cuestionario con ID ${quizId} en el curso ${moodleCourseId}:`,
+        error,
+      );
+      throw error;
     }
   }
 }
