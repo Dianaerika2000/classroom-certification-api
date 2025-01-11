@@ -14,7 +14,7 @@ export class ClassroomController {
   constructor(private readonly classroomService: ClassroomService) {}
 
   @Post()
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiResponse({ status: 201, description: 'Classroom was created successfully', type: Classroom })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -32,7 +32,7 @@ export class ClassroomController {
 
   @ApiQuery({ name: 'status', required: false, description: 'Filter classrooms by status' })
   @Get()
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiResponse({ status: 200, description: 'List of classrooms retrieved successfully', type: [Classroom] })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
@@ -52,7 +52,7 @@ export class ClassroomController {
   }
 
   @Get(':id')
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiParam({ name: 'id', type: 'number', description: 'Classroom ID' })
   @ApiResponse({ status: 200, description: 'Classroom retrieved successfully', type: Classroom })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -108,7 +108,7 @@ export class ClassroomController {
 
   @Post('moodle-search')
   @HttpCode(200)
-  @Auth(ValidRoles.admin, ValidRoles.evaluator)
+  @Auth(ValidRoles.admin, ValidRoles.evaluator, ValidRoles.dedteF)
   @ApiResponse({ status: 200, description: 'Classroom search in Moodle completed successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
