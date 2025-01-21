@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClassroomService } from './classroom.service';
 import { ClassroomController } from './classroom.controller';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { Classroom } from './entities/classroom.entity';
-import { AuthModule } from 'src/auth/auth.module';
-import { MoodleModule } from 'src/moodle/moodle.module';
-import { TeamModule } from 'src/team/team.module';
+import { AuthModule } from '../auth/auth.module';
+import { MoodleModule } from '../moodle/moodle.module';
+import { TeamModule } from '../team/team.module';
+import { PlatformModule } from '../platform/platform.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { TeamModule } from 'src/team/team.module';
     AuthModule,
     MoodleModule,
     TeamModule,
+    PlatformModule,
   ],
   controllers: [ClassroomController],
   providers: [ClassroomService],
