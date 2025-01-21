@@ -4,6 +4,7 @@ import { Certification } from '../../certification/entities/certification.entity
 import { Evaluation } from '../../evaluation/entities/evaluation.entity';
 import { Form } from '../../form/entities/form.entity';
 import { Team } from '../../team/entities/team.entity';
+import { Platform } from '../../platform/entities/platform.entity';
 
 @Entity({ name: 'classrooms'})
 export class Classroom {
@@ -43,4 +44,7 @@ export class Classroom {
 
   @ManyToOne(() => Team, (team) => team.classrooms)
   team: Team;
+
+  @ManyToOne(() => Platform, (platform) => platform.classrooms)
+  platform: Platform;
 }

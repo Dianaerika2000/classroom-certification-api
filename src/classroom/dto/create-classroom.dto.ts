@@ -40,4 +40,11 @@ export class CreateClassroomDto {
   })
   @IsNumber()
   teamId: number;
+
+  @ApiProperty({
+    description: "ID of the platform associated with the classroom.",
+    example: 1,
+  })
+  @IsNumber()
+  platformId: number;
 }

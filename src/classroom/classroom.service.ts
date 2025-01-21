@@ -7,6 +7,7 @@ import { Classroom } from './entities/classroom.entity';
 import { MoodleService } from '../moodle/moodle.service';
 import { FindClassroomMoodleDto } from '../moodle/dto/find-classroom-moodle.dto';
 import { TeamService } from '../team/team.service';
+import { PlatformService } from '../platform/platform.service';
 
 @Injectable()
 export class ClassroomService {
@@ -15,38 +16,41 @@ export class ClassroomService {
     private readonly classroomRepository: Repository<Classroom>,
     private readonly moodleService: MoodleService,
     private readonly teamService: TeamService,
+    private readonly platformService: PlatformService,
   ){}
 
   async create(createClassroomDto: CreateClassroomDto): Promise<Classroom> {
-    const { teamId, ...classroomData } = createClassroomDto;
+    const { teamId, platformId, ...classroomData } = createClassroomDto;
+    
     const team = await this.teamService.findOne(teamId);
+    const platform = await this.platformService.findOne(platformId);
     
     const classroom = this.classroomRepository.create({
       ...classroomData,
-      team
+      team,
+      platform,
     });
   
     return await this.classroomRepository.save(classroom);
   }
 
   async findAll(status?: string): Promise<Classroom[]> {
+    const options: any = {
+      relations: ['team', 'team.personals', 'platform'],
+      order: { id: 'DESC' },
+    };
+  
     if (status) {
-      return await this.classroomRepository.find({ 
-        where: { status },
-        relations: ['team', 'team.personals'] 
-      });
+      options.where = { status };
     }
-    
-    return await this.classroomRepository.find({ 
-      where: { status },
-      relations: ['team', 'team.personals'] 
-    });
-  }
+  
+    return await this.classroomRepository.find(options);
+  }  
 
   async findOne(id: number): Promise<Classroom> {
     const classroom = await this.classroomRepository.findOne({
       where: { id },
-      relations: ['team', 'team.personals'] 
+      relations: ['team', 'team.personals', 'platform'] 
     });
 
     if (!classroom) {
@@ -66,10 +70,16 @@ export class ClassroomService {
       throw new NotFoundException(`Classroom with ID "${id}" not found`);
     }
     
-    const { teamId } = updateClassroomDto;
+    const { teamId, platformId } = updateClassroomDto;
+
     if (teamId) {
       const team = await this.teamService.findOne(teamId);
       preloadedClassroom.team = team;
+    }
+
+    if (platformId) {
+      const platform = await this.platformService.findOne(platformId);
+      preloadedClassroom.platform = platform;
     }
 
     return await this.classroomRepository.save(preloadedClassroom);
