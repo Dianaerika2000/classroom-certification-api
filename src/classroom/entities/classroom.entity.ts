@@ -29,8 +29,8 @@ export class Classroom {
   @OneToMany(() => Evaluation, evaluation => evaluation.classroom)
   evaluations: Evaluation[];
 
-  @OneToOne(() => Form, (form) => form.classroom, { cascade: true })
-  form: Form;
+  @OneToMany(() => Form, (form) => form.classroom, { cascade: true })
+  forms: Form[];
 
   @OneToOne(
     () => Certification, 

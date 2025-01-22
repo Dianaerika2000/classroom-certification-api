@@ -21,9 +21,11 @@ export class FormService {
     const { classroomId, ...formData } = createFormDto;
 
     const classroom = await this.classroomService.findOne(classroomId);
+    const server = classroom.platform?.name;
 
     const form = this.formRepository.create({
       ...formData,
+      server,
       finalGrade: formData.finalGrade ?? 0,
       classroom,
       completionDate: new Date(),

@@ -15,8 +15,9 @@ export class CreateFormDto {
     description: 'The server where the virtual classroom is',
     type: String,
   })
+  @IsOptional()
   @IsString()
-  server: string;
+  server?: string;
 
   @ApiProperty({
     example: 'Derecho', 
