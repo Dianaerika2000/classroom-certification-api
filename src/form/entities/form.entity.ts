@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Assessment } from "../../assessment/entities/assessment.entity";
 import { Classroom } from "../../classroom/entities/classroom.entity";
 import { Summary } from "../../summary/entities/summary.entity";
@@ -38,10 +38,7 @@ export class Form {
   @Column({ type: 'text', nullable: true })
   observation?: string;
 
-  @OneToOne(
-    () => Classroom, 
-    (classroom) => classroom.form, 
-    { onDelete: 'CASCADE' })
+  @ManyToOne(() => Classroom, (classroom) => classroom.forms, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'classroom_id' })
   classroom: Classroom;
 

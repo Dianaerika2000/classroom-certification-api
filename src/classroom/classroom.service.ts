@@ -102,22 +102,22 @@ export class ClassroomService {
     }
   }
 
-  async getFormByClassroom(classroomId: number) {
+  async getFormsByClassroom(classroomId: number) {
     const classroom = await this.classroomRepository.findOne({
       where: { id: classroomId },
-      relations: ['form'],
+      relations: ['forms'],
     });
   
     if (!classroom) {
       throw new NotFoundException(`Classroom with ID ${classroomId} not found.`);
     }
   
-    if (!classroom.form) {
+    if (!classroom.forms || classroom.forms.length === 0) {
       throw new NotFoundException(
-        `No form associated with classroom ID ${classroomId}.`,
+        `No forms associated with classroom ID ${classroomId}.`,
       );
     }
   
-    return classroom.form;
+    return classroom.forms;
   }  
 }
