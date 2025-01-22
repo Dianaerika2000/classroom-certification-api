@@ -92,6 +92,9 @@ export class Cycle3TechnicalDesignService {
         'finalización': async (indicator: any) => {
           return this.checkRestrictionsLinkedToCompletion(indicator, matchedContent)
         },
+        'configuración del esquema': async (indicator: any) => {
+          return this.evaluateEsquemaQuiz(indicator, matchedContent, token, courseid)
+        },
       };
 
       for (const indicator of indicators) {
@@ -216,6 +219,75 @@ export class Cycle3TechnicalDesignService {
         ? 'Todos los cuestionarios cumplen con las restricciones de restricciones de completación'
         : `No cumple con el indicador. Los siguientes cuestionarios tienen problemas de configuración:${observation}`
     };
+  }
+
+  private async evaluateEsquemaQuiz(indicator: any, matchedContent: any, token: string, courseid: number): Promise<IndicatorResult> {
+    const quizModules = matchedContent.modules.filter(section =>
+      section && section.modname.toLowerCase().includes('quiz')
+    );
+
+    // Verificar cada cuestionario usando la función checkQuiz
+    const quizValidationResults = await Promise.all(
+      quizModules.map(async (quiz) => this.checkEsquemaQuiz(quiz, courseid, token))
+    );
+
+    // Filtrar los cuestionarios que no cumplen
+    const nonCompliantQuizzes = quizValidationResults.filter(result => !result.isValid).map(result => result.name);
+
+    // Evaluar si todos los cuestionarios cumplen con la configuración
+    const allQuizzesValid = nonCompliantQuizzes.length === 0;
+
+    const assignModules = matchedContent.modules.filter(section =>
+      section && section.modname.toLowerCase().includes('assign')
+    );
+
+    const assignValidationResults = await Promise.all(
+      assignModules.map(async (assign) => this.checkGeneralConfigReto(assign))
+    );
+
+
+    return {
+      indicatorId: indicator.id,
+      result: allQuizzesValid ? 1 : 0,
+      observation: allQuizzesValid
+        ? 'Todos los cuestionarios cumplen con la configuración del esquema, comportamiento de las preguntas y  opciones de revisión.'
+        : `Los siguientes cuestionarios no cumplen: \n${nonCompliantQuizzes.join(', \n')}.`,
+    };
+  }
+
+  private async checkEsquemaQuiz(quiz: any, courseid: number, token: string): Promise<{ isValid: boolean, name: string }> {
+    try {
+      // Verificar si el cuestionario tiene fechas configuradas
+      const hasDates = quiz.dates != null;
+
+      // Obtener los datos de los cuestionarios desde Moodle
+      const quizzesFromMoodle = await this.moodleService.getQuizzesByCourse(courseid, token);
+      const quizData = quizzesFromMoodle?.quizzes?.find((item) => item.coursemodule == quiz.id);
+
+      if (quizData) {
+        // Verificar configuración específica del cuestionario
+        const isOnePage = quizData.questionsperpage === 0;
+        const isNavMethod = quizData.navmethod === 'free';
+        const isShuffleAnswers = quizData.shuffleanswers === 1;
+        const isPreferredBehaviour = quizData.preferredbehaviour === 'deferredfeedback';
+        const isAttemptonLast = quizData.attemptonlast === 0;
+
+        const isValid = isOnePage && isNavMethod && isShuffleAnswers && isPreferredBehaviour && isAttemptonLast;
+        return { isValid, name: quiz.name };
+      }
+    } catch (error) {
+      console.error(`Error verificando el cuestionario ${quiz.id}:`, error);
+    }
+
+    return { isValid: false, name: quiz.name };
+  }
+
+  private checkGeneralConfigReto(section: any): boolean {
+    const hasName = section.name != null;
+    const hasInstructions = section.intro != null;
+    const hasContentFiles = section.introattachments?.length > 0 || false;
+
+    return hasName && hasInstructions && hasContentFiles;
   }
 
   private evaluateGeneralMapaCierre(indicator: any, matchedContent: any): IndicatorResult {

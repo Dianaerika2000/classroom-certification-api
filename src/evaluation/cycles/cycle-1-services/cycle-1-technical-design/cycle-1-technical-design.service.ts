@@ -350,21 +350,26 @@ export class Cycle1TechnicalDesignService {
     }
 
     const config = quizConfig.configuration;
-    const isValidResult = await this.checkQuiz(matchedContent, courseid, token, config);
+    const validationResult = await this.checkQuiz(matchedContent, courseid, token, config);
 
     return {
       indicatorId: indicator.id,
-      result: isValidResult ? 1 : 0,
-      observation: isValidResult
+      result: validationResult.isValid ? 1 : 0,
+      observation: validationResult.isValid
         ? 'Todos los cuestionarios cumplen con la configuración de temporalización y calificación.'
-        : `No cumple con las configuraciones: ${matchedContent.name}.`,
+        : `No cumple con las configuraciones: ${validationResult.issues.join(' ')}`,
     };
   }
 
-  private async checkQuiz(quiz: any, courseid: number, token: string, config: any): Promise<boolean> {
+  private async checkQuiz(quiz: any, courseid: number, token: string, config: any): Promise<{ isValid: boolean; issues: string[] }> {
+    const issues: string[] = [];
+
     try {
       // Verificar si el cuestionario tiene fechas configuradas
       const hasDates = quiz.dates != null;
+      if (!hasDates) {
+        issues.push('El cuestionario no tiene fechas configuradas.');
+      }
 
       // Obtener los datos de los cuestionarios desde Moodle
       const quizzesFromMoodle = await this.moodleService.getQuizzesByCourse(courseid, token);
@@ -373,15 +378,23 @@ export class Cycle1TechnicalDesignService {
       if (quizData) {
         // Verificar configuración específica del cuestionario
         const isAutosubmit = quizData.overduehandling === config.submission;
-        const hasTimeLimit = quizData.timelimit <= 1200 || quizData.timelimit >= 600;
+        if (!isAutosubmit) {
+          issues.push('El manejo de envíos tardíos no es el esperado.');
+        }
 
-        return isAutosubmit && hasTimeLimit && hasDates;
+        const hasTimeLimit = quizData.timelimit <= 1200 && quizData.timelimit >= 600;
+        if (!hasTimeLimit) {
+          issues.push('El límite de tiempo no está entre 10 y 20 minutos.');
+        }
+      } else {
+        issues.push('No se encontraron datos del cuestionario en Moodle.');
       }
     } catch (error) {
       console.error(`Error verificando el cuestionario ${quiz.id}:`, error);
+      issues.push('Error al verificar el cuestionario en Moodle.');
     }
 
-    return false;
+    return { isValid: issues.length === 0, issues };
   }
 
   private evaluateAccessRestrictionsQuizzes(indicator: any, matchedContent: any): IndicatorResult {
@@ -530,27 +543,35 @@ export class Cycle1TechnicalDesignService {
       }
   
       // Validar las configuraciones específicas del cuestionario
-      const hasDates = quiz.dates != null;
-      const isOnePage = quiz.questionsperpage === 0;
-      const isNavMethod = quiz.navmethod === 'free';
-      const isShuffleAnswers = quiz.shuffleanswers === 1;
-      const isPreferredBehaviour = quiz.preferredbehaviour === 'deferredfeedback';
-      const isAttemptonLast = quiz.attemptonlast === 0;
+      const issues = [];
   
-      const isValid =
-        hasDates &&
-        isOnePage &&
-        isNavMethod &&
-        isShuffleAnswers &&
-        isPreferredBehaviour &&
-        isAttemptonLast;
+      if (!quiz.dates) {
+        issues.push('No tiene fechas definidas.');
+      }
+      if (quiz.questionsperpage !== 0) {
+        issues.push('No está configurado para una sola página.');
+      }
+      if (quiz.navmethod !== 'free') {
+        issues.push('El método de navegación no es libre.');
+      }
+      if (quiz.shuffleanswers !== 1) {
+        issues.push('Las respuestas no están configuradas para ser mezcladas.');
+      }
+      if (quiz.preferredbehaviour !== 'deferredfeedback') {
+        issues.push('El comportamiento preferido no es "retroalimentación diferida".');
+      }
+      if (quiz.attemptonlast !== 0) {
+        issues.push('No está configurado para "intento en el último".');
+      }
+  
+      const isValid = issues.length === 0;
   
       return {
         indicatorId: indicator.id,
         result: isValid ? 1 : 0,
         observation: isValid
           ? 'El cuestionario cumple con la configuración del esquema, comportamiento de las preguntas y opciones de revisión.'
-          : 'El cuestionario no cumple con la configuración requerida.',
+          : `El cuestionario no cumple con la configuración requerida: ${issues.join(' ')}`,
       };
     } catch (error) {
       console.error(
