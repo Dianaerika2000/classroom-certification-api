@@ -43,7 +43,7 @@ export class CertificationService {
       throw new BadRequestException('Failed to upload QR image to S3');
     }
 
-    const form = await this.classroomService.getFormByClassroom(classroomId);
+    const form = await this.classroomService.getLatestFormByClassroom(classroomId);
 
     const evaluator = await this.determineEvaluatorName(username, evaluatorUsername);
 
