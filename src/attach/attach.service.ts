@@ -6,6 +6,7 @@ import { UpdateAttachDto } from './dto/update-attach.dto';
 import { Attach } from './entities/attach.entity';
 import { MoodleService } from 'src/moodle/moodle.service';
 import { AwsService } from 'src/aws/aws.service';
+import { ClassroomService } from 'src/classroom/classroom.service';
 
 @Injectable()
 export class AttachService {
@@ -13,17 +14,19 @@ export class AttachService {
     @InjectRepository(Attach)
     private readonly attachRepository: Repository<Attach>,
     private readonly moodleService: MoodleService,
-    private readonly awsService: AwsService
+    private readonly awsService: AwsService,
+    private readonly classroomService: ClassroomService
   ){}
 
   async create(createAttachDto: CreateAttachDto) {
     const { token, classroomId, courseId } = createAttachDto;
+    const classroom = await this.classroomService.findOne(classroomId);
 
     const version = await this.getNextVersion(classroomId);
 
     const courseContents = await this.moodleService.getCourseContents(
       courseId, 
-      token
+      classroom.platform.token
     );
 
     const jsonContent = JSON.stringify(courseContents);
