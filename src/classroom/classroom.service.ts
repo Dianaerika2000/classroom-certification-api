@@ -8,6 +8,7 @@ import { MoodleService } from '../moodle/moodle.service';
 import { FindClassroomMoodleDto } from '../moodle/dto/find-classroom-moodle.dto';
 import { TeamService } from '../team/team.service';
 import { PlatformService } from '../platform/platform.service';
+import { Form } from '../form/entities/form.entity';
 
 @Injectable()
 export class ClassroomService {
@@ -102,7 +103,7 @@ export class ClassroomService {
     }
   }
 
-  async getFormsByClassroom(classroomId: number) {
+  async getLatestFormByClassroom(classroomId: number): Promise<Form> {
     const classroom = await this.classroomRepository.findOne({
       where: { id: classroomId },
       relations: ['forms'],
@@ -114,10 +115,14 @@ export class ClassroomService {
   
     if (!classroom.forms || classroom.forms.length === 0) {
       throw new NotFoundException(
-        `No forms associated with classroom ID ${classroomId}.`,
+        `No forms found for Classroom with ID ${classroomId}.`,
       );
     }
   
-    return classroom.forms;
-  }  
+    const latestForm = classroom.forms.sort(
+      (a, b) => b.completionDate.getTime() - a.completionDate.getTime(),
+    )[0];
+  
+    return latestForm;
+  }    
 }
