@@ -23,7 +23,7 @@ export const cyclesItems = {
       name: "Sección inicio",
       subItems: [
         "Mapa de inicio",
-        "Lección de conocmientos previos",
+        "Lección de conocimientos previos",
         "Cuestionario diagnóstico",
         "Bibliografía"
       ]
