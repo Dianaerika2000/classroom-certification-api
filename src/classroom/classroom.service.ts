@@ -3,9 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateClassroomDto } from './dto/create-classroom.dto';
 import { UpdateClassroomDto } from './dto/update-classroom.dto';
+import { FindClassroomMoodleDto } from './dto/find-classroom-moodle.dto';
 import { Classroom } from './entities/classroom.entity';
 import { MoodleService } from '../moodle/moodle.service';
-import { FindClassroomMoodleDto } from '../moodle/dto/find-classroom-moodle.dto';
 import { TeamService } from '../team/team.service';
 import { PlatformService } from '../platform/platform.service';
 import { Form } from '../form/entities/form.entity';
@@ -93,13 +93,28 @@ export class ClassroomService {
   }
 
   async findClassroomInMoodle(findClassroomMoodleDto: FindClassroomMoodleDto): Promise<any> {
-    const { field, value } = findClassroomMoodleDto;
-  
+    const { field, value, platformId} = findClassroomMoodleDto;
+    
+    const platform = await this.platformService.findOne(platformId);
+
     try {
-      const courses = await this.moodleService.getCourseByField(findClassroomMoodleDto);
-      return courses;
+      const courses = await this.moodleService.getCourses(
+        platform.url,
+        platform.token,
+        'core_course_get_courses'
+      );
+
+      const matchingCourses = courses.filter((course: any) =>
+        course[field]?.toLowerCase().includes(value.toLowerCase())
+      );
+
+      if (matchingCourses.length === 0) {
+        throw new NotFoundException(`No se encontraron aulas en Moodle con ${field} = ${value}.`);
+      }
+
+      return matchingCourses;
     } catch (error) {
-      throw new NotFoundException(`No se encontró el aula en Moodle con ${field} = ${value}`);
+      throw new NotFoundException(`Error al buscar aulas en Moodle: ${error.message}`);
     }
   }
 
