@@ -1,9 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { url } from 'inspector';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
-import { FindClassroomMoodleDto } from './dto/find-classroom-moodle.dto';
 
 @Injectable()
 export class MoodleService {
@@ -84,24 +82,6 @@ export class MoodleService {
     } catch (error) {
       console.error(error);
       throw new HttpException('Error al obtener la lista de usuarios de Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  async getCourseByField(findClassroomMoodleDto: FindClassroomMoodleDto): Promise<any> {
-    const { token, field, value } = findClassroomMoodleDto;
-    const apiUrl = this.getMoodleApiUrl();
-    const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=core_course_get_courses_by_field&field=${field}&value=${value}`;
-
-    try {
-      const response = await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
-      if (response.data && response.data.courses.length > 0) {
-        return response.data.courses;
-      } else {
-        throw new HttpException('Curso no encontrado en Moodle', HttpStatus.NOT_FOUND);
-      }
-    } catch (error) {
-      console.error(error);
-      throw new HttpException('Error al obtener el curso de Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -220,6 +200,19 @@ export class MoodleService {
     } catch (error) {
       console.error(error);
       throw new HttpException('Error al registrar el usuario en el curso', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getCourses(url: string, token: string, wsfunction: string) {
+    const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=${wsfunction}`;
+    const endpoint = `${url}?${queryParams}`;
+
+    try {
+      const response = await firstValueFrom(this.httpService.get(endpoint));
+
+      return response.data;
+    } catch (error) {
+      throw new HttpException('Error al obtener los cursos', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

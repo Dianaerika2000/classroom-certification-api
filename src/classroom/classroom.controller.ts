@@ -4,9 +4,9 @@ import { ClassroomService } from './classroom.service';
 import { Classroom } from './entities/classroom.entity';
 import { CreateClassroomDto } from './dto/create-classroom.dto';
 import { UpdateClassroomDto } from './dto/update-classroom.dto';
+import { FindClassroomMoodleDto } from './dto/find-classroom-moodle.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { ValidRoles } from '../auth/enums/valid-roles';
-import { FindClassroomMoodleDto } from '../moodle/dto/find-classroom-moodle.dto';
 
 @ApiTags('Classroom')
 @Controller('classroom')
