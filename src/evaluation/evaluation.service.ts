@@ -57,6 +57,7 @@ export class EvaluationService {
     // Obtener las evaluaciones
     const evaluations = await this.evaluationRepository.find({
       where: { classroom: { id: classroomId } },
+      order: { reviewDate: 'ASC' },
     });
 
     if (!evaluations.length) {
