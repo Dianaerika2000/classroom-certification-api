@@ -101,7 +101,6 @@ export class ClassroomService {
       const courses = await this.moodleService.getCourses(
         platform.url,
         platform.token,
-        'core_course_get_courses'
       );
 
       const matchingCourses = courses.filter((course: any) =>

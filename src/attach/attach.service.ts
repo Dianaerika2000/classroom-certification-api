@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateAttachDto } from './dto/create-attach.dto';
-import { UpdateAttachDto } from './dto/update-attach.dto';
 import { Attach } from './entities/attach.entity';
-import { MoodleService } from 'src/moodle/moodle.service';
-import { AwsService } from 'src/aws/aws.service';
-import { ClassroomService } from 'src/classroom/classroom.service';
+import { CreateAttachDto } from './dto/create-attach.dto';
+import { AttachType } from './enums/attach-type.enum';
+import { MoodleService } from '../moodle/moodle.service';
+import { AwsService } from '../aws/aws.service';
+import { ClassroomService } from '../classroom/classroom.service';
 
 @Injectable()
 export class AttachService {
@@ -19,20 +19,27 @@ export class AttachService {
   ){}
 
   async create(createAttachDto: CreateAttachDto) {
-    const { token, classroomId, courseId } = createAttachDto;
+    const { classroomId, type } = createAttachDto;
     const classroom = await this.classroomService.findOne(classroomId);
-
+    const moodleCourseId = classroom.moodleCourseId;
+    const platform = classroom.platform;
+    
     const version = await this.getNextVersion(classroomId);
 
-    const courseContents = await this.moodleService.getCourseContents(
-      courseId, 
-      classroom.platform.token
+    const courseContents = await this.getCourseContentsByType(
+      type,
+      platform.url,
+      platform.token,
+      moodleCourseId
     );
+
+    if (!courseContents || courseContents.length === 0) {
+      throw new NotFoundException(`No se encontraron contenidos para el tipo ${type} en el curso con ID ${moodleCourseId}`);
+    }
 
     const jsonContent = JSON.stringify(courseContents);
     const buffer = Buffer.from(jsonContent);
-
-    const fileName = `course_${classroomId}_${version}.json`;
+    const fileName = `${type}_course_${classroomId}_${version}.json`;
 
     const fileUrl = await this.awsService.uploadFileToS3(
       buffer, 
@@ -43,6 +50,7 @@ export class AttachService {
     const attach = this.attachRepository.create({
       url: fileUrl,
       version,
+      type,
       classroom: { id: classroomId }
     });
 
@@ -55,12 +63,13 @@ export class AttachService {
     });
   }
 
-  async findAllByClassroom(classroomId: number) {
+  async findAllByClassroom(classroomId: number, type: AttachType) {
     return await this.attachRepository.find({
       where: { 
-        classroom: { id: classroomId } 
+        classroom: { id: classroomId },
+        type,
       },
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -94,4 +103,69 @@ export class AttachService {
     const currentVersionNumber = parseInt(lastAttach.version.replace('v', ''), 10);
     return `v${currentVersionNumber + 1}`;
   }
+
+  private async getCourseContentsByType(
+    type: AttachType,
+    url: string,
+    token: string,
+    courseId: number
+  ): Promise<any[]> {
+    switch (type) {
+      case AttachType.ASSIGN:
+        return await this.getAssignmentsByCourse(url, token, courseId);
+      case AttachType.FORUM:
+        return await this.getForumsByCourse(url, token, courseId);
+      case AttachType.GENERAL:
+      default:
+        return await this.moodleService.getCourseContents2(url, token, courseId);
+    }
+  }  
+
+  private async getAssignmentsByCourse(url: string, token: string, courseId: number): Promise<any[]> {
+    const courseContents = await this.moodleService.getCourseContents2(url, token, courseId);
+  
+    if (!courseContents || courseContents.length === 0) {
+      throw new NotFoundException(`No se encontraron contenidos para el curso con ID ${courseId}`);
+    }
+  
+    const assignsBySection = courseContents.reduce((result, section) => {
+      const sectionName = section.name || `Section ${section.id}`;
+      const assigns = (section.modules || []).filter((module: any) => module.modname === 'assign');
+  
+      if (assigns.length > 0) {
+        result.push({
+          section: sectionName,
+          assigns: assigns,
+        });
+      }
+  
+      return result;
+    }, []);
+  
+    return assignsBySection;
+  }
+
+  private async getForumsByCourse(url: string, token: string, courseId: number): Promise<any[]> {
+    const courseContents = await this.moodleService.getCourseContents2(url, token, courseId);
+  
+    if (!courseContents || courseContents.length === 0) {
+      throw new NotFoundException(`No se encontraron contenidos para el curso con ID ${courseId}`);
+    }
+  
+    const forumsBySection = courseContents.reduce((result, section) => {
+      const sectionName = section.name || `Section ${section.id}`;
+      const forums = (section.modules || []).filter((module: any) => module.modname === 'forum');
+  
+      if (forums.length > 0) {
+        result.push({
+          section: sectionName,
+          forums: forums,
+        });
+      }
+  
+      return result;
+    }, []);
+  
+    return forumsBySection;
+  }  
 }
