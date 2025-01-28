@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNumber, IsString } from "class-validator";
+import { IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
+import { AttachType } from "../enums/attach-type.enum";
 
 export class CreateAttachDto {
   @ApiProperty({
@@ -11,18 +12,12 @@ export class CreateAttachDto {
   classroomId: number;
 
   @ApiProperty({
-    description: 'Moodle course ID',
-    example: 456,
-    type: Number
+    description: 'Type of the attachment',
+    example: 'general',
+    enum: AttachType,
+    required: false,
   })
-  @IsNumber()
-  courseId: number;
-
-  @ApiProperty({
-    description: 'Moodle token',
-    example: 'abc123xyz',
-    type: String
-  })
-  @IsString()
-  token: string;
+  @IsOptional()
+  @IsEnum(AttachType, { message: `Type must be one of the following: ${Object.values(AttachType).join(', ')}` })
+  type?: AttachType;
 }

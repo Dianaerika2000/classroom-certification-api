@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
-import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Param, Delete, Query } from '@nestjs/common';
+import { ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AttachService } from './attach.service';
 import { CreateAttachDto } from './dto/create-attach.dto';
 import { Attach } from './entities/attach.entity';
+import { AttachType } from './enums/attach-type.enum';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { ValidRoles } from '../auth/enums/valid-roles';
 
@@ -21,7 +22,7 @@ export class AttachController {
     const attachment = await this.attachService.create(createAttachDto);
     
     return {
-      message: "Attachment creado exitosamente",
+      message: "Anexo creado exitosamente",
       data: {
         attachment
       }
@@ -36,7 +37,7 @@ export class AttachController {
     const attachments = await this.attachService.findAll();
     
     return {
-      message: "Attachments obtenidos exitosamente",
+      message: "Anexos obtenidos exitosamente",
       data: {
         attachments
       }
@@ -53,7 +54,7 @@ export class AttachController {
     const attachment = await this.attachService.findOne(id);
     
     return {
-      message: "Attachment obtenido exitosamente",
+      message: "Anexo obtenido exitosamente",
       data: {
         attachment
       }
@@ -66,16 +67,25 @@ export class AttachController {
     type: 'number', 
     description: 'ID of the classroom to retrieve attachments from' 
   })
+  @ApiQuery({ 
+    name: 'type', 
+    enum: AttachType, 
+    required: false, 
+    description: 'Type of the attachments to filter (general, assign, forum)' 
+  })
   @ApiResponse({ status: 200, description: 'Attachments retrieved successfully', type: [Attach] })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Classroom not found' })
-  async findAllByClassroom(@Param('classroomId') classroomId: string) {
-    const attachments = await this.attachService.findAllByClassroom(+classroomId);
+  async findAllByClassroom(
+    @Param('classroomId') classroomId: string,
+    @Query('type') type?: AttachType,
+  ) {
+    const attachments = await this.attachService.findAllByClassroom(+classroomId, type || AttachType.GENERAL);
     
     return {
-      message: "Attachments del aula obtenidos exitosamente",
+      message: "Anexos del aula obtenidos exitosamente",
       data: {
         attachments
       }
@@ -92,7 +102,7 @@ export class AttachController {
     const attachment = await this.attachService.remove(id);
     
     return {
-      message: "Attachment eliminado exitosamente",
+      message: "Anexo eliminado exitosamente",
       data: {
         attachment: attachment
       }

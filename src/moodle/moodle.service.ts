@@ -203,16 +203,51 @@ export class MoodleService {
     }
   }
 
-  async getCourses(url: string, token: string, wsfunction: string) {
+  async getCourses(url: string, token: string) {
+    const wsfunction = 'core_course_get_courses';
     const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=${wsfunction}`;
     const endpoint = `${url}?${queryParams}`;
 
     try {
       const response = await firstValueFrom(this.httpService.get(endpoint));
-
       return response.data;
     } catch (error) {
-      throw new HttpException('Error al obtener los cursos', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        'Error al obtener los cursos',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  async getCourseContents2(url: string, token: string, courseid: number) {
+    const wsfunction = 'core_course_get_contents';
+    const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=${wsfunction}&courseid=${courseid}`;
+    const endpoint = `${url}?${queryParams}`;
+
+    try {
+      const response = await firstValueFrom(this.httpService.get(endpoint));
+      return response.data;
+    } catch (error) {
+      throw new HttpException(
+        'Error al obtener los contenidos del curso',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  async getForumsByCourse2(url: string, token: string, courseId: number): Promise<any> {
+    const wsfunction = 'mod_forum_get_forums_by_courses';
+    const queryParams = `wstoken=${token}&wsfunction=${wsfunction}&moodlewsrestformat=json&courseids[0]=${courseId}`;
+    const endpoint = `${url}?${queryParams}`;
+
+    try {
+      const response = await firstValueFrom(this.httpService.get(endpoint));
+      return response.data;
+    } catch (error) {
+      throw new HttpException(
+        `Error al obtener foros del curso con ID ${courseId}: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }
