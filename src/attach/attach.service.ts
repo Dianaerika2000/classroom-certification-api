@@ -63,11 +63,11 @@ export class AttachService {
     });
   }
 
-  async findAllByClassroom(classroomId: number, type: AttachType) {
+  async findAllByClassroom(classroomId: number) {
     return await this.attachRepository.find({
       where: { 
         classroom: { id: classroomId },
-        type,
+        //type,
       },
       order: { createdAt: 'DESC' },
     });
@@ -146,26 +146,27 @@ export class AttachService {
   }
 
   private async getForumsByCourse(url: string, token: string, courseId: number): Promise<any[]> {
-    const courseContents = await this.moodleService.getCourseContents2(url, token, courseId);
+    const courseContents = await this.moodleService.getForumsByCourse2(url, token, courseId);
+    console.log('response', courseContents)
   
     if (!courseContents || courseContents.length === 0) {
       throw new NotFoundException(`No se encontraron contenidos para el curso con ID ${courseId}`);
     }
   
-    const forumsBySection = courseContents.reduce((result, section) => {
-      const sectionName = section.name || `Section ${section.id}`;
-      const forums = (section.modules || []).filter((module: any) => module.modname === 'forum');
+    // const forumsBySection = courseContents.reduce((result, section) => {
+    //   const sectionName = section.name || `Section ${section.id}`;
+    //   const forums = (section.modules || []).filter((module: any) => module.modname === 'forum');
   
-      if (forums.length > 0) {
-        result.push({
-          section: sectionName,
-          forums: forums,
-        });
-      }
+    //   if (forums.length > 0) {
+    //     result.push({
+    //       section: sectionName,
+    //       forums: forums,
+    //     });
+    //   }
   
-      return result;
-    }, []);
+    //   return result;
+    // }, []);
   
-    return forumsBySection;
+    return courseContents;
   }  
 }

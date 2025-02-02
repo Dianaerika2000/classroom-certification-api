@@ -80,9 +80,10 @@ export class AttachController {
   @ApiResponse({ status: 404, description: 'Classroom not found' })
   async findAllByClassroom(
     @Param('classroomId') classroomId: string,
-    @Query('type') type?: AttachType,
+    //@Query('type') type?: AttachType,
   ) {
-    const attachments = await this.attachService.findAllByClassroom(+classroomId, type || AttachType.GENERAL);
+    //const attachments = await this.attachService.findAllByClassroom(+classroomId, type || AttachType.GENERAL);
+    const attachments = await this.attachService.findAllByClassroom(+classroomId);
     
     return {
       message: "Anexos del aula obtenidos exitosamente",

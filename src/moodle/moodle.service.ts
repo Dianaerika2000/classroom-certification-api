@@ -239,9 +239,11 @@ export class MoodleService {
     const wsfunction = 'mod_forum_get_forums_by_courses';
     const queryParams = `wstoken=${token}&wsfunction=${wsfunction}&moodlewsrestformat=json&courseids[0]=${courseId}`;
     const endpoint = `${url}?${queryParams}`;
+    console.log('endpons', endpoint)
 
     try {
       const response = await firstValueFrom(this.httpService.get(endpoint));
+
       return response.data;
     } catch (error) {
       throw new HttpException(
