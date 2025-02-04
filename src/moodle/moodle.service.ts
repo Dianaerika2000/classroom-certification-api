@@ -139,7 +139,7 @@ export class MoodleService {
   async getLessonPages(lessonId: number, token: string): Promise<any[]> {
     const apiUrl = this.getMoodleApiUrl();
     const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=mod_lesson_get_pages&lessonid=${lessonId}`;
-  
+
     try {
       const response = await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
       return response.data.pages || [];
@@ -152,7 +152,7 @@ export class MoodleService {
   async getLessonPageContent(lessonId: number, pageId: number, token: string): Promise<any> {
     const apiUrl = this.getMoodleApiUrl();
     const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=mod_lesson_get_page_data&lessonid=${lessonId}&pageid=${pageId}`;
-  
+
     try {
       const response = await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
       return response.data.page;
@@ -165,7 +165,7 @@ export class MoodleService {
   async getQuizzesByCourse(courseId: number, token: string): Promise<any> {
     const apiUrl = this.getMoodleApiUrl();
     const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=mod_quiz_get_quizzes_by_courses&courseids[0]=${courseId}`;
-    
+
     try {
       const response = await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
       return response.data;
@@ -175,11 +175,11 @@ export class MoodleService {
     }
   }
 
-  async enrolUsers(courseId: number, token: string, userId?: number) {
-    const apiUrl = this.getMoodleApiUrl();
+  async enrolUsers(courseId: number, token: string, url?: string, userId?: number) {
+    const apiUrl = url ?? this.getMoodleApiUrl();
     const userToEnroll = userId ?? 50;
     const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=enrol_manual_enrol_users&enrolments[0][roleid]=1&enrolments[0][userid]=${userToEnroll}&enrolments[0][courseid]=${courseId}`;
-    
+
     try {
       await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
       //return response.data;
@@ -189,11 +189,11 @@ export class MoodleService {
     }
   }
 
-  async unenrolUsers(courseId: number, token: string, userId?: number) {
-    const apiUrl = this.getMoodleApiUrl();
+  async unenrolUsers(courseId: number, token: string, url?: string, userId?: number) {
+    const apiUrl = url ?? this.getMoodleApiUrl();
     const userToEnroll = userId ?? 50;
     const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=enrol_manual_unenrol_users&enrolments[0][roleid]=1&enrolments[0][userid]=${userToEnroll}&enrolments[0][courseid]=${courseId}`;
-    
+
     try {
       await firstValueFrom(this.httpService.get(`${apiUrl}?${queryParams}`));
       //return response.data;
@@ -239,7 +239,6 @@ export class MoodleService {
     const wsfunction = 'mod_forum_get_forums_by_courses';
     const queryParams = `wstoken=${token}&wsfunction=${wsfunction}&moodlewsrestformat=json&courseids[0]=${courseId}`;
     const endpoint = `${url}?${queryParams}`;
-    console.log('endpons', endpoint)
 
     try {
       const response = await firstValueFrom(this.httpService.get(endpoint));
@@ -250,6 +249,20 @@ export class MoodleService {
         `Error al obtener foros del curso con ID ${courseId}: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    }
+  }
+
+  async getAssignmentsByCourse2(url: string, token: string, courseId: number, userId?: number): Promise<any> {
+    const wsfunction = 'mod_assign_get_assignments';
+    const queryParams = `wstoken=${token}&moodlewsrestformat=json&wsfunction=${wsfunction}&courseids[0]=${courseId}`;
+    const endpoint = `${url}?${queryParams}`;
+
+    try {
+      const response = await firstValueFrom(this.httpService.get(endpoint));
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      throw new HttpException('Error al obtener actividades del curso de Moodle', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

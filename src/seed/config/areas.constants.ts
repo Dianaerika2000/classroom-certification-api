@@ -96,7 +96,7 @@ export const areasItems = {
     },
     {
       resourceParent: "Sección inicio",
-      content: "Lección de conocmientos previos",
+      content: "Lección de conocimientos previos",
       indicators: [
         "Contiene lectura guía de conocimientos previos",
         "Utiliza númeración, viñetas para clasificar el contenido",
@@ -297,7 +297,7 @@ export const areasItems = {
     },
     {
       resourceParent: "Sección inicio",
-      content: "Lección de conocmientos previos",
+      content: "Lección de conocimientos previos",
       indicators: [
         "Tiene botón: Pág. Anterior, Pág. Siguiente",
         "La configuración para añadir preguntas con de carácter autocalificadas",
@@ -452,7 +452,7 @@ export const areasItems = {
     },
     {
       resourceParent: "Sección inicio",
-      content: "Lección de conocmientos previos",
+      content: "Lección de conocimientos previos",
       indicators: [
         "Las imágenes del contenido se editaron para una mejor visualización",
         "Los videos de lección estan editados en el foramato del DEDTE"

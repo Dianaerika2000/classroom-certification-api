@@ -122,32 +122,33 @@ export class AttachService {
   }  
 
   private async getAssignmentsByCourse(url: string, token: string, courseId: number): Promise<any[]> {
-    const courseContents = await this.moodleService.getCourseContents2(url, token, courseId);
+    await this.moodleService.enrolUsers(courseId, token, url);
+    const courseContents = await this.moodleService.getAssignmentsByCourse2(url, token, courseId);
+    await this.moodleService.unenrolUsers(courseId, token, url);
   
     if (!courseContents || courseContents.length === 0) {
       throw new NotFoundException(`No se encontraron contenidos para el curso con ID ${courseId}`);
     }
   
-    const assignsBySection = courseContents.reduce((result, section) => {
-      const sectionName = section.name || `Section ${section.id}`;
-      const assigns = (section.modules || []).filter((module: any) => module.modname === 'assign');
+    // const assignsBySection = courseContents.reduce((result, section) => {
+    //   const sectionName = section.name || `Section ${section.id}`;
+    //   const assigns = (section.modules || []).filter((module: any) => module.modname === 'assign');
   
-      if (assigns.length > 0) {
-        result.push({
-          section: sectionName,
-          assigns: assigns,
-        });
-      }
+    //   if (assigns.length > 0) {
+    //     result.push({
+    //       section: sectionName,
+    //       assigns: assigns,
+    //     });
+    //   }
   
-      return result;
-    }, []);
+    //   return result;
+    // }, []);
   
-    return assignsBySection;
+    return courseContents.courses[0].assignments;
   }
 
   private async getForumsByCourse(url: string, token: string, courseId: number): Promise<any[]> {
     const courseContents = await this.moodleService.getForumsByCourse2(url, token, courseId);
-    console.log('response', courseContents)
   
     if (!courseContents || courseContents.length === 0) {
       throw new NotFoundException(`No se encontraron contenidos para el curso con ID ${courseId}`);
