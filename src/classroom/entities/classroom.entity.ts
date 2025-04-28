@@ -45,6 +45,6 @@ export class Classroom {
   @ManyToOne(() => Team, (team) => team.classrooms)
   team: Team;
 
-  @ManyToOne(() => Platform, (platform) => platform.classrooms)
+  @ManyToOne(() => Platform, (platform) => platform.classrooms, { eager: true })
   platform: Platform;
 }
