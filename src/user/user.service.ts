@@ -26,7 +26,8 @@ export class UserService {
     const userExists = await this.userRepository.findOneBy({ username });
     if(userExists) throw new BadRequestException(`User with username ${username} already exists`);
 
-    const genericPassword = `${username}.dedte.2024`;
+    const passwordTemplate = this.configService.get<string>('GENERIC_PASSWORD_TEMPLATE', '.dedte.2024');
+    const genericPassword = `${username}${passwordTemplate}`;
 
     const saltRounds = Number(this.configService.get('BCRYPT_SALT_ROUNDS', 10));
     const hashedPassword = await bcrypt.hash(genericPassword, saltRounds);
